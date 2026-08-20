@@ -46,7 +46,13 @@ kind: Gateway
 metadata:
   name: envoy-external
   annotations:
-    external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+    # The APEX, not external.${SECRET_DOMAIN}. cluster-template's default
+    # assumes something publishes an "external" record; nothing here does, so
+    # every CNAME external-dns wrote pointed at a name that does not resolve.
+    # The apex A record is the one kept current by cloudflare-ddns, so the two
+    # work together: ddns tracks the WAN address, external-dns points names at
+    # it.
+    external-dns.alpha.kubernetes.io/target: ${SECRET_DOMAIN}
 spec:
   gatewayClassName: envoy
   infrastructure:

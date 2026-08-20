@@ -1,0 +1,60 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cloudflare-ddns
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: cloudflare-ddns
+  interval: 1h
+  values:
+    controllers:
+      cloudflare-ddns:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            # Replaces the old TrueCharts "cloudflareddns". Same job: keep the
+            # APEX A record pointing at the current WAN address. Without it,
+            # every externally reachable name breaks the next time the ISP
+            # hands out a different IP -- external-dns only writes CNAMEs to
+            # the apex, it has no idea what the WAN address is.
+            #
+            # favonia rather than the trueforge image: actively maintained and
+            # needs no PVC at all, so the old 10Gi cloudflareddns-config claim
+            # and its Kopiur policy are not recreated.
+            image:
+              repository: ghcr.io/favonia/cloudflare-ddns
+              tag: 1.15.1
+            env:
+              CLOUDFLARE_API_TOKEN:
+                valueFrom:
+                  secretKeyRef:
+                    name: cloudflare-ddns-secret
+                    key: api-token
+              DOMAINS: "${SECRET_DOMAIN}"
+              # false: the apex is the ORIGIN that Cloudflare proxies the
+              # per-app CNAMEs to. Proxying it would point Cloudflare at
+              # itself.
+              PROXIED: "false"
+              IP6_PROVIDER: "none"
+              UPDATE_CRON: "@every 5m"
+              TZ: Europe/Vienna
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 128Mi
