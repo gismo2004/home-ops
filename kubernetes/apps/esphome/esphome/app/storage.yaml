@@ -1,0 +1,80 @@
+# Only esphome-config is backed up and restored -- it holds the device YAML,
+# secrets and the peer-link key. cache and build are regenerated compilation
+# artifacts; the old cluster deliberately had no policy for them, and they were
+# never declared in git at all (leftovers from the earlier VolSync migration).
+# They are plain PVCs here so the tree is now self-contained.
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: esphome
+spec:
+  compression: { compressor: zstd }
+  mover:
+    securityContext:
+      # Root: esphome writes e.g. the device-builder peer-link key 0600
+      # root-owned, and an unelevated mover cannot read it. runAsNonRoot:false
+      # is REQUIRED alongside runAsUser:0 -- runAsUser alone is a silent no-op
+      # and yields an identical unprivileged Job with no error anywhere.
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+    cache: { capacity: 2Gi, mode: Ephemeral, storageClassName: miroir-local }
+  repository: { kind: ClusterRepository, name: default }
+  credentialProjection: { enabled: true }
+  retention: { keepLatest: 3, keepHourly: 24, keepDaily: 7, keepWeekly: 4 }
+  sources:
+    - pvc: { name: esphome-config }
+  volumeSnapshotClassName: miroir-snap
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: esphome
+spec:
+  policyRef: { name: esphome }
+  schedule: { cron: "H H * * *" }
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  name: esphome-config
+spec:
+  credentialProjection: { enabled: true }
+  mover:
+    securityContext: { runAsUser: 0, runAsGroup: 0, runAsNonRoot: false }
+  policy: { onMissingSnapshot: Fail }
+  source:
+    fromPolicy: { name: esphome, offset: 0 }
+  target: { populator: {} }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: esphome-config
+spec:
+  accessModes: [ReadWriteOnce]
+  dataSourceRef:
+    apiGroup: kopiur.home-operations.com
+    kind: Restore
+    name: esphome-config
+  resources: { requests: { storage: 10Gi } }
+  storageClassName: miroir-local
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: esphome-cache
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 20Gi } }
+  storageClassName: miroir-local
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: esphome-build
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 20Gi } }
+  storageClassName: miroir-local

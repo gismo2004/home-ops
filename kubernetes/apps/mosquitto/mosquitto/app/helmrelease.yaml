@@ -1,0 +1,111 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mosquitto
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: mosquitto
+  interval: 1h
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups: [568]
+    controllers:
+      mosquitto:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: eclipse-mosquitto
+              tag: 2.0.22@sha256:212f89e1eaeb2c322d6441b64396e3346026674db8fa9c27beac293405c32b3c
+            probes:
+              liveness:
+                enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 1883
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
+              readOnlyRootFilesystem: true
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                memory: 2400Mi
+    service:
+      app:
+        controller: mosquitto
+        type: LoadBalancer
+        annotations:
+          # 10.0.0.220, unchanged -- every ESPHome device and Home Assistant's
+          # MQTT integration points at this address.
+          lbipam.cilium.io/ips: "10.0.0.220"
+          lbipam.cilium.io/sharing-key: mosquitto
+        ports:
+          main:
+            port: &port 1883
+            targetPort: *port
+      websockets:
+        controller: mosquitto
+        ports:
+          websockets:
+            port: 9001
+            targetPort: 9001
+    persistence:
+      data:
+        existingClaim: mosquitto-data
+        globalMounts:
+          - path: /mosquitto/data
+      configinc:
+        existingClaim: mosquitto-configinc
+        globalMounts:
+          - path: /mosquitto/configinc
+      config:
+        type: configMap
+        # identifier, not a literal name: app-template 5.x names generated
+        # objects <release> or <release>-<identifier> depending on how many
+        # exist, so a hardcoded name can silently stop resolving.
+        identifier: config
+        globalMounts:
+          - path: /mosquitto/config/mosquitto.conf
+            subPath: mosquitto.conf
+            readOnly: true
+    configMaps:
+      config:
+        data:
+          mosquitto.conf: |
+            listener 1883
+            allow_anonymous true
+            persistence true
+            persistence_location /mosquitto/data
+            autosave_interval 1800
+            include_dir /mosquitto/configinc
