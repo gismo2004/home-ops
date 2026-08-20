@@ -1,0 +1,21 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: k8tz
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: k8tz
+  interval: 1h
+  values:
+    # Europe/Vienna rather than the old Europe/Amsterdam: identical CET/CEST
+    # rules, so no behaviour change, but consistent with Kopiur's
+    # scheduleDefaults, cloudflare-ddns and the Renovate timezone.
+    timezone: Europe/Vienna
+    injectAll: true
+    webhook:
+      # Ignore, not Fail. A mutating webhook that hard-fails will block EVERY
+      # pod creation cluster-wide if k8tz is down -- including the pods needed
+      # to bring k8tz back.
+      failurePolicy: Ignore

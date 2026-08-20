@@ -1,0 +1,35 @@
+---
+apiVersion: tuppr.home-operations.com/v1alpha1
+kind: TalosUpgrade
+metadata:
+  name: talos
+spec:
+  talos:
+    # Literal, NOT ${TALOS_VERSION}. The old cluster read that from an
+    # upgrade-settings ConfigMap that does not exist here -- it would have
+    # substituted to an empty string. Renovate keeps this current via the
+    # talosFactory preset, which also owns talos/topf.yaml, so the two move
+    # together. It must equal the running version or tuppr upgrades on sight.
+    version: v1.13.7
+  talosctl:
+    image:
+      tag: v1.13.7
+  policy:
+    rebootMode: default
+    placement: soft
+  healthChecks:
+    # Never upgrade the node while Kopiur is mid-flight: a reboot during a
+    # snapshot or restore is how you get a half-written volume.
+    - apiVersion: kopiur.home-operations.com/v1alpha1
+      kind: Snapshot
+      expr: |-
+        status.phase != 'Running'
+    - apiVersion: kopiur.home-operations.com/v1alpha1
+      kind: Restore
+      expr: |-
+        !(status.phase in ['Resolving', 'Restoring'])
+    # miroir equivalent of onedr0p's CephCluster gate.
+    - apiVersion: miroir.home-operations.com/v1alpha1
+      kind: MiroirNode
+      expr: |-
+        status.conditions.exists(c, c.type == 'PoolUsageHigh' && c.status == 'False')

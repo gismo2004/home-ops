@@ -1,0 +1,18 @@
+---
+# The old cluster pulled k8tz 0.20.0 from a HelmRepository at k8tz.jaconi.io.
+# That host no longer resolves at all, so that source is dead and could not be
+# carried over. home-operations' charts-mirror is the only OCI source and tops
+# out at 0.19.0 -- a one-minor step back for a timezone-injection webhook,
+# which is an acceptable trade for having a source that exists.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: k8tz
+spec:
+  interval: 15m
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  ref:
+    tag: 0.19.0
+  url: oci://ghcr.io/home-operations/charts-mirror/k8tz
