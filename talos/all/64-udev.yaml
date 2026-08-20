@@ -1,0 +1,12 @@
+# Names the oscam smartcard reader deterministically by its USB serial, so the
+# app can bind /dev/ttyUSB-oscam rather than a ttyUSB* number that changes with
+# enumeration order.
+#
+# This was missed when porting the Talos config from the old cluster. Without
+# it the symlink does not exist, kubelet CREATES A DIRECTORY at that hostPath
+# and bind-mounts the empty directory into the pod -- oscam then serves its web
+# UI perfectly while the reader is silently absent.
+machine:
+  udev:
+    rules:
+      - SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", ATTRS{serial}=="AD02EAEY", MODE="0666", SYMLINK+="ttyUSB-oscam"
