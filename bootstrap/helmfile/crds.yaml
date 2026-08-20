@@ -29,6 +29,16 @@ releases:
     inherit:
       - template: default
 
+  - name: cloudnative-pg
+    namespace: cnpg-system
+    inherit:
+      - template: default
+
+  - name: kopiur
+    namespace: kopiur-system
+    inherit:
+      - template: default
+
   - name: miroir
     namespace: miroir-system
     inherit:

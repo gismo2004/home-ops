@@ -1,0 +1,32 @@
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: ClusterRepository
+metadata:
+  name: default
+spec:
+  # Bucket, endpoint and region are carried over from the old cluster
+  # UNCHANGED. Kopiur derives a snapshot's identity from the repository plus
+  # <policy>@<namespace>:/pvc/<claim>, so any drift here means the existing
+  # snapshots cannot be found and restores silently come back empty.
+  allowedNamespaces:
+    all: true
+  credentialProjection:
+    allowed: true
+  backend:
+    s3:
+      auth:
+        secretRef:
+          name: kopiur-repository-secret
+          namespace: kopiur-system
+      bucket: kopiur
+      endpoint: s3.eu-central-003.backblazeb2.com
+      region: eu-central-003
+      tls:
+        disableTls: false
+  encryption:
+    passwordSecretRef:
+      name: kopiur-repository-secret
+      namespace: kopiur-system
+      key: KOPIA_PASSWORD
+  scheduleDefaults:
+    timezone: Europe/Vienna

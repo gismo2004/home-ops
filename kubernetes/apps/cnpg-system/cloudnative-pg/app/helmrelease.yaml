@@ -1,0 +1,22 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cloudnative-pg
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: cloudnative-pg
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    # crds.create stays at the chart default (true). The CRDs are gated by that
+    # value, so setting it false also removes them from the out-of-band render
+    # in bootstrap/helmfile/crds.yaml -- which is where they need to come from.
+    {}
