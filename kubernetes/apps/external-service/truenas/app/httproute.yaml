@@ -12,6 +12,15 @@ kind: Backend
 metadata:
   name: truenas
 spec:
+  # Die Weboberflaeche ist eine Angular-App, die ihre gesamte Kommunikation
+  # ueber einen WebSocket auf /websocket abwickelt. Ohne diese Angabe spricht
+  # envoy HTTP/2 zum Backend, dort ist `Connection: Upgrade` unzulaessig, und
+  # TrueNAS' nginx beantwortet den Upgrade mit 400. Sichtbar wird das nicht als
+  # Fehlerseite, sondern als endloses "Connecting to TrueNAS ..." -- die Seite
+  # laedt, der Login erscheint nie. Direkt am Geraet liefert derselbe Request
+  # 101 Switching Protocols, ueber den Gateway 400.
+  appProtocols:
+    - gateway.envoyproxy.io/wss
   endpoints:
     - ip:
         address: "10.0.0.2"
