@@ -1,0 +1,105 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: sabnzbd
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: sabnzbd
+  values:
+    defaultPodOptions:
+      securityContext:
+        # kept at 568 (not the reference config's 1000) -- sabnzbd's
+        # downloads mount is the same shared NFS path sonarr/radarr/lidarr
+        # import completed downloads from, and all of those still run as
+        # 568. This image doesn't hardcode uid 1000 internally (unlike
+        # PUID/PGID-style images), it just runs as whatever non-root uid
+        # the pod gives it, so pinning to 568 keeps the whole download
+        # pipeline's ownership consistent.
+        runAsNonRoot: true
+        runAsUser: 568
+        runAsGroup: 568
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+    controllers:
+      sabnzbd:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            # Do not swap this image back to containerforge/sabnzbd: its
+            # startup VACUUM hit a `disk I/O error` on every pod (re)start
+            # under readOnlyRootFilesystem: true. The fix is the writable
+            # /tmp emptyDir in persistence -- SQLite's VACUUM needs a
+            # writable temp location and does not resolve it the same way
+            # Python's tempfile module does. Keep both together.
+            image:
+              repository: ghcr.io/home-operations/sabnzbd
+              tag: 5.1.1@sha256:8f90c25c7ee2773112c76b209ba0c32f089ced996f0dd0683cdfeaf07df365f8
+            env:
+              SABNZBD__PORT: &port 10097
+              SABNZBD__HOST_WHITELIST_ENTRIES: ""
+            probes:
+              liveness:
+                enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api?mode=version
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 300Mi
+              limits:
+                cpu: 12000m
+                memory: 8Gi
+    service:
+      app:
+        controller: sabnzbd
+        ports:
+          main:
+            port: *port
+            targetPort: *port
+    # Exactly one enabled Service, so app-template 5.x auto-detects the
+    # backendRef and no explicit rules: block is needed.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: sabnzbd-config
+      downloads:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/download
+        globalMounts:
+          - path: /mnt/download
+      tmp:
+        type: emptyDir

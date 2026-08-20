@@ -1,0 +1,111 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: sonarr
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: sonarr
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 568
+    controllers:
+      sonarr:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/home-operations/sonarr
+              tag: 4.0.19.3001@sha256:2fef93accb445aeb1773e454825ac903f7d66d9addfe045d56fff69ba8181c82
+            env:
+              UMASK: "0022"
+
+              S6_READ_ONLY_ROOT: "1"
+              SONARR__AUTH__METHOD: ""
+              SONARR__AUTH__REQUIRED: DisabledForLocalAddresses
+              SONARR__SERVER__PORT: &port 8989
+
+            probes:
+              liveness:
+                enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /ping
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
+              readOnlyRootFilesystem: true
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                cpu: 1500m
+                memory: 2400Mi
+    service:
+      app:
+        controller: sonarr
+        ports:
+          main:
+            port: *port
+            targetPort: *port
+    # Exactly one enabled Service, so app-template 5.x auto-detects the
+    # backendRef and no explicit rules: block is needed.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: sonarr-config
+      backup:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/container_share/backups
+        globalMounts:
+          - path: /config/Backups
+      downloads:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/download
+        globalMounts:
+          - path: /mnt/download
+      series:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/tv
+        globalMounts:
+          - path: /mnt/tv

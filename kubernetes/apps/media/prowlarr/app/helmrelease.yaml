@@ -1,0 +1,99 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: prowlarr
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: prowlarr
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 568
+    controllers:
+      prowlarr:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/home-operations/prowlarr
+              tag: 2.6.1.5509@sha256:ce5d6bdd5be6529f503df77aa9d2bad20239031d7c660406e8fb1c6d621dd020
+            env:
+              UMASK: "0022"
+
+              S6_READ_ONLY_ROOT: "1"
+              PROWLARR__AUTH__METHOD: ""
+              PROWLARR__AUTH__REQUIRED: DisabledForLocalAddresses
+              PROWLARR__SERVER__PORT: &port 9696
+
+            probes:
+              liveness:
+                enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /ping
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                cpu: 1500m
+                memory: 2400Mi
+    service:
+      app:
+        controller: prowlarr
+        ports:
+          main:
+            port: *port
+            targetPort: *port
+    # Exactly one enabled Service, so app-template 5.x auto-detects the
+    # backendRef and no explicit rules: block is needed.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: prowlarr-config
+      backup:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/container_share/backups
+        globalMounts:
+          - path: /config/Backups

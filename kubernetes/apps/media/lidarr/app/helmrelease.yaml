@@ -1,0 +1,126 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: lidarr
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: lidarr
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 568
+    controllers:
+      lidarr:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/home-operations/lidarr
+              tag: 3.1.3.4987@sha256:7ad5061bcf71c7b07e6096a65586ea195b7afc87efe06d8f1d202816514fe144
+            env:
+              UMASK: "0022"
+
+              S6_READ_ONLY_ROOT: "1"
+              LIDARR__AUTH__METHOD: ""
+              LIDARR__AUTH__REQUIRED: DisabledForLocalAddresses
+              LIDARR__SERVER__PORT: &port 8686
+
+            probes:
+              liveness:
+                enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /ping
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                cpu: 1500m
+                memory: 2400Mi
+    service:
+      app:
+        controller: lidarr
+        ports:
+          main:
+            port: *port
+            targetPort: *port
+    # Exactly one enabled Service, so app-template 5.x auto-detects the
+    # backendRef and no explicit rules: block is needed.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: lidarr-config
+      covers:
+        # app-template 5.x names a dynamic PVC "<release>" instead of
+        # "<release>-<identifier>" when the app has exactly ONE dynamic PVC
+        # (see _determineResourceNameFromValues.tpl: the identifier is only
+        # appended when itemCount > 1). "config" uses existingClaim so it
+        # does not count, leaving covers as the only one -- which silently
+        # renamed this PVC to "lidarr" and provisioned a fresh empty 20Gi
+        # volume. forceRename pins the existing name and, unlike relying on
+        # itemCount, stays correct if another dynamic PVC is ever added.
+        forceRename: lidarr-covers
+        size: 20Gi
+        storageClass: miroir-local
+        accessMode: ReadWriteOnce
+        globalMounts:
+          - path: /config/MediaCover
+      backup:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/container_share/backups
+        globalMounts:
+          - path: /config/Backups
+      downloads:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/download
+        globalMounts:
+          - path: /mnt/download
+      music:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/music
+        globalMounts:
+          - path: /mnt/music

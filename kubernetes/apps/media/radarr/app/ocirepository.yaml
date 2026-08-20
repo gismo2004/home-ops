@@ -1,0 +1,16 @@
+---
+# Per-app OCIRepository + chartRef, the pattern home-ops/cluster-template use,
+# replacing the shared bjw-s HelmRepository + chart.spec.chart. Pins the chart
+# version in its own file, which Renovate tracks cleanly.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: radarr
+spec:
+  interval: 15m
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  ref:
+    tag: 5.1.0
+  url: oci://ghcr.io/bjw-s-labs/helm/app-template
