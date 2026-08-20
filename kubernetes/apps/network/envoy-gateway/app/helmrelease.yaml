@@ -13,6 +13,12 @@ spec:
       imageRegistry: mirror.gcr.io
     config:
       envoyGateway:
+        # Schaltet die Backend-Erweiterung frei. Ohne das ignoriert der
+        # Controller Backend-Objekte, obwohl die CRD vom Chart mitkommt --
+        # pve und truenas brauchen sie fuer tls.insecureSkipVerify gegen ihre
+        # selbstsignierten Zertifikate (Core Gateway API kann das nicht).
+        extensionApis:
+          enableBackend: true
         provider:
           type: Kubernetes
           kubernetes:

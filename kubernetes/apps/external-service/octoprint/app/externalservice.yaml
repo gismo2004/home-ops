@@ -1,0 +1,38 @@
+---
+# Kein Workload hier -- eine selektorlose Service plus handgeschriebene
+# EndpointSlice gibt einem Host ausserhalb des Clusters eine ClusterIP und
+# damit einen Ingress-Hostnamen.
+#
+# EndpointSlice statt des v1-Endpoints-Objekts: Endpoints ist ab k8s 1.33
+# deprecated, dieser Cluster laeuft auf 1.36.
+#
+# Die IP ist bewusst hartkodiert statt als ${VAR} -- im neuen Repo gibt es die
+# alten *_IP-Variablen nicht mehr, und LAN-Adressen stehen hier ohnehin im
+# Klartext (10.0.0.2 allein an 22 Stellen).
+apiVersion: v1
+kind: Service
+metadata:
+  name: octoprint
+spec:
+  type: ClusterIP
+  ports:
+    - name: main
+      port: 5000
+      targetPort: 5000
+      protocol: TCP
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: octoprint
+  labels:
+    kubernetes.io/service-name: octoprint
+addressType: IPv4
+ports:
+  - name: main
+    port: 5000
+    protocol: TCP
+endpoints:
+  - addresses: ["10.0.0.40"]
+    conditions:
+      ready: true

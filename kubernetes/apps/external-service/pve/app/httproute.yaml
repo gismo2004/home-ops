@@ -1,0 +1,38 @@
+---
+# Proxmox liefert seine Weboberflaeche per HTTPS auf 8006 mit einem
+# selbstsignierten Zertifikat aus. Core Gateway API kann das nicht abbilden:
+# BackendTLSPolicy verlangt caCertificateRefs oder wellKnownCACertificates und
+# kennt kein insecureSkipVerify. envoy-gateways Backend-Erweiterung kann es --
+# deshalb zeigt die Route auf ein Backend statt auf eine Service, und deshalb
+# muss extensionApis.enableBackend im envoy-gateway HelmRelease an sein.
+#
+# Die selektorlose Service samt EndpointSlice aus dem alten Repo ist hier
+# bewusst NICHT mitportiert: die Route zeigt auf das Backend, die Service war
+# ungenutzt, und nichts im Repo referenziert sie per DNS (geprueft).
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: pve
+spec:
+  endpoints:
+    - ip:
+        address: "10.0.0.3"
+        port: 8006
+  tls:
+    insecureSkipVerify: true
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pve
+spec:
+  hostnames:
+    - "pve.${SECRET_DOMAIN}"
+  parentRefs:
+    - name: envoy-internal
+      namespace: network
+  rules:
+    - backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: pve
