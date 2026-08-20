@@ -34,7 +34,11 @@ spec:
               runAsUser: 0
               runAsGroup: 0
               runAsNonRoot: false
-              allowPrivilegeEscalation: false
+              # true, not false: jlesage's supervisor drops to USER_ID via
+              # setuid helpers, and no_new_privs makes dbus fail to start
+              # ("terminated before being ready"), which kills the whole
+              # supervisor and leaves nothing listening on 5800.
+              allowPrivilegeEscalation: true
               capabilities:
                 drop: ["ALL"]
                 add: ["CHOWN", "SETUID", "SETGID", "FOWNER", "DAC_OVERRIDE"]
