@@ -15,4 +15,46 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
-  values: {}
+  values:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 512Mi
+    sidecars:
+      provisioner:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+      snapshotter:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+      resizer:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+    agent:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          memory: 512Mi
+      registrar:
+        resources:
+          requests:
+            cpu: 5m
+            memory: 16Mi
+          limits:
+            memory: 128Mi
