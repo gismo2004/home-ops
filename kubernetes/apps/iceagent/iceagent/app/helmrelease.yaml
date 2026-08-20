@@ -1,0 +1,172 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: iceagent
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: iceagent
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 568
+      imagePullSecrets:
+        - name: iceagent-ghcr
+    controllers:
+      iceagent:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/gismo2004/ice_agent
+              tag: v1.9.3
+            env:
+              UMASK: "0022"
+
+              S6_READ_ONLY_ROOT: "1"
+            probes:
+              liveness:
+                type: HTTP
+                path: /
+                port: &port 8080
+              readiness:
+                type: HTTP
+                path: /
+                port: *port
+              startup:
+                type: HTTP
+                path: /
+                port: *port
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
+              readOnlyRootFilesystem: true
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                cpu: 1500m
+                memory: 2400Mi
+          codeserver:
+            image:
+              repository: oci.trueforge.org/containerforge/code-server
+              tag: 4.133.0@sha256:3134bebd3abe5a06773d671cff244630263afbd6c5339883bb36119858465612
+            env:
+              UMASK: "0022"
+
+              PUID: "568"
+              USER_ID: "568"
+              UID: "568"
+              PGID: "568"
+              GROUP_ID: "568"
+              GID: "568"
+              DEFAULT_WORKSPACE: /
+              PORT: "12321"
+            securityContext:
+              privileged: false
+              allowPrivilegeEscalation: false
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                cpu: 1500m
+                memory: 2400Mi
+    service:
+      app:
+        controller: iceagent
+        ports:
+          main:
+            port: *port
+            targetPort: *port
+      codeserver:
+        controller: iceagent
+        ports:
+          http:
+            port: 12321
+            targetPort: 12321
+    # Two Services (app + codeserver), so 5.x auto-detection does not apply
+    # and each route names its backend explicitly.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: main
+      codeserver:
+        hostnames:
+          - "iceagentcs.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: codeserver
+                port: http
+    persistence:
+      config:
+        existingClaim: iceagent-config
+        globalMounts:
+          - path: /app/config
+      devshm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 2400Mi
+        globalMounts:
+          - path: /dev/shm
+      shared:
+        type: emptyDir
+        globalMounts:
+          - path: /shared
+      tmp:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 2400Mi
+        globalMounts:
+          - path: /tmp
+      varlogs:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 2400Mi
+        globalMounts:
+          - path: /var/logs
+      varrun:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 2400Mi
+        globalMounts:
+          - path: /var/run

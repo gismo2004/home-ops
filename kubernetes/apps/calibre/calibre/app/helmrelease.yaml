@@ -1,0 +1,101 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: calibre
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: calibre
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 568
+    controllers:
+      calibre:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/linuxserver/calibre
+              tag: 9.13.0@sha256:fc0c3b0375e1e078f52f26abb94641291d4aed146fa6d0abe813443459be5e2f
+            env:
+              PUID: "568"
+              PGID: "568"
+              PASSWORD: ""
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+              capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                cpu: 1500m
+                memory: 2400Mi
+    service:
+      main:
+        controller: calibre
+        type: LoadBalancer
+        annotations:
+          lbipam.cilium.io/ips: "10.0.0.202"
+          lbipam.cilium.io/sharing-key: calibre
+        ports:
+          http:
+            port: 80
+            targetPort: 8080
+      webserver:
+        controller: calibre
+        ports:
+          http:
+            port: 8081
+            targetPort: 8081
+    # Two Services (main + webserver), so 5.x auto-detection does not apply
+    # and each route names its backend explicitly.
+    route:
+      main:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: main
+                port: http
+      webserver:
+        hostnames:
+          - "calibreserver.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: webserver
+                port: http
+    persistence:
+      config:
+        existingClaim: calibre-config
+      books:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/ebooks
+        globalMounts:
+          - path: /mnt/books

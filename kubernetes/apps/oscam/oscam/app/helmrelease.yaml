@@ -1,0 +1,178 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: oscam
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: oscam
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 568
+    controllers:
+      oscam:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/linuxserver/oscam
+              tag: 11966-ls21@sha256:ed2061b4092955326bc5b8e27d47efc15b25df30cffaf156ab8e5a5c530b6153
+            env:
+              PUID: "568"
+              PGID: "568"
+            securityContext:
+              privileged: true
+              allowPrivilegeEscalation: true
+              runAsUser: 0
+              runAsGroup: 20
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                cpu: 1500m
+                memory: 2400Mi
+          codeserver:
+            image:
+              repository: oci.trueforge.org/containerforge/code-server
+              tag: 4.133.0@sha256:3134bebd3abe5a06773d671cff244630263afbd6c5339883bb36119858465612
+            env:
+              UMASK: "0022"
+
+              PUID: "568"
+              USER_ID: "568"
+              UID: "568"
+              PGID: "568"
+              GROUP_ID: "568"
+              GID: "568"
+              DEFAULT_WORKSPACE: /
+              PORT: "12321"
+            securityContext:
+              privileged: true
+              allowPrivilegeEscalation: true
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                cpu: 1500m
+                memory: 2400Mi
+    service:
+      app:
+        controller: oscam
+        type: LoadBalancer
+        annotations:
+          lbipam.cilium.io/ips: "10.0.0.211"
+          lbipam.cilium.io/sharing-key: oscam
+        ports:
+          main:
+            port: 10062
+            targetPort: 8888
+          cccam:
+            port: 24101
+            protocol: TCP
+            targetPort: 24101
+          camd:
+            port: 24104
+            protocol: TCP
+            targetPort: 24104
+      codeserver:
+        controller: oscam
+        ports:
+          http:
+            port: 12321
+            targetPort: 12321
+    # Two Services (app + codeserver), so 5.x auto-detection does not apply
+    # and each route names its backend explicitly.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: main
+      codeserver:
+        hostnames:
+          - "oscamcs.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: codeserver
+                port: http
+    persistence:
+      config:
+        existingClaim: oscam-config
+      devshm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 2400Mi
+        globalMounts:
+          - path: /dev/shm
+      shared:
+        type: emptyDir
+        globalMounts:
+          - path: /shared
+      tmp:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 2400Mi
+        globalMounts:
+          - path: /tmp
+      varlogs:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 2400Mi
+        globalMounts:
+          - path: /var/logs
+      varrun:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 2400Mi
+        globalMounts:
+          - path: /var/run
+      usb:
+        type: hostPath
+        hostPath: /dev/ttyUSB-oscam
+        globalMounts:
+          - path: /dev/ttyUSB0

@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: orcaslicer
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: orcaslicer
+  values:
+    defaultPodOptions:
+      runtimeClassName: nvidia
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 44
+          - 107
+          - 568
+    controllers:
+      orcaslicer:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/linuxserver/orcaslicer
+              tag: latest
+            env:
+              PIXELFLUX_WAYLAND: "false"
+              SELKIES_UI_TITLE: OrcaSlicer
+              PUID: "568"
+              PGID: "568"
+            securityContext:
+              privileged: true
+              allowPrivilegeEscalation: true
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+              capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+                nvidia.com/gpu: 1
+              limits:
+                cpu: 12000m
+                memory: 2400Mi
+                nvidia.com/gpu: 1
+    service:
+      app:
+        controller: orcaslicer
+        ports:
+          http:
+            port: &port 3000
+            targetPort: *port
+    # Exactly one enabled Service, so app-template 5.x auto-detects the
+    # backendRef and no explicit rules: block is needed.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: orcaslicer-config
+      printdata:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/container_share/printer
+        globalMounts:
+          - path: /config/data

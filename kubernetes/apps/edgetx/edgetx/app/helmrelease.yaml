@@ -1,0 +1,99 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: edgetx
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: edgetx
+  values:
+    controllers:
+      edgetx:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/edgetx/edgetx-dev
+              tag: latest@sha256:75a076b11bcf82128f25261d4e3149b0b9aac9bd24f49fb74076b3d0e723686c
+            env:
+              HOME: /workspace
+            args:
+              - /bin/bash
+              - -c
+              - |
+                apt-get update && \
+                apt-get install -y curl openssh-server && \
+                mkdir -p /run/sshd && \
+                chown root:root /workspace && \
+                chown root:root /workspace/.ssh && \
+                chown root:root /workspace/.ssh/authorized_keys && \
+                useradd -m -d /workspace -s /bin/bash dev && \
+                echo 'dev:devpass' | chpasswd && \
+                chown -R dev:dev /workspace && \
+                chown -R dev:dev /opt/venv && \
+                chmod 0600 /workspace/.ssh/authorized_keys && \
+                chmod 0600 /workspace/.ssh/ssh_host_rsa_key && \
+                chmod 0600 /workspace/.ssh/ssh_host_rsa_key && \
+                chmod 0600 /workspace/.ssh/ssh_host_ed25519_key && \
+                echo "HostKey /workspace/.ssh/ssh_host_ed25519_key" >> /etc/ssh/sshd_config && \
+                echo "HostKey /workspace/.ssh/ssh_host_rsa_key"  >> /etc/ssh/sshd_config && \
+                echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
+                echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
+                echo "UsePAM no" >> /etc/ssh/sshd_config && \
+                echo 'AuthorizedKeysFile /workspace/.ssh/authorized_keys' >> /etc/ssh/sshd_config && \
+                service ssh start && \
+                curl -fsSL https://code-server.dev/install.sh | sh && \
+                export CODE_SERVER_CONFIG=/workspace/.config/code-server/config.yaml && \
+                code-server /workspace/edgetx && \
+                sleep infinity
+            probes:
+              liveness:
+                enabled: false
+              readiness:
+                enabled: false
+              startup:
+                enabled: false
+            securityContext:
+              privileged: true
+              allowPrivilegeEscalation: true
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                cpu: 12000m
+                memory: 16Gi
+    service:
+      app:
+        controller: edgetx
+        type: LoadBalancer
+        annotations:
+          lbipam.cilium.io/ips: "10.0.0.221"
+          lbipam.cilium.io/sharing-key: edgetx
+        ports:
+          main:
+            port: &port 8080
+            targetPort: *port
+          ssh:
+            port: 2222
+            targetPort: 22
+    # Single Service, so app-template 5.x auto-detects the backendRef.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: edgetx-config
+        globalMounts:
+          - path: /workspace
