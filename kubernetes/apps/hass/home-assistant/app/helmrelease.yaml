@@ -19,6 +19,20 @@ spec:
       home-assistant:
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          wait-for-db:
+            # Without this HA starts before the recorder database is
+            # reachable, and its component setup is NOT retried: recorder
+            # fails permanently and takes filter, logbook, history,
+            # import_statistics, energy and analytics down with it until
+            # someone restarts the pod. The old release had no such guard.
+            image:
+              repository: ghcr.io/cloudnative-pg/postgresql
+              tag: "16.14"
+            command:
+              - /bin/sh
+              - -c
+              - until pg_isready -U home-assistant -d home-assistant -h home-assistant-postgres-rw; do sleep 5; done
         containers:
           app:
             image:
