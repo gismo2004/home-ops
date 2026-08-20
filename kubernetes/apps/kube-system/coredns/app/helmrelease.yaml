@@ -32,6 +32,16 @@ spec:
             configBlock: |-
               lameduck 5s
           - name: ready
+          # This cluster is IPv4-only (podCIDR 172.16.0.0/16, no IPv6 on the
+          # node) but upstream DNS returns AAAA records. Clients that try the
+          # AAAA first and do not fall back fail with "connect: network is
+          # unreachable" -- which broke a Kopiur restore against Backblaze and
+          # a Flux OCIRepository pull, both intermittently and both looking
+          # like unrelated transient errors. NODATA for AAAA forces IPv4.
+          - name: template
+            parameters: ANY AAAA
+            configBlock: |-
+              rcode NODATA
           - name: kubernetes
             parameters: cluster.local in-addr.arpa ip6.arpa
             configBlock: |-
