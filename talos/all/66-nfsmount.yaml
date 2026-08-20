@@ -1,0 +1,28 @@
+# Talos' built-in /etc/nfsmount.conf is just "nolock=true", leaving every NFS
+# mount on a SINGLE TCP connection. The media mounts (jellyfin, the arr suite,
+# photoview, krokiet) all come from TrueNAS over NFS, so that is a real
+# throughput ceiling.
+#
+# Values match onedr0p/home-ops. The old cluster used nconnect=16; 8 is the
+# reference value and ample for one server on this LAN. rsize/wsize=1MiB are
+# additions the old cluster did not have.
+#
+# Written via machine.files rather than an EtcFileConfig document: topf passes
+# RawVolumeConfig through but silently drops EtcFileConfig, so that form
+# renders to nothing at all.
+#
+# NOTE: existing mounts keep their old options until the consuming pod
+# restarts.
+machine:
+  files:
+    - op: overwrite
+      path: /etc/nfsmount.conf
+      permissions: 0o644
+      content: |
+        [ NFSMount_Global_Options ]
+        nfsvers=4.2
+        hard=True
+        nconnect=8
+        noatime=True
+        rsize=1048576
+        wsize=1048576

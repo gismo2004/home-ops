@@ -1,19 +1,17 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/tuppr.home-operations.com/talosupgrade_v1alpha1.json
 apiVersion: tuppr.home-operations.com/v1alpha1
 kind: TalosUpgrade
 metadata:
   name: talos
 spec:
   talos:
-    # Literal, NOT ${TALOS_VERSION}. The old cluster read that from an
-    # upgrade-settings ConfigMap that does not exist here -- it would have
-    # substituted to an empty string. Renovate keeps this current via the
-    # talosFactory preset, which also owns talos/topf.yaml, so the two move
-    # together. It must equal the running version or tuppr upgrades on sight.
+    # The annotation is what makes Renovate manage this line. The talosFactory
+    # preset's custom manager only scans files under talos/, so without it this
+    # plan would silently stay pinned while topf.yaml moved on, and the two
+    # would drift. Matches onedr0p/home-ops.
+    # renovate: datasource=custom.talos-factory depName=siderolabs/talos
     version: v1.13.7
-  talosctl:
-    image:
-      tag: v1.13.7
   policy:
     rebootMode: default
     placement: soft
