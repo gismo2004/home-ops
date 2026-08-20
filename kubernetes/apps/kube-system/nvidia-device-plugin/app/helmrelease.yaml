@@ -1,0 +1,38 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: nvidia-device-plugin
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: nvidia-device-plugin
+  interval: 1h
+  values:
+    runtimeClassName: nvidia
+    # No nodeAffinity. The old release selected on
+    # feature.node.kubernetes.io/pci-0300_10de.present (needs
+    # node-feature-discovery) OR an extensions.talos.dev label -- neither
+    # exists on this cluster, so the DaemonSet would never schedule. This is a
+    # single node and it demonstrably has the GPU: talosctl reports the
+    # nvidia-open-gpu-kernel-modules-lts and nvidia-container-toolkit-lts
+    # extensions installed and 4 nvidia kernel modules loaded. NFD existed in
+    # the old repo only to feed that selector.
+    gfd:
+      enabled: true
+    config:
+      map:
+        default: |-
+          version: v1
+          sharing:
+            timeSlicing:
+              resources:
+                - name: nvidia.com/gpu
+                  replicas: 5
+    tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
+      - key: "node.kubernetes.io/unschedulable"
+        operator: "Exists"
+        effect: "NoSchedule"

@@ -1,0 +1,149 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: jellyfin
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: jellyfin
+  interval: 1h
+  values:
+    defaultPodOptions:
+      runtimeClassName: nvidia
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        # 44 = video, 107 = render. Both are needed for the container to open
+        # the GPU device nodes.
+        supplementalGroups: [44, 107, 568]
+    controllers:
+      jellyfin:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: oci.trueforge.org/containerforge/jellyfin
+              tag: 10.11.11@sha256:7f5325bd23b7445a8fda17b6d2d24033e3935536789f682aed63698b7b3a97c6
+            env:
+              UMASK: "0022"
+              NVIDIA_DRIVER_CAPABILITIES: all
+              S6_READ_ONLY_ROOT: "1"
+              JELLYFIN_CACHE_DIR: /cache
+              JELLYFIN_CONFIG_DIR: /config/config
+              JELLYFIN_DATA_DIR: /config
+              JELLYFIN_LOG_DIR: /logs
+              JELLYFIN_PublishedServerUrl: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+            probes:
+              liveness:
+                enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 8096
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
+              readOnlyRootFilesystem: true
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 250m
+                memory: 2Gi
+                nvidia.com/gpu: 1
+              limits:
+                memory: 24Gi
+                nvidia.com/gpu: 1
+    service:
+      app:
+        controller: jellyfin
+        ports:
+          main:
+            port: &port 8096
+            targetPort: *port
+      autodiscovery:
+        controller: jellyfin
+        ports:
+          autodiscovery:
+            port: 7359
+            protocol: UDP
+            targetPort: 7359
+    # Two Services, so the backend is named explicitly.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-external
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: main
+    persistence:
+      config:
+        existingClaim: jellyfin-config
+      # The old chart also mounted a 100Gi jellyfin-data PVC at /data. It was
+      # completely empty (only lost+found) and referenced by no JELLYFIN_*_DIR
+      # variable -- a leftover from a past chart default. Deliberately not
+      # recreated.
+      cache:
+        type: emptyDir
+      transcode:
+        type: emptyDir
+        globalMounts:
+          - path: /cache/transcodes
+      logs:
+        type: emptyDir
+      devshm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 24Gi
+        globalMounts:
+          - path: /dev/shm
+      tmp:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 24Gi
+        globalMounts:
+          - path: /tmp
+      movies:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/movies
+        globalMounts:
+          - path: /mnt/movies
+      music:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/music
+        globalMounts:
+          - path: /mnt/music
+      tv:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/tv
+        globalMounts:
+          - path: /mnt/tvshows
