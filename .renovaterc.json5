@@ -1,7 +1,14 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["github>home-operations/renovate-presets#7.0.0"],
-  schedule: ["every weekend"],
+  extends: [
+    "github>home-operations/renovate-presets#8.0.0",
+    // Teaches Renovate about factory.talos.dev installer images AND the
+    // `talosVersion:` key in talos/topf.yaml, which no generic manager
+    // understands. Directly relevant here: this cluster runs a custom
+    // schematic (drbd + nvidia -lts), so the installer image is factory-built.
+    "github>home-operations/renovate-presets//apps/talosFactory.json5#8.0.0",
+    ":timezone(Europe/Vienna)",
+  ],
   lockFileMaintenance: {
     enabled: true,
     schedule: ["before 3am on the first day of the month"],
@@ -9,25 +16,47 @@
     additionalBranchPrefix: "{{manager}}-",
   },
   packageRules: [
+    // ---- Auto-merge -------------------------------------------------------
+    // Deliberately narrow. Version bumps of cluster workloads are NOT
+    // auto-merged: a Renovate automerge previously took cilium 1.18.6 -> 1.20.0
+    // unattended, which is exactly what these rules avoid.
     {
-      description: "GitHub Actions Group",
+      description: "Auto-merge trusted OCI digests",
+      matchDatasources: ["docker"],
+      matchUpdateTypes: ["digest"], // digest only, never a version change
+      matchPackageNames: ["/home-operations/"],
+      automerge: true,
+      automergeType: "pr",
+      ignoreTests: false,
+    },
+    {
+      description: "Auto-merge GitHub Actions",
       matchManagers: ["github-actions"],
-      groupName: "github-actions",
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      automerge: true,
+      automergeType: "branch",
       minimumReleaseAge: "3 days",
+      ignoreTests: true,
     },
     {
-      description: "Mise Tools Group",
-      matchManagers: ["mise"],
-      groupName: "mise tools",
-      groupSlug: "mise-tools",
-      minimumReleaseAge: "3 days",
+      description: "Auto-merge trusted GitHub Actions",
+      matchManagers: ["github-actions"],
+      matchPackageNames: ["/^actions\\//", "/^renovatebot\\//"],
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      automerge: true,
+      automergeType: "branch",
+      minimumReleaseAge: "1 minute",
+      ignoreTests: true,
     },
     {
-      description: "Talos Group",
-      groupName: "talos",
-      matchPackageNames: ["ghcr.io/siderolabs/installer", "siderolabs/talos", "talosctl"],
-      minimumGroupSize: 3,
+      description: "Auto-merge Renovate presets",
+      matchManagers: ["renovate-config"],
+      matchUpdateTypes: ["minor", "patch"],
+      automerge: true,
+      automergeType: "branch",
+      ignoreTests: true,
     },
+    // ---- Grouping ---------------------------------------------------------
     {
       description: "Flux Operator Group",
       groupName: "flux-operator",
@@ -38,6 +67,25 @@
       },
       minimumGroupSize: 2,
     },
+    {
+      description: "Mise Tools Group",
+      matchManagers: ["mise"],
+      groupName: "mise tools",
+      groupSlug: "mise-tools",
+    },
+    {
+      // After the mise catch-all so talos wins its own group. Unites the mise
+      // talosctl pin with the factory installer image and topf's talosVersion,
+      // so the node image and the CLI never drift apart.
+      description: "Talos Group",
+      groupName: "talos",
+      matchPackageNames: ["siderolabs/talos"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      minimumGroupSize: 2,
+    },
+    // ---- Labels -----------------------------------------------------------
     {
       matchUpdateTypes: ["major"],
       addLabels: ["type/major"],
