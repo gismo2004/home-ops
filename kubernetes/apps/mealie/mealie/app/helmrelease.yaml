@@ -1,0 +1,116 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mealie
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: mealie
+  interval: 1h
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups: [568]
+    controllers:
+      mealie:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          wait-for-db:
+            # Same pg_isready wait the old release used, but on the CNPG image
+            # this cluster already pulls instead of the TrueCharts one. NOT
+            # postgres-init: that expects INIT_POSTGRES_* vars and would fail
+            # against mealie-env.
+            image:
+              repository: ghcr.io/cloudnative-pg/postgresql
+              tag: "16.14"
+            command:
+              - /bin/sh
+              - -c
+              - until pg_isready -U mealie -d mealie -h mealie-postgres-rw; do sleep 5; done
+        containers:
+          app:
+            image:
+              repository: ghcr.io/mealie-recipes/mealie
+              tag: v3.23.1@sha256:5fc5cebedddb3952c1ee78f20faf42ab7e49986813fd314745aa97978a4a13eb
+            envFrom:
+              - secretRef:
+                  name: mealie-env
+            env:
+              THEME_LIGHT_PRIMARY: "#E58325"
+              THEME_LIGHT_ACCENT: "#007A99"
+              THEME_LIGHT_SECONDARY: "#973542"
+              THEME_LIGHT_SUCCESS: "#43A047"
+              THEME_LIGHT_INFO: "#1976D2"
+              THEME_LIGHT_WARNING: "#FF6D00"
+              THEME_LIGHT_ERROR: "#EF5350"
+              THEME_DARK_PRIMARY: "#E58325"
+              THEME_DARK_ACCENT: "#007A99"
+              THEME_DARK_SECONDARY: "#973542"
+              THEME_DARK_SUCCESS: "#43A047"
+              THEME_DARK_INFO: "#1976D2"
+              THEME_DARK_WARNING: "#FF6D00"
+              THEME_DARK_ERROR: "#EF5350"
+              OPENAI_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai/
+              OPENAI_MODEL: gemini-2.5-flash-lite
+            probes:
+              liveness: &probe
+                type: HTTP
+                path: /
+                port: &port 10018
+              readiness: *probe
+              startup:
+                type: HTTP
+                path: /
+                port: *port
+                spec:
+                  failureThreshold: 60
+                  periodSeconds: 5
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
+              readOnlyRootFilesystem: true
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                memory: 2400Mi
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: mealie-config
+        globalMounts:
+          - path: /app/data
+      nltk:
+        type: emptyDir
+        sizeLimit: 5Gi
+        globalMounts:
+          - path: /nltk_data
+      # readOnlyRootFilesystem: true, so the writable scratch paths the app
+      # actually uses must be mounted explicitly.
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

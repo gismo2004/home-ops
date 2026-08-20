@@ -1,0 +1,95 @@
+---
+# Bare CNPG Cluster, recovering the old cluster's data.
+#
+# barman-cloud identifies backups by the "serverName" string in the S3 path,
+# not by the Kubernetes object name, so this fresh object recovers the old
+# history by naming it in externalClusters.
+#
+# spec.backup.serverName MUST differ from the recovery source. CNPG's restore
+# job runs barman-cloud-check-wal-archive against its OWN backup destination
+# before recovering and refuses with "Expected empty archive" if that prefix
+# already has WAL history -- a guard against two timelines sharing a catalog.
+# The old prefix is read-only from here on; new backups land under -v2.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: mealie-postgres
+spec:
+  instances: 1
+  # A single-instance cluster can never satisfy CNPG's default primary PDB
+  # (minAvailable 1 -> disruptionsAllowed 0), which makes `kubectl drain` block
+  # forever and would stall a Talos node upgrade.
+  enablePDB: false
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.14@sha256:9f917c9f05732db5c40f6bc72be4e7d34705f205c75761f0d0d63e1f77e932ab
+  primaryUpdateMethod: switchover
+  enableSuperuserAccess: true
+  postgresUID: 26
+  postgresGID: 26
+  storage:
+    # 20Gi/10Gi rather than the old 100Gi/100Gi: the database is ~24MB and the
+    # miroir pool is 1.07TB total, so reserving 200Gi for it was wasteful.
+    storageClass: miroir-local
+    size: 20Gi
+    resizeInUseVolumes: true
+  walStorage:
+    storageClass: miroir-local
+    size: 10Gi
+    resizeInUseVolumes: true
+  resources:
+    requests:
+      cpu: 75m
+      memory: 200Mi
+    limits:
+      memory: 2400Mi
+  bootstrap:
+    recovery:
+      database: mealie
+      owner: mealie
+      secret:
+        name: mealie-postgres-user
+      source: mealie-postgres-old
+  externalClusters:
+    # Reads the LAST backup the old cluster took (2026-08-20 09:09), which it
+    # wrote under serverName "mealie-postgres".
+    - name: mealie-postgres-old
+      barmanObjectStore:
+        destinationPath: s3://mealie-gismo2004/mealie/cnpg
+        endpointURL: https://s3.eu-central-003.backblazeb2.com
+        serverName: mealie-postgres
+        s3Credentials:
+          accessKeyId:
+            name: mealie-postgres-s3-creds
+            key: ACCESS_KEY_ID
+          secretAccessKey:
+            name: mealie-postgres-s3-creds
+            key: ACCESS_SECRET_KEY
+  backup:
+    retentionPolicy: 5d
+    barmanObjectStore:
+      destinationPath: s3://mealie-gismo2004/mealie/cnpg
+      endpointURL: https://s3.eu-central-003.backblazeb2.com
+      serverName: mealie-postgres-v2
+      data:
+        compression: bzip2
+        jobs: 2
+      wal:
+        compression: bzip2
+      s3Credentials:
+        accessKeyId:
+          name: mealie-postgres-s3-creds
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: mealie-postgres-s3-creds
+          key: ACCESS_SECRET_KEY
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: mealie-postgres-daily
+spec:
+  schedule: "0 0 0 * * *"
+  immediate: true
+  backupOwnerReference: self
+  method: barmanObjectStore
+  cluster:
+    name: mealie-postgres
