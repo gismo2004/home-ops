@@ -1,0 +1,55 @@
+---
+# Kept permanently alongside pvc.yaml (not one-time infrastructure like a
+# VolSync ReplicationDestination would be): each PVC's dataSourceRef
+# claims its own Restore as its populator, so if either PVC is ever
+# deleted again in some future accident, simply recreating it with the
+# same dataSourceRef automatically re-triggers a restore from the latest
+# matching SnapshotPolicy snapshot — no manual intervention needed.
+#
+# Each restore points at its own single-source policy (see
+# snapshotpolicy.yaml) — a shared multi-source policy with fromPolicy
+# does NOT disambiguate by target PVC name (confirmed on mosquitto), so
+# two independent policies/restores are required for correct independent
+# restores.
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  name: kavita-config
+spec:
+  credentialProjection:
+    enabled: true
+  # matches snapshotpolicy.yaml's mover identity — without this the
+  # restore mover defaults to its own uid/gid (65532), leaving every
+  # restored file owned by that instead of the app's real PUID/PGID (568).
+  mover:
+    securityContext:
+      runAsUser: 568
+      runAsGroup: 568
+  policy:
+    onMissingSnapshot: Continue
+  source:
+    fromPolicy:
+      name: kavita-config
+      offset: 0
+  target:
+    populator: {}
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  name: kavita-manga
+spec:
+  credentialProjection:
+    enabled: true
+  mover:
+    securityContext:
+      runAsUser: 568
+      runAsGroup: 568
+  policy:
+    onMissingSnapshot: Continue
+  source:
+    fromPolicy:
+      name: kavita-manga
+      offset: 0
+  target:
+    populator: {}

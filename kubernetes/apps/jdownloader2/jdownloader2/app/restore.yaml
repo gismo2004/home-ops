@@ -1,0 +1,29 @@
+---
+# Kept permanently alongside pvc.yaml (not one-time infrastructure like a
+# VolSync ReplicationDestination would be): pvc.yaml's dataSourceRef claims
+# this Restore as its populator, so if jdownloader2-config PVC is ever
+# deleted again in some future accident, simply recreating it with the
+# same dataSourceRef automatically re-triggers a restore from the latest
+# jdownloader2 SnapshotPolicy snapshot — no manual intervention needed.
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  name: jdownloader2-config
+spec:
+  credentialProjection:
+    enabled: true
+  # matches snapshotpolicy.yaml's mover identity — without this the restore
+  # mover defaults to its own uid/gid (65532), leaving every restored file
+  # owned by that instead of the app's real PUID/PGID (568).
+  mover:
+    securityContext:
+      runAsUser: 568
+      runAsGroup: 568
+  policy:
+    onMissingSnapshot: Continue
+  source:
+    fromPolicy:
+      name: jdownloader2
+      offset: 0
+  target:
+    populator: {}

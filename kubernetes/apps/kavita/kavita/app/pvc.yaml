@@ -1,0 +1,41 @@
+---
+# Declared as bare Kustomize resources, not app-template's existingClaim
+# output and not Helm-templated at all, so no future Helm release can ever
+# consider them part of its own release manifest and delete them on an
+# uninstall/chart swap.
+#
+# Each PVC's dataSourceRef claims its own Restore populator in
+# restore.yaml — Kopiur fills these from the matching kavita-config /
+# kavita-manga SnapshotPolicy's most recent snapshot before anything else
+# can mount them.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kavita-config
+spec:
+  accessModes:
+    - ReadWriteOnce
+  dataSourceRef:
+    apiGroup: kopiur.home-operations.com
+    kind: Restore
+    name: kavita-config
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: miroir-local
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kavita-manga
+spec:
+  accessModes:
+    - ReadWriteOnce
+  dataSourceRef:
+    apiGroup: kopiur.home-operations.com
+    kind: Restore
+    name: kavita-manga
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: miroir-local

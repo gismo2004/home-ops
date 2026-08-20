@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vdf-app-template-config
+spec:
+  accessModes: [ReadWriteOnce]
+  dataSourceRef:
+    apiGroup: kopiur.home-operations.com
+    kind: Restore
+    name: vdf-app-template-config
+  resources: { requests: { storage: 5Gi } }
+  storageClassName: miroir-local
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vdf-app-template-state
+spec:
+  accessModes: [ReadWriteOnce]
+  dataSourceRef:
+    apiGroup: kopiur.home-operations.com
+    kind: Restore
+    name: vdf-app-template-state
+  resources: { requests: { storage: 5Gi } }
+  storageClassName: miroir-local

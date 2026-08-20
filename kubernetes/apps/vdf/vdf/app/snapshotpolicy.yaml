@@ -1,0 +1,71 @@
+---
+# TWO independent single-source policies, not one policy with two sources.
+# A combined policy backs up fine, but Restore.spec.source.fromPolicy
+# resolves its sourcePath from the POLICY's configured source and has no way
+# to disambiguate between several -- so both Restores would resolve to the
+# first source and restore the wrong data into one of the PVCs (confirmed
+# the hard way on mosquitto). That is what this file used to be.
+#
+# The mover is left unelevated: the app runs as root and its files are
+# 0:0 mode 2775, but everything is world-readable, and the previous
+# unelevated snapshots succeeded -- so there is no reason to grant this
+# namespace the privileged-movers boundary.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: vdf-config
+spec:
+  compression:
+    compressor: zstd
+  mover:
+    cache:
+      capacity: 2Gi
+      # Ephemeral, not Persistent: a persistent cache PVC keeps the on-disk
+      # ownership of whichever mover identity last wrote it, so any later
+      # change of mover identity fails with cache permission errors that
+      # look unrelated to the real cause.
+      mode: Ephemeral
+      storageClassName: miroir-local
+  repository:
+    kind: ClusterRepository
+    name: default
+  credentialProjection:
+    enabled: true
+  retention:
+    keepLatest: 3
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    - pvc:
+        name: vdf-app-template-config
+  volumeSnapshotClassName: miroir-snap
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: vdf-state
+spec:
+  compression:
+    compressor: zstd
+  mover:
+    cache:
+      capacity: 2Gi
+      mode: Ephemeral
+      storageClassName: miroir-local
+  repository:
+    kind: ClusterRepository
+    name: default
+  credentialProjection:
+    enabled: true
+  retention:
+    keepLatest: 3
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    - pvc:
+        name: vdf-app-template-state
+  volumeSnapshotClassName: miroir-snap

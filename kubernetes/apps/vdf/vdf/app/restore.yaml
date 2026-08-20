@@ -1,0 +1,30 @@
+# The claim names keep their old TrueCharts-era "vdf-app-template-*" form on
+# purpose: the snapshot identity is <policy>@<ns>:/pvc/<claim>, so renaming
+# them would orphan every existing snapshot. Rename only in a later commit,
+# after a restore against the current names has verifiably succeeded.
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  name: vdf-app-template-config
+spec:
+  credentialProjection: { enabled: true }
+  mover:
+    securityContext: { runAsUser: 568, runAsGroup: 568 }
+  policy: { onMissingSnapshot: Fail }
+  source:
+    fromPolicy: { name: vdf-config, offset: 0 }
+  target: { populator: {} }
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  name: vdf-app-template-state
+spec:
+  credentialProjection: { enabled: true }
+  mover:
+    securityContext: { runAsUser: 568, runAsGroup: 568 }
+  policy: { onMissingSnapshot: Fail }
+  source:
+    fromPolicy: { name: vdf-state, offset: 0 }
+  target: { populator: {} }

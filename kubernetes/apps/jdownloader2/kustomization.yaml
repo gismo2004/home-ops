@@ -1,0 +1,11 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: jdownloader2
+
+components:
+  - ../../components/sops
+
+resources:
+  - ./namespace.yaml
+  - ./jdownloader2/ks.yaml

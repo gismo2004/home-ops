@@ -1,0 +1,51 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: jdownloader2
+spec:
+  compression:
+    compressor: zstd
+  mover:
+    # bulk of the PVC (downloads config, myjdownloader account state) is
+    # owned 568:568 and needs no elevation. The container itself runs as
+    # root (runAsUser: 0 in helm-release.yaml) though, and a handful of
+    # internal processes (nginx's reverse proxy, the JVM's font-detection
+    # cache) write their own scratch/cache files as root regardless of
+    # PUID/PGID — confirmed via a post-migration verification Snapshot
+    # that failed with PermissionDenied on exactly these paths. None of
+    # this is real user data (all regenerated on container start), so
+    # excluded via files.ignoreRules below rather than granting this
+    # namespace privileged-movers just to back up nginx scratch space.
+    securityContext:
+      runAsUser: 568
+      runAsGroup: 568
+    cache:
+      capacity: 2Gi
+      mode: Ephemeral
+      storageClassName: miroir-local
+  files:
+    ignoreRules:
+      - /lost+found
+      - System Volume Information
+      - $RECYCLE.BIN
+      - "@eaDir"
+      - .snapshot
+      - /var/tmp/nginx
+      - /.java/fonts
+      - /xdg/state/logrotate/logrotate.status
+  repository:
+    kind: ClusterRepository
+    name: default
+  credentialProjection:
+    enabled: true
+  retention:
+    keepLatest: 3
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    - pvc:
+        name: jdownloader2-config
+  volumeSnapshotClassName: miroir-snap

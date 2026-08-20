@@ -1,0 +1,24 @@
+---
+# vdf had no SnapshotSchedule at all -- its only backups were the manual
+# Snapshot CRs someone created by hand. Both PVCs are now on the same daily
+# cadence as every other app.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: vdf-config
+spec:
+  policyRef:
+    name: vdf-config
+  schedule:
+    cron: "H H * * *"
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: vdf-state
+spec:
+  policyRef:
+    name: vdf-state
+  schedule:
+    cron: "H H * * *"

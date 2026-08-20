@@ -1,0 +1,71 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vdf
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: vdf
+  values:
+    defaultPodOptions:
+      runtimeClassName: nvidia
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+    controllers:
+      vdf:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/0x90d/vdf-web
+              tag: latest
+            env:
+              VDF_WEB_AUTH: "false"
+            securityContext:
+              privileged: true
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+            resources:
+              requests:
+                cpu: 100m
+              limits:
+                cpu: 8000m
+                memory: 8Gi
+                nvidia.com/gpu: 1
+    service:
+      app:
+        controller: vdf
+        ports:
+          http:
+            port: 8080
+    # Exactly one enabled Service, so app-template 5.x auto-detects the
+    # backendRef and no explicit rules: block is needed.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: vdf-app-template-config
+        globalMounts:
+          - path: /root/.config/VDF
+      state:
+        existingClaim: vdf-app-template-state
+        globalMounts:
+          - path: /root/.local/state/VDF
+      incomming:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Backup/private/WD_15_backup/Seagate/Incomming/
+        globalMounts:
+          - path: /mnt/incomming

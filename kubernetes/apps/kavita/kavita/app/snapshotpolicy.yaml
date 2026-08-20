@@ -1,0 +1,86 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
+#
+# Two separate single-source policies, not one combined multi-source
+# policy -- confirmed on mosquitto that Restore.spec.source.fromPolicy
+# does NOT disambiguate which of a policy's multiple sources to restore
+# by the target PVC's own name (no such field exists on fromPolicy). A
+# combined policy with [config, manga] sources would restore the SAME
+# source into both PVCs' Restores. Two independent policies avoid the
+# ambiguity entirely, at the cost of two separate scheduled jobs instead
+# of one.
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: kavita-config
+spec:
+  compression:
+    compressor: zstd
+  mover:
+    # unlike most containerforge apps, kavita's main .NET process never
+    # drops privileges to the PUID user -- essentially all of /config
+    # (kavita.db, appsettings.json, covers, backups) is owned uid 0, not
+    # 568. It IS all group-readable (group 568), so the unelevated mover
+    # can read almost everything via group permission -- except one
+    # ASP.NET DataProtection key (mode 600, no group access), excluded
+    # below rather than granting privileged-movers for a single
+    # regenerable auth key (losing it just forces a re-login).
+    securityContext:
+      runAsUser: 568
+      runAsGroup: 568
+    cache:
+      capacity: 2Gi
+      mode: Ephemeral
+      storageClassName: miroir-local
+  files:
+    ignoreRules:
+      - /lost+found
+      - System Volume Information
+      - $RECYCLE.BIN
+      - "@eaDir"
+      - .snapshot
+      - /.aspnet/DataProtection-Keys
+  repository:
+    kind: ClusterRepository
+    name: default
+  credentialProjection:
+    enabled: true
+  retention:
+    keepLatest: 3
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    - pvc:
+        name: kavita-config
+  volumeSnapshotClassName: miroir-snap
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: kavita-manga
+spec:
+  compression:
+    compressor: zstd
+  mover:
+    securityContext:
+      runAsUser: 568
+      runAsGroup: 568
+    cache:
+      capacity: 2Gi
+      mode: Ephemeral
+      storageClassName: miroir-local
+  repository:
+    kind: ClusterRepository
+    name: default
+  credentialProjection:
+    enabled: true
+  retention:
+    keepLatest: 3
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    - pvc:
+        name: kavita-manga
+  volumeSnapshotClassName: miroir-snap

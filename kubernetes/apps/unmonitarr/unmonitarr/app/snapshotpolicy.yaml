@@ -1,0 +1,76 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
+#
+# Two separate single-source policies, not one combined multi-source
+# policy -- confirmed on mosquitto that Restore.spec.source.fromPolicy
+# does NOT disambiguate which of a policy's multiple sources to restore
+# by the target PVC's own name. Two independent policies avoid the
+# ambiguity entirely.
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: unmonitarr-config
+spec:
+  compression:
+    compressor: zstd
+  mover:
+    # non-root, non-privileged container, uniformly owned 568:568
+    # (verified: zero files with any other uid, aside from the standard
+    # root-owned mount-root/lost+found) -- no elevation needed.
+    securityContext:
+      runAsUser: 568
+      runAsGroup: 568
+    cache:
+      capacity: 2Gi
+      mode: Ephemeral
+      storageClassName: miroir-local
+  repository:
+    kind: ClusterRepository
+    name: default
+  credentialProjection:
+    enabled: true
+  retention:
+    keepLatest: 3
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    # Renamed now that the restore against the old name succeeded and was
+    # verified (ownership 568:568) -- unmonitarr-app-template-config no
+    # longer exists (deleted by the chart swap).
+    - pvc:
+        name: unmonitarr-config
+  volumeSnapshotClassName: miroir-snap
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: unmonitarr-data
+spec:
+  compression:
+    compressor: zstd
+  mover:
+    securityContext:
+      runAsUser: 568
+      runAsGroup: 568
+    cache:
+      capacity: 2Gi
+      mode: Ephemeral
+      storageClassName: miroir-local
+  repository:
+    kind: ClusterRepository
+    name: default
+  credentialProjection:
+    enabled: true
+  retention:
+    keepLatest: 3
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    # Renamed now that the restore against the old name succeeded and was
+    # verified -- unmonitarr-app-template-data no longer exists (deleted
+    # by the chart swap).
+    - pvc:
+        name: unmonitarr-data
+  volumeSnapshotClassName: miroir-snap

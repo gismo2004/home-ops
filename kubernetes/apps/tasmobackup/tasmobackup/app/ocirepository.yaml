@@ -1,0 +1,15 @@
+---
+# Per-app OCIRepository + chartRef (home-ops/cluster-template pattern),
+# replacing the shared bjw-s HelmRepository.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: tasmobackup
+spec:
+  interval: 15m
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  ref:
+    tag: 5.1.0
+  url: oci://ghcr.io/bjw-s-labs/helm/app-template

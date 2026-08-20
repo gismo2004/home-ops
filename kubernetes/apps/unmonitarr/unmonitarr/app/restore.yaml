@@ -1,0 +1,59 @@
+---
+# Kept permanently alongside pvc.yaml (not one-time infrastructure like a
+# VolSync ReplicationDestination would be): each PVC's dataSourceRef
+# claims its own Restore as its populator, so if either PVC is ever
+# deleted again in some future accident, simply recreating it with the
+# same dataSourceRef automatically re-triggers a restore from the latest
+# matching SnapshotPolicy snapshot — no manual intervention needed.
+#
+# Each restore points at its own single-source policy (see
+# snapshotpolicy.yaml) — a shared multi-source policy with fromPolicy
+# does NOT disambiguate by target PVC name (confirmed on mosquitto), so
+# two independent policies/restores are required for correct independent
+# restores.
+#
+# SnapshotPolicy sources are deliberately left at the OLD PVC names for
+# now (unmonitarr-app-template-config/data) -- fromPolicy resolves
+# identity from the policy's own configured source, independent of what
+# PVC the Restore populates into, so this is safe. Will rename the
+# sources in a follow-up commit once these restores are confirmed,
+# matching orcaslicer/edgetx/krokiet sequencing.
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  name: unmonitarr-config
+spec:
+  credentialProjection:
+    enabled: true
+  mover:
+    securityContext:
+      runAsUser: 568
+      runAsGroup: 568
+  policy:
+    onMissingSnapshot: Continue
+  source:
+    fromPolicy:
+      name: unmonitarr-config
+      offset: 0
+  target:
+    populator: {}
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  name: unmonitarr-data
+spec:
+  credentialProjection:
+    enabled: true
+  mover:
+    securityContext:
+      runAsUser: 568
+      runAsGroup: 568
+  policy:
+    onMissingSnapshot: Continue
+  source:
+    fromPolicy:
+      name: unmonitarr-data
+      offset: 0
+  target:
+    populator: {}

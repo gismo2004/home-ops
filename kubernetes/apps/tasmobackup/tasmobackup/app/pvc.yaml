@@ -1,0 +1,21 @@
+---
+# Declared as a bare Kustomize resource, not app-template's existingClaim and
+# not Helm-templated at all, so no future Helm release can ever consider it
+# part of its own release manifest and delete it on an uninstall/chart swap —
+# see kubernetes/apps/tasmoadmin (helm.sh/resource-policy: keep did not
+# survive that exact scenario there).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tasmobackup-data
+spec:
+  dataSourceRef:
+    apiGroup: kopiur.home-operations.com
+    kind: Restore
+    name: tasmobackup-data
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: miroir-local

@@ -1,0 +1,13 @@
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  name: tasmobackup-data
+spec:
+  credentialProjection: { enabled: true }
+  mover:
+    securityContext: { runAsUser: 568, runAsGroup: 568 }
+  policy: { onMissingSnapshot: Fail }
+  source:
+    fromPolicy: { name: tasmobackup, offset: 0 }
+  target: { populator: {} }

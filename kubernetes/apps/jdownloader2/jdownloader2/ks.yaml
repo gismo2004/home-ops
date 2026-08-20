@@ -1,0 +1,24 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: jdownloader2
+spec:
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: jdownloader2
+      namespace: jdownloader2
+  interval: 1h
+  path: ./kubernetes/apps/jdownloader2/jdownloader2/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: jdownloader2
+  wait: true
+  postBuild:
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
