@@ -1,7 +1,14 @@
-# miroir requires DRBD. usermode_helper=disabled because the kernel side
-# otherwise shells out to /sbin/drbdadm, which does not exist on Talos.
-# dm_thin_pool is in the stock kernel and the miroir agent loads it on demand,
-# so it is deliberately not listed here.
+# Kernel modules miroir needs.
+#
+# drbd is the replication/device layer, required even at replicas: "1".
+# usermode_helper=disabled because the kernel side otherwise shells out to
+# /sbin/drbdadm, which does not exist on Talos.
+#
+# dm_thin_pool backs the LVM thin pool. miroir's docs say the agent loads it
+# on demand, and that is true on a normal distro -- but on Talos the agent
+# cannot modprobe from its container ("could not insert 'dm_thin_pool':
+# Operation not permitted"), so lvcreate fails and every pool setup fails
+# with it. It has to be declared here instead.
 machine:
   kernel:
     modules:
@@ -9,3 +16,4 @@ machine:
         parameters:
           - usermode_helper=disabled
       - name: drbd_transport_tcp
+      - name: dm_thin_pool
