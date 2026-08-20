@@ -1,0 +1,104 @@
+---
+# Bare, non-Helm-templated CNPG Cluster.
+#
+# barman-cloud identifies backups by the "serverName" string inside the S3
+# path, not by the k8s object's name -- so this brand-new Cluster object
+# can still recover the OLD cluster's full backup history by referencing
+# its serverName ("photoview-cnpg-main") in externalClusters. Recovers to
+# the latest available WAL (no explicit recoveryTarget = PITR to "now").
+#
+# spec.backup deliberately uses a DIFFERENT serverName ("photoview-postgres")
+# than the recovery source, same destinationPath (barman-cloud namespaces
+# by serverName under it, so this is a sibling prefix, no collision).
+# Reusing the old serverName here fails outright on recovery: CNPG's own
+# restore job runs barman-cloud-check-wal-archive against ITS OWN
+# spec.backup destination before recovering, and refuses with "Expected
+# empty archive" if that destination already has WAL history (confirmed
+# on mealie's identical migration) -- it's a guard against two different
+# cluster timelines writing into the same catalog. The old serverName's
+# archive is only ever read (via externalClusters), never written to
+# again; all future backups land under the new serverName.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: photoview-postgres
+spec:
+  instances: 1
+  # Single-instance cluster, so a PodDisruptionBudget can only ever be
+  # unsatisfiable: CNPG's default primary PDB uses minAvailable: 1, which
+  # with one pod yields disruptionsAllowed: 0 and makes `kubectl drain`
+  # block forever -- i.e. it would stall a Talos node upgrade.
+  # Draining this single-node cluster takes postgres down regardless, so
+  # the budget protects nothing.
+  enablePDB: false
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.14@sha256:9f917c9f05732db5c40f6bc72be4e7d34705f205c75761f0d0d63e1f77e932ab
+  primaryUpdateMethod: switchover
+  enableSuperuserAccess: true
+  postgresUID: 26
+  postgresGID: 26
+  storage:
+    storageClass: miroir-local
+    size: 20Gi
+    resizeInUseVolumes: true
+  walStorage:
+    storageClass: miroir-local
+    size: 20Gi
+    resizeInUseVolumes: true
+  resources:
+    requests:
+      cpu: 75m
+      memory: 200Mi
+    limits:
+      cpu: 10000m
+      memory: 16Gi
+  bootstrap:
+    recovery:
+      database: photoview
+      owner: photoview
+      secret:
+        name: photoview-postgres-user
+      source: photoview-postgres-old
+  externalClusters:
+    - name: photoview-postgres-old
+      barmanObjectStore:
+        destinationPath: s3://photoview-gismo2004/photoview/cnpg
+        endpointURL: https://s3.eu-central-003.backblazeb2.com
+        serverName: photoview-postgres
+        s3Credentials:
+          accessKeyId:
+            name: photoview-postgres-s3-creds
+            key: ACCESS_KEY_ID
+          secretAccessKey:
+            name: photoview-postgres-s3-creds
+            key: ACCESS_SECRET_KEY
+  backup:
+    retentionPolicy: 5d
+    barmanObjectStore:
+      destinationPath: s3://photoview-gismo2004/photoview/cnpg
+      endpointURL: https://s3.eu-central-003.backblazeb2.com
+      serverName: photoview-postgres-v2
+      data:
+        compression: bzip2
+        jobs: 2
+      wal:
+        compression: bzip2
+      s3Credentials:
+        accessKeyId:
+          name: photoview-postgres-s3-creds
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: photoview-postgres-s3-creds
+          key: ACCESS_SECRET_KEY
+
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: photoview-postgres-daily
+spec:
+  schedule: "0 0 0 * * *"
+  backupOwnerReference: self
+  cluster:
+    name: photoview-postgres
+  method: barmanObjectStore
+  immediate: true
