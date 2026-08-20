@@ -49,6 +49,52 @@
       ignoreTests: true,
     },
     {
+      // Normal applications: minor and patch merge unattended. Major never
+      // does -- that is where behaviour changes. minimumReleaseAge gives a
+      // broken release time to be pulled before it lands here.
+      description: "Auto-merge app minor/patch",
+      matchDatasources: ["docker", "helm"],
+      matchUpdateTypes: ["minor", "patch"],
+      automerge: true,
+      automergeType: "pr",
+      minimumReleaseAge: "3 days",
+      ignoreTests: false,
+    },
+    {
+      // MUST come after the rule above -- later packageRules win. These are the
+      // things that take the whole cluster down when they go wrong, so they
+      // always wait for a human regardless of update type. Cilium 1.18.6 ->
+      // 1.20.0 once auto-merged itself on the old cluster; coredns took DNS
+      // down cluster-wide during this migration.
+      description: "Never auto-merge infrastructure",
+      matchPackageNames: [
+        "/cilium/",
+        "/coredns/",
+        "/cert-manager/",
+        "/cloudnative-pg/",
+        "/miroir/",
+        "/kopiur/",
+        "/snapshot-controller/",
+        "/gateway-helm/",
+        "/envoy/",
+        "/k8s-gateway/",
+        "/external-dns/",
+        "/flux-operator/",
+        "/flux-instance/",
+        "/nvidia-device-plugin/",
+        "/tuppr/",
+        "/k8tz/",
+        "/metrics-server/",
+        "/kubelet/",
+        "siderolabs/talos",
+        // app-template is one chart behind ~26 apps, so a single bump changes
+        // every workload at once. Its 5.x naming rules have already silently
+        // renamed PVCs here; that blast radius belongs with infrastructure.
+        "/app-template/",
+      ],
+      automerge: false,
+    },
+    {
       description: "Auto-merge Renovate presets",
       matchManagers: ["renovate-config"],
       matchUpdateTypes: ["minor", "patch"],
