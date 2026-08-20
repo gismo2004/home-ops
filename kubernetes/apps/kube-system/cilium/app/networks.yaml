@@ -4,9 +4,19 @@ kind: CiliumLoadBalancerIPPool
 metadata:
   name: pool
 spec:
-  allowFirstLastIPs: "No"
+  # "Yes", not the template's "No". The template pools a whole CIDR, where
+  # first/last are the network and broadcast addresses and must be skipped.
+  # This range is hand-authored, so both endpoints are ordinary usable
+  # addresses and there is no reason to exclude them.
+  allowFirstLastIPs: "Yes"
   blocks:
-    - cidr: "10.0.0.0/24"
+    # NOT the template's cidr: 10.0.0.0/24 -- that is the whole LAN and would
+    # let Cilium hand out addresses belonging to real machines (the router at
+    # .1, Proxmox at .3, TrueNAS, the desktop VMs). This range is the block
+    # reserved for the cluster on this network; it is not CIDR-aligned, which
+    # is why it is expressed as start/stop rather than a prefix.
+    - start: "10.0.0.130"
+      stop: "10.0.0.240"
 ---
 apiVersion: cilium.io/v2alpha1
 kind: CiliumL2AnnouncementPolicy
@@ -14,10 +24,7 @@ metadata:
   name: l2-policy
 spec:
   loadBalancerIPs: true
-  # NOTE: interfaces might need to be set if you have more than one active NIC on your hosts
-  # interfaces:
-  #   - ^eno[0-9]+
-  #   - ^eth[0-9]+
+  # L2/ARP, not BGP: the router here is a FritzBox and does not speak BGP.
   nodeSelector:
     matchLabels:
       kubernetes.io/os: linux
