@@ -31,7 +31,7 @@ spec:
   # Draining this single-node cluster takes postgres down regardless, so
   # the budget protects nothing.
   enablePDB: false
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.14@sha256:9f917c9f05732db5c40f6bc72be4e7d34705f205c75761f0d0d63e1f77e932ab
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.14@sha256:93d0456be6e8e7a5d2d4e54953967f8b2d7f410c5ab7ca1739f42383436df035
   primaryUpdateMethod: switchover
   enableSuperuserAccess: true
   postgresUID: 26
