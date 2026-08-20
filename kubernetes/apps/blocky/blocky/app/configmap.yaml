@@ -1,0 +1,150 @@
+---
+# Blocky's complete runtime config and the single source of truth for it.
+#
+# Do NOT add a `redis:` block. There is no shared cache -- each replica
+# keeps its own in-memory cache. A redis block defaults to `required: true`,
+# and blocky refuses to start if that redis is unreachable.
+#
+# Everything here is load-bearing, including what looks like boilerplate:
+# clientGroupsBlock.default is [ads, default], so every denylist group below
+# (default / -ads / -malicious / -suspicious / -tracking, ~30 list URLs), the
+# allowlist group, all ten upstream resolvers and the caching/prefetch tuning
+# are actively in effect on the LAN. Trimming anything here changes what gets
+# blocked. Any
+# trimming of these inherited lists should be a separate, deliberate commit.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blocky-conf
+  namespace: blocky
+data:
+  config.yml: |
+    blocking:
+      allowlists:
+        ads:
+        - /mnt/data/blocky/whitelist.txt
+        default:
+        - https://raw.githubusercontent.com/anudeepND/whitelist/master/domains/optional-list.txt
+        - https://raw.githubusercontent.com/anudeepND/whitelist/master/domains/whitelist.txt
+        - https://raw.githubusercontent.com/rahilpathan/pihole-whitelist/main/1.LowWL.txt
+      blockTTL: 6h
+      blockType: nxDomain
+      clientGroupsBlock:
+        default:
+        - ads
+        - default
+        fernseher:
+        - default
+      denylists:
+        ads:
+        - /mnt/data/blocky/blacklist.txt
+        # hagezi restructured their repo: the old main/domains/*.txt paths
+        # 404 and had been failing silently since (blocky logs "cannot open
+        # source ... got status code 404" and just carries on with the
+        # remaining sources). Current equivalents live under wildcard/ as
+        # *-onlydomains.txt, which is plain one-domain-per-line -- exactly
+        # what blocky parses. Verified 200 + format before switching.
+        - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/ultimate-onlydomains.txt
+        - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif-onlydomains.txt
+        - https://big.oisd.nl/domainswild
+        - https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling/hosts
+        default:
+        - https://big.oisd.nl/domainswild
+        - https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+        default-ads:
+        - https://adaway.org/hosts.txt
+        - https://v.firebog.net/hosts/AdguardDNS.txt
+        - https://v.firebog.net/hosts/Admiral.txt
+        - https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt
+        - https://v.firebog.net/hosts/Easylist.txt
+        - https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext
+        - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/UncheckyAds/hosts
+        - https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts
+        default-malicious:
+        - https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareHosts.txt
+        - https://v.firebog.net/hosts/Prigent-Crypto.txt
+        - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Risk/hosts
+        - https://bitbucket.org/ethanr/dns-blacklists/raw/8575c9f96e5b4a1308f2f12394abd86d0927a4a0/bad_lists/Mandiant_APT1_Report_Appendix_D.txt
+        - https://phishing.army/download/phishing_army_blocklist_extended.txt
+        - https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-malware.txt
+        - https://v.firebog.net/hosts/Prigent-Malware.txt
+        - https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt
+        - https://raw.githubusercontent.com/AssoEchap/stalkerware-indicators/master/generated/hosts
+        - https://urlhaus.abuse.ch/downloads/hostfile/
+        default-suspicious:
+        - https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt
+        - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Spam/hosts
+        - https://v.firebog.net/hosts/static/w3kbl.txt
+        default-tracking:
+        - https://v.firebog.net/hosts/Easyprivacy.txt
+        - https://v.firebog.net/hosts/Prigent-Ads.txt
+        - https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.2o7Net/hosts
+        - https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt
+        - https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt
+      loading:
+        concurrency: 8
+        downloads:
+          attempts: 3
+          cooldown: 5s
+          readHeaderTimeout: 60s
+          readTimeout: 60s
+          timeout: 60s
+          writeTimeout: 60s
+        maxErrorsPerSource: 5
+        refreshPeriod: 4h
+        strategy: blocking
+    caching:
+      cacheTimeNegative: -1
+      maxItemsCount: 0
+      maxTime: 0m
+      minTime: 15m
+      prefetchExpires: 12h
+      prefetchMaxItemsCount: 0
+      prefetchThreshold: 5
+      prefetching: true
+    clientLookup:
+      clients:
+        fernseher:
+        - 10.0.0.46
+        - 10.0.0.18
+      singleNameOrder:
+      - 1
+    conditional:
+      mapping:
+        gismo2004.cc: 10.0.0.201
+    customDNS:
+      customTTL: 1h
+      filterUnmappedTypes: true
+    log:
+      format: text
+      level: info
+      timestamp: true
+    minTlsServeVersion: 1.2
+    ports:
+      dns: 53
+      http: 4000
+      https: 4443
+      tls: 853
+    prometheus:
+      enable: true
+      path: /metrics
+    queryLog:
+      creationAttempts: 3
+      creationCooldown: 2s
+      logRetentionDays: 0
+      target: 
+      type: null
+    upstreams:
+      groups:
+        default:
+        - 1.1.1.1
+        - 1.0.0.1
+        - 8.8.8.8
+        - 8.8.4.4
+        - 9.9.9.9
+        - 149.112.112.112
+        - 208.67.222.222
+        - 208.67.220.220
+        - 8.26.56.26
+        - 8.20.247.20
+      timeout: 1s
