@@ -2,6 +2,7 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
     "github>home-operations/renovate-presets#8.0.0",
+    "github>home-operations/renovate-presets//apps/cnpg.json5#8.0.0",
     // Teaches Renovate about factory.talos.dev installer images AND the
     // `talosVersion:` key in talos/topf.yaml, which no generic manager
     // understands. Directly relevant here: this cluster runs a custom
@@ -101,6 +102,16 @@
       automerge: true,
       automergeType: "branch",
       ignoreTests: true,
+    },
+    {
+      // PostgreSQL major upgrades change on-disk PGDATA format and cannot be
+      // done in-place by swapping images. Keep clusters on their pinned major
+      // (PG 16) and only track minor/patch/digest updates.
+      description: "Never bump CNPG PostgreSQL across major versions",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/cloudnative-pg/postgresql", "/cloudnative-pg\\/postgresql/"],
+      matchUpdateTypes: ["major"],
+      enabled: false,
     },
     // ---- Grouping ---------------------------------------------------------
     {
