@@ -1,0 +1,23 @@
+---
+clusterName: kubernetes
+clusterEndpoint: https://10.0.0.120:6443
+
+# renovate: datasource=docker depName=ghcr.io/siderolabs/installer
+talosVersion: v1.13.7
+# renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
+kubernetesVersion: v1.36.3
+
+secretsPath: secrets.sops.yaml
+
+nodes:
+  - host: "cluster-cp-1"
+    ip: "10.0.0.48"
+    role: control-plane
+    schematicId: "0a7421044012a579d5403428eab4bf62c3c5e613bd38f1a1a7487e3b85f8d4a9"
+    data:
+      installDisk: ""
+      installDiskSerial: "talos-os"
+      macAddr: "bc:24:11:9e:26:d8"
+      mtu: 1500
+      encryptDisk: false
+      kernelModules: [nvidia, nvidia_uvm, nvidia_drm, nvidia_modeset]

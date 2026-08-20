@@ -1,0 +1,11 @@
+# Raw (unformatted) partition consumed by miroir's lvmthin pool. "!system_disk"
+# selects the second virtual disk; miroir puts the VG + thin pool on it itself.
+# Raw volumes can be applied after install, so this is not a one-shot decision.
+apiVersion: v1alpha1
+kind: RawVolumeConfig
+name: miroir
+provisioning:
+  diskSelector:
+    match: "!system_disk"
+  minSize: 100GB
+  grow: true

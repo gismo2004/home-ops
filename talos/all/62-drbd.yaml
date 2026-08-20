@@ -1,0 +1,11 @@
+# miroir requires DRBD. usermode_helper=disabled because the kernel side
+# otherwise shells out to /sbin/drbdadm, which does not exist on Talos.
+# dm_thin_pool is in the stock kernel and the miroir agent loads it on demand,
+# so it is deliberately not listed here.
+machine:
+  kernel:
+    modules:
+      - name: drbd
+        parameters:
+          - usermode_helper=disabled
+      - name: drbd_transport_tcp

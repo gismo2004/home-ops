@@ -1,0 +1,35 @@
+---
+# The MiroirNode name must match the Kubernetes node name.
+# The device is the Talos raw volume declared in talos/all/63-miroir-volume.yaml,
+# which Talos exposes at /dev/disk/by-partlabel/r-<volume-name>.
+apiVersion: miroir.home-operations.com/v1alpha1
+kind: MiroirNode
+metadata:
+  name: cluster-cp-1
+spec:
+  pools:
+    - name: default
+      lvmthin:
+        device: /dev/disk/by-partlabel/r-miroir
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: miroir-local
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: miroir.home-operations.com
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  # Single node: one replica. DRBD is still the device layer.
+  miroir.home-operations.com/replicas: "1"
+  csi.storage.k8s.io/fstype: ext4
+---
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: miroir-snap
+driver: miroir.home-operations.com
+deletionPolicy: Delete
