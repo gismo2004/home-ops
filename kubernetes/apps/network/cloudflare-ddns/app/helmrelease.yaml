@@ -26,8 +26,11 @@ spec:
             # needs no PVC at all, so the old 10Gi cloudflareddns-config claim
             # and its Kopiur policy are not recreated.
             image:
-              repository: ghcr.io/favonia/cloudflare-ddns
-              tag: 1.15.1
+              # mirror.gcr.io, not ghcr: favonia only publishes "edge" tags to
+              # ghcr, so there is no versioned image there to pin. The mirror
+              # is already used for coredns and avoids Docker Hub rate limits.
+              repository: mirror.gcr.io/favonia/cloudflare-ddns
+              tag: "1.17.0"
             env:
               CLOUDFLARE_API_TOKEN:
                 valueFrom:
