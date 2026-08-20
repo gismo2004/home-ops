@@ -28,7 +28,7 @@ spec:
             # someone restarts the pod. The old release had no such guard.
             image:
               repository: ghcr.io/cloudnative-pg/postgresql
-              tag: "16.14"
+              tag: "16.15"
             command:
               - /bin/sh
               - -c
