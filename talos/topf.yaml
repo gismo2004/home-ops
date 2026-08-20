@@ -15,8 +15,8 @@ nodes:
     role: control-plane
     schematicId: "0a7421044012a579d5403428eab4bf62c3c5e613bd38f1a1a7487e3b85f8d4a9"
     data:
-      installDisk: ""
-      installDiskSerial: "talos-os"
+      installDisk: "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_talos-os"
+      installDiskSerial: ""
       macAddr: "bc:24:11:9e:26:d8"
       mtu: 1500
       encryptDisk: false
