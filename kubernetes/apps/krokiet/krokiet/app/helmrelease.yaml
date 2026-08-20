@@ -28,20 +28,25 @@ spec:
               UMASK: "0022"
               KEEP_APP_RUNNING: "1"
             securityContext:
-              # This image has a root init phase that chowns and then drops to
-              # USER_ID, so it cannot run as non-root. It does not need
-              # privileged or the extra capability grants the old release had.
+              # Restored verbatim from the working TrueCharts-era release.
+              # Trimming this is what broke the app: dropping privileged (and
+              # separately allowPrivilegeEscalation) makes jlesage's supervisor
+              # fail to start dbus -- "terminated before being ready" -- which
+              # tears down every downstream service, so nothing listens on 5800
+              # and the Gateway returns 503 while the Service still shows a
+              # healthy endpoint. Any future trim here must be verified by
+              # curling the route, not by the pod reaching 1/1 Running.
+              privileged: true
+              allowPrivilegeEscalation: true
               runAsUser: 0
               runAsGroup: 0
               runAsNonRoot: false
-              # true, not false: jlesage's supervisor drops to USER_ID via
-              # setuid helpers, and no_new_privs makes dbus fail to start
-              # ("terminated before being ready"), which kills the whole
-              # supervisor and leaves nothing listening on 5800.
-              allowPrivilegeEscalation: true
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
               capabilities:
-                drop: ["ALL"]
                 add: ["CHOWN", "SETUID", "SETGID", "FOWNER", "DAC_OVERRIDE"]
+                drop: ["ALL"]
             resources:
               requests:
                 cpu: 75m
