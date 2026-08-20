@@ -1,0 +1,26 @@
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  # Named after the CLAIM, not the policy, because the PVC's dataSourceRef
+  # points at the Restore by name.
+  name: ${KOPIUR_CLAIM}
+spec:
+  credentialProjection:
+    enabled: true
+  mover:
+    # Must match the SnapshotPolicy's identity, or restored files land owned by
+    # the mover's own uid instead of the app's.
+    securityContext:
+      runAsUser: ${KOPIUR_PUID:=568}
+      runAsGroup: ${KOPIUR_PGID:=568}
+  policy:
+    # Fail during a migration so a missed snapshot stops loudly; Continue is
+    # only right for an app with no history to lose.
+    onMissingSnapshot: ${KOPIUR_ONMISSING:=Fail}
+  source:
+    fromPolicy:
+      name: ${KOPIUR_NAME}
+      offset: 0
+  target:
+    populator: {}

@@ -1,0 +1,23 @@
+---
+# Shared Kopiur backup definition. An app opts in from its ks.yaml:
+#
+#   components:
+#     - ../../../components/kopiur/backup
+#   postBuild:
+#     substitute:
+#       KOPIUR_NAME: myapp          # SnapshotPolicy / Schedule name
+#       KOPIUR_CLAIM: myapp-config  # the PVC it backs up and restores into
+#       KOPIUR_CAPACITY: 10Gi
+#
+# TWO names, not one. The mover derives its snapshot identity from
+# <policy>@<namespace>:/pvc/<claim>, so policy and claim are distinct inputs
+# and collapsing them would change the identity and orphan every existing
+# snapshot. When migrating an app, both MUST keep the values the old cluster
+# used, and the namespace must match too.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - ./snapshotpolicy.yaml
+  - ./snapshotschedule.yaml
+  - ./restore.yaml
+  - ./pvc.yaml

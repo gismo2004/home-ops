@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${KOPIUR_CLAIM}
+spec:
+  accessModes:
+    - ${KOPIUR_ACCESSMODE:=ReadWriteOnce}
+  # Claims the Restore populator: if this PVC is ever deleted, recreating it
+  # re-triggers a restore from the latest snapshot. Keep the pair permanently.
+  dataSourceRef:
+    apiGroup: kopiur.home-operations.com
+    kind: Restore
+    name: ${KOPIUR_CLAIM}
+  resources:
+    requests:
+      storage: ${KOPIUR_CAPACITY:=5Gi}
+  storageClassName: ${KOPIUR_STORAGECLASS:=miroir-local}

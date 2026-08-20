@@ -1,0 +1,37 @@
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: ${KOPIUR_NAME}
+spec:
+  compression:
+    compressor: zstd
+  mover:
+    securityContext:
+      # 568 is this cluster's convention; apps that differ override it.
+      runAsUser: ${KOPIUR_PUID:=568}
+      runAsGroup: ${KOPIUR_PGID:=568}
+    cache:
+      capacity: ${KOPIUR_CACHE:=2Gi}
+      # Ephemeral, not Persistent: a persistent cache keeps the ownership of
+      # whichever mover identity last wrote it, and the next run under a
+      # different identity fails with permission errors that look unrelated.
+      mode: Ephemeral
+      storageClassName: ${KOPIUR_STORAGECLASS:=miroir-local}
+  repository:
+    kind: ClusterRepository
+    name: default
+  credentialProjection:
+    enabled: true
+  retention:
+    keepLatest: 3
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    # Exactly one source per policy. A combined multi-source policy files every
+    # source under sources[0]'s path, so the others are never really captured
+    # and cannot be restored independently.
+    - pvc:
+        name: ${KOPIUR_CLAIM}
+  volumeSnapshotClassName: ${KOPIUR_VSC:=miroir-snap}

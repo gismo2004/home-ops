@@ -1,0 +1,78 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: krokiet
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: krokiet
+  interval: 1h
+  values:
+    controllers:
+      krokiet:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: jlesage/krokiet
+              tag: latest
+            env:
+              # jlesage images take USER_ID/GROUP_ID, not PUID/PGID. The old
+              # release also set PUID/PGID/UID/GID, which this image ignores --
+              # TrueCharts injected all four variants regardless of image.
+              USER_ID: 568
+              GROUP_ID: 568
+              UMASK: "0022"
+              KEEP_APP_RUNNING: "1"
+            securityContext:
+              # This image has a root init phase that chowns and then drops to
+              # USER_ID, so it cannot run as non-root. It does not need
+              # privileged or the extra capability grants the old release had.
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+                add: ["CHOWN", "SETUID", "SETGID", "FOWNER", "DAC_OVERRIDE"]
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                memory: 16Gi
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups: [568]
+    service:
+      app:
+        ports:
+          http:
+            port: 5800
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: krokiet-config
+      photos:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/photos
+        globalMounts:
+          - path: /mnt/photos
+      incomming:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Backup/private/WD_15_backup/Seagate/Incomming/
+        globalMounts:
+          - path: /mnt/incomming

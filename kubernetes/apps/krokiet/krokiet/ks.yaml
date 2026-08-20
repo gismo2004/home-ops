@@ -1,0 +1,33 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: krokiet
+spec:
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: krokiet
+      namespace: krokiet
+  interval: 1h
+  path: ./kubernetes/apps/krokiet/krokiet/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: krokiet
+  wait: true
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Both names carried over from the old cluster UNCHANGED. The snapshot
+      # identity is krokiet@krokiet:/pvc/krokiet-config -- policy, namespace
+      # and claim all contribute, so any change orphans the existing backups.
+      KOPIUR_NAME: krokiet
+      KOPIUR_CLAIM: krokiet-config
+      KOPIUR_CAPACITY: 5Gi
+    substituteFrom:
+      - name: cluster-secrets
+        kind: Secret
