@@ -1,0 +1,90 @@
+---
+# Bare CNPG Cluster recovering Home Assistant's recorder database.
+#
+# The object name is kept EXACTLY as the old cluster had it. That is not
+# cosmetic: HA's recorder db_url -- host, user, password and all -- is
+# hardcoded in /config/configuration.yaml, which lives on the restored PVC.
+# Keeping the name keeps the -rw Service at home-assistant-postgres-rw, so
+# that line stays valid and no user data has to be edited. The old password is
+# reused for the same reason.
+#
+# spec.backup.serverName MUST differ from the externalClusters source, or
+# CNPG's barman-cloud-check-wal-archive pre-flight refuses with "Expected
+# empty archive".
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: home-assistant-postgres
+spec:
+  instances: 1
+  enablePDB: false
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.14@sha256:9f917c9f05732db5c40f6bc72be4e7d34705f205c75761f0d0d63e1f77e932ab
+  primaryUpdateMethod: switchover
+  enableSuperuserAccess: true
+  postgresUID: 26
+  postgresGID: 26
+  storage:
+    storageClass: miroir-local
+    size: 50Gi
+    resizeInUseVolumes: true
+  walStorage:
+    storageClass: miroir-local
+    size: 20Gi
+    resizeInUseVolumes: true
+  resources:
+    requests:
+      cpu: 75m
+      memory: 200Mi
+    limits:
+      memory: 2400Mi
+  bootstrap:
+    recovery:
+      database: home-assistant
+      owner: home-assistant
+      secret:
+        name: home-assistant-postgres-user
+      source: home-assistant-postgres-old
+  externalClusters:
+    # The prefix the OLD cluster wrote to, holding its final backup.
+    - name: home-assistant-postgres-old
+      barmanObjectStore:
+        destinationPath: s3://hass-gismo2004/home-assistant/cnpg
+        endpointURL: https://s3.eu-central-003.backblazeb2.com
+        serverName: home-assistant-postgres
+        s3Credentials:
+          accessKeyId:
+            name: home-assistant-postgres-s3-creds
+            key: ACCESS_KEY_ID
+          secretAccessKey:
+            name: home-assistant-postgres-s3-creds
+            key: ACCESS_SECRET_KEY
+  backup:
+    retentionPolicy: 5d
+    barmanObjectStore:
+      destinationPath: s3://hass-gismo2004/home-assistant/cnpg
+      endpointURL: https://s3.eu-central-003.backblazeb2.com
+      serverName: home-assistant-postgres-v2
+      data:
+        compression: bzip2
+        jobs: 2
+      wal:
+        compression: bzip2
+      s3Credentials:
+        accessKeyId:
+          name: home-assistant-postgres-s3-creds
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: home-assistant-postgres-s3-creds
+          key: ACCESS_SECRET_KEY
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: home-assistant-postgres-daily
+spec:
+  schedule: "0 0 0 * * *"
+  immediate: true
+  backupOwnerReference: self
+  method: barmanObjectStore
+  cluster:
+    name: home-assistant-postgres

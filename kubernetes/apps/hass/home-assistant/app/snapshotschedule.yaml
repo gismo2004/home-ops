@@ -1,0 +1,10 @@
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: home-assistant
+spec:
+  policyRef:
+    name: home-assistant
+  schedule:
+    cron: "H H * * *"

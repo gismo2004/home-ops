@@ -1,0 +1,26 @@
+---
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: Restore
+metadata:
+  name: home-assistant-config
+spec:
+  credentialProjection:
+    enabled: true
+  mover:
+    # Must match the SnapshotPolicy identity, or files come back owned by the
+    # mover's own uid rather than root.
+    securityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      runAsNonRoot: false
+  policy:
+    # Fail, never Continue. An empty /config is worse than a stalled
+    # migration: Home Assistant will happily initialise a FRESH instance over
+    # the top, losing every account and integration with no error anywhere.
+    onMissingSnapshot: Fail
+  source:
+    fromPolicy:
+      name: home-assistant
+      offset: 0
+  target:
+    populator: {}

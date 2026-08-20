@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: home-assistant-config
+spec:
+  accessModes: [ReadWriteOnce]
+  # Claims the Restore populator. Keep the pair permanently: if this PVC is
+  # ever deleted, recreating it re-triggers a restore from the latest snapshot.
+  dataSourceRef:
+    apiGroup: kopiur.home-operations.com
+    kind: Restore
+    name: home-assistant-config
+  resources:
+    requests:
+      # Kept at the old size. miroir thin-provisions, so this costs nothing
+      # until used, and undersizing would risk the restore failing.
+      storage: 100Gi
+  storageClassName: miroir-local

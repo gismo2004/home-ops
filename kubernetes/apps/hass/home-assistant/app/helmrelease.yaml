@@ -1,0 +1,169 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: home-assistant
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: home-assistant
+  interval: 1h
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups: [568]
+    controllers:
+      home-assistant:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: oci.trueforge.org/containerforge/home-assistant
+              tag: 2026.8.2@sha256:3aec2b6d35db85e3a61bf479cedfbc3e27a4544fa569233e6283d2c43a694ee3
+            env:
+              # containerforge images expect this set; kept verbatim.
+              UMASK: "0022"
+              UMASK_SET: "0022"
+              PUID: "568"
+              USER_ID: "568"
+              UID: "568"
+              PGID: "568"
+              GROUP_ID: "568"
+              GID: "568"
+            probes:
+              liveness:
+                enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: &port 8123
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              # Verbatim from the working release. NET_RAW is needed for the
+              # network-discovery integrations; the rest is the container's
+              # root init phase. Do not trim without curling the app after.
+              privileged: false
+              allowPrivilegeEscalation: false
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                add:
+                  [
+                    "NET_RAW",
+                    "NET_BIND_SERVICE",
+                    "CHOWN",
+                    "SETUID",
+                    "SETGID",
+                    "FOWNER",
+                    "DAC_OVERRIDE",
+                  ]
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                memory: 2400Mi
+          codeserver:
+            image:
+              repository: oci.trueforge.org/containerforge/code-server
+              tag: 4.133.0@sha256:3134bebd3abe5a06773d671cff244630263afbd6c5339883bb36119858465612
+            env:
+              UMASK: "0022"
+              UMASK_SET: "0022"
+              PUID: "568"
+              USER_ID: "568"
+              UID: "568"
+              PGID: "568"
+              GROUP_ID: "568"
+              GID: "568"
+              DEFAULT_WORKSPACE: /
+              PORT: "12321"
+            securityContext:
+              privileged: false
+              allowPrivilegeEscalation: false
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                add: ["CHOWN", "SETUID", "SETGID", "FOWNER", "DAC_OVERRIDE"]
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                memory: 2400Mi
+    service:
+      app:
+        controller: home-assistant
+        type: LoadBalancer
+        annotations:
+          # 10.0.0.210, unchanged. Baked into device integrations and the
+          # companion apps -- anything pointing at HA by IP depends on it.
+          lbipam.cilium.io/ips: "10.0.0.210"
+          lbipam.cilium.io/sharing-key: hass
+        ports:
+          main:
+            port: *port
+            targetPort: *port
+      codeserver:
+        controller: home-assistant
+        ports:
+          http:
+            port: 12321
+    # Two Services, so 5.x auto-detection does not apply and each route names
+    # its backend. These affect hostname-based HTTP only; the LoadBalancer on
+    # 10.0.0.210 is separate and unaffected.
+    route:
+      app:
+        hostnames:
+          - "homeserver.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-external
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: main
+      codeserver:
+        hostnames:
+          - "homeservercs.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: codeserver
+                port: http
+    persistence:
+      config:
+        existingClaim: home-assistant-config
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
