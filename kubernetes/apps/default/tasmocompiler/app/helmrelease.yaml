@@ -25,15 +25,15 @@ spec:
             image:
               repository: docker.io/benzino77/tasmocompiler
               tag: latest@sha256:15ba4221fa594b597baf90b8e2acbff058de6cbd6215b4cc00506fab50157f57
-            env:
-              UMASK: "0022"
-
-              PUID: "568"
-              USER_ID: "568"
-              UID: "568"
-              PGID: "568"
-              GROUP_ID: "568"
-              GID: "568"
+            probes:
+              liveness:
+                type: HTTP
+                path: /
+                port: 3000
+              readiness:
+                type: HTTP
+                path: /
+                port: 3000
             securityContext:
               allowPrivilegeEscalation: false
               runAsUser: 0

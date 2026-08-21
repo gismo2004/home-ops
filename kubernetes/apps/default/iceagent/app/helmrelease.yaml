@@ -26,10 +26,6 @@ spec:
             image:
               repository: ghcr.io/gismo2004/ice_agent
               tag: v1.9.3
-            env:
-              UMASK: "0022"
-
-              S6_READ_ONLY_ROOT: "1"
             probes:
               liveness:
                 type: HTTP

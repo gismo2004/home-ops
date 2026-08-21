@@ -27,6 +27,15 @@ spec:
             env:
               PUID: "568"
               PGID: "568"
+            probes:
+              liveness:
+                type: HTTP
+                path: /
+                port: 8888
+              readiness:
+                type: HTTP
+                path: /
+                port: 8888
             securityContext:
               privileged: true
               allowPrivilegeEscalation: true

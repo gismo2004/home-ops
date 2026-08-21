@@ -28,6 +28,15 @@ spec:
               PUID: "568"
               PGID: "568"
               PASSWORD: ""
+            probes:
+              liveness:
+                type: HTTP
+                path: /
+                port: 8080
+              readiness:
+                type: HTTP
+                path: /
+                port: 8080
             securityContext:
               allowPrivilegeEscalation: false
               runAsUser: 0

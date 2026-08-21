@@ -20,13 +20,18 @@ spec:
               repository: jlesage/krokiet
               tag: latest
             env:
-              # jlesage images take USER_ID/GROUP_ID, not PUID/PGID. The old
-              # release also set PUID/PGID/UID/GID, which this image ignores --
-              # TrueCharts injected all four variants regardless of image.
               USER_ID: 568
               GROUP_ID: 568
-              UMASK: "0022"
               KEEP_APP_RUNNING: "1"
+            probes:
+              liveness:
+                type: HTTP
+                path: /
+                port: 5800
+              readiness:
+                type: HTTP
+                path: /
+                port: 5800
             securityContext:
               # Restored verbatim from the working TrueCharts-era release.
               # Trimming this is what broke the app: dropping privileged (and

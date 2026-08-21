@@ -34,6 +34,15 @@ spec:
               TASMO_DEBUG: "1"
               PUID: "568"
               PGID: "568"
+            probes:
+              liveness:
+                type: HTTP
+                path: /
+                port: 80
+              readiness:
+                type: HTTP
+                path: /
+                port: 80
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:

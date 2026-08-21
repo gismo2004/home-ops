@@ -27,6 +27,15 @@ spec:
               tag: latest
             env:
               ESPHOME_DASHBOARD_USE_PING: "true"
+            probes:
+              liveness:
+                type: HTTP
+                path: /
+                port: 6052
+              readiness:
+                type: HTTP
+                path: /
+                port: 6052
             resources:
               requests:
                 cpu: 100m

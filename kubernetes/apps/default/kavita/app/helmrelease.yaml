@@ -28,6 +28,22 @@ spec:
               PUID: "568"
               PGID: "568"
               TZ: Europe/Vienna
+            probes:
+              liveness:
+                type: HTTP
+                path: /
+                port: 5000
+              readiness:
+                type: HTTP
+                path: /
+                port: 5000
+              startup:
+                type: HTTP
+                path: /
+                port: 5000
+                spec:
+                  failureThreshold: 60
+                  periodSeconds: 5
             securityContext:
               allowPrivilegeEscalation: false
               runAsUser: 0

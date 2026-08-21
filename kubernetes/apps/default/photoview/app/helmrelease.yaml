@@ -19,6 +19,15 @@ spec:
       photoview:
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          wait-for-db:
+            image:
+              repository: ghcr.io/cloudnative-pg/postgresql
+              tag: "16.15"
+            command:
+              - /bin/sh
+              - -c
+              - until pg_isready -U photoview -d photoview -h photoview-postgres-rw; do sleep 5; done
         containers:
           app:
             image:
@@ -28,15 +37,6 @@ spec:
               - secretRef:
                   name: photoview-secrets
             env:
-              UMASK: "0022"
-              UMASK_SET: "0022"
-
-              PUID: "568"
-              USER_ID: "568"
-              UID: "568"
-              PGID: "568"
-              GROUP_ID: "568"
-              GID: "568"
               MAPBOX_TOKEN: ""
               PHOTOVIEW_DATABASE_DRIVER: postgres
               PHOTOVIEW_DISABLE_FACE_RECOGNITION: "false"

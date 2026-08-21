@@ -25,9 +25,6 @@ spec:
               repository: ghcr.io/home-operations/sonarr
               tag: 4.0.19.3001@sha256:2fef93accb445aeb1773e454825ac903f7d66d9addfe045d56fff69ba8181c82
             env:
-              UMASK: "0022"
-
-              S6_READ_ONLY_ROOT: "1"
               SONARR__AUTH__METHOD: ""
               SONARR__AUTH__REQUIRED: DisabledForLocalAddresses
               SONARR__SERVER__PORT: &port 8989
