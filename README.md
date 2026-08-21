@@ -6,6 +6,7 @@ _A Kubernetes homelab cluster, fully managed with GitOps, Talos Linux, and Flux 
 
 <p align="center">
   <a href="https://github.com/gismo2004/home-ops/actions/workflows/flate.yaml"><img src="https://img.shields.io/github/actions/workflow/status/gismo2004/home-ops/flate.yaml?label=Flate%20Diff&style=for-the-badge&logo=github" alt="Flate Status"></a>
+  <a href="https://status.gismo2004.cc"><img src="https://img.shields.io/badge/Status-Gatus-darkgreen?style=for-the-badge&logo=statuspage" alt="Status Page"></a>
   <a href="https://github.com/fluxcd/flux2"><img src="https://img.shields.io/badge/GitOps-Flux%20v2-blue?style=for-the-badge&logo=flux" alt="Flux"></a>
   <a href="https://www.talos.dev/"><img src="https://img.shields.io/badge/OS-Talos%20Linux-orange?style=for-the-badge&logo=linux" alt="Talos"></a>
   <a href="https://cilium.io/"><img src="https://img.shields.io/badge/CNI-Cilium%20eBPF-brightgreen?style=for-the-badge&logo=cilium" alt="Cilium"></a>

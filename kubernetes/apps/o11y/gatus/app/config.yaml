@@ -1,0 +1,112 @@
+web:
+  port: 8080
+
+ui:
+  title: "Gismo Status"
+  header: "Infrastructure & Services"
+
+endpoints:
+  - name: Home Assistant
+    group: Core
+    url: "https://home-assistant.gismo2004.cc"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Blocky DNS
+    group: Core
+    url: "https://blocky.gismo2004.cc"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Jellyfin
+    group: Media
+    url: "https://jellyfin.gismo2004.cc/health"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Kavita
+    group: Media
+    url: "https://kavita.gismo2004.cc"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Calibre
+    group: Media
+    url: "https://calibre.gismo2004.cc"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Radarr
+    group: Media
+    url: "https://radarr.gismo2004.cc/ping"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Sonarr
+    group: Media
+    url: "https://sonarr.gismo2004.cc/ping"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Lidarr
+    group: Media
+    url: "https://lidarr.gismo2004.cc/ping"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Prowlarr
+    group: Media
+    url: "https://prowlarr.gismo2004.cc/ping"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: SABnzbd
+    group: Media
+    url: "https://sabnzbd.gismo2004.cc"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Mealie
+    group: Apps
+    url: "https://mealie.gismo2004.cc"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: ESPHome
+    group: Apps
+    url: "https://esphome.gismo2004.cc"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Grafana
+    group: Observability
+    url: "https://grafana.gismo2004.cc/api/health"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Prometheus
+    group: Observability
+    url: "https://prometheus.gismo2004.cc/-/healthy"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: Alertmanager
+    group: Observability
+    url: "https://alertmanager.gismo2004.cc/-/healthy"
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
