@@ -17,7 +17,7 @@ spec:
         containers:
           app:
             image:
-              repository: docker.io/prompve/prometheus-pve-exporter
+              repository: ghcr.io/prometheus-pve/prometheus-pve-exporter
               tag: 3.10.0@sha256:4867684c0a937716f11f770a32d32958bded507cf570fc334f774392afcb2f37
             securityContext:
               readOnlyRootFilesystem: false

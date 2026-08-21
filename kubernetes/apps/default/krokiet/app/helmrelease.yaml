@@ -17,8 +17,8 @@ spec:
         containers:
           app:
             image:
-              repository: jlesage/krokiet
-              tag: latest
+              repository: ghcr.io/jlesage/krokiet
+              tag: latest@sha256:13358d9ddab7fa0b44ff033a09931734fed662e4974188e35ae969eba4109f4d
             env:
               USER_ID: 568
               GROUP_ID: 568

@@ -22,7 +22,7 @@ spec:
         containers:
           app:
             image:
-              repository: docker.io/jlesage/jdownloader-2
+              repository: ghcr.io/jlesage/jdownloader-2
               tag: v26.08.2@sha256:f16d47986bf6a5db6d67484e3b7e76404bce74f6f212809127a79eb76aa1c641
             env:
               PUID: "568"

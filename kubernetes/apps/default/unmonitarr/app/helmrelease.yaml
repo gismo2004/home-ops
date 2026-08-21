@@ -22,8 +22,8 @@ spec:
         containers:
           app:
             image:
-              repository: baretsky24/unmonitarr
-              tag: latest
+              repository: ghcr.io/unmonitarr/unmonitarr
+              tag: latest@sha256:9a8cc3683a633c36739189d23c66f0beef9419b2eee04a4eb16fd9eea7524d47
             args:
               - uvicorn
               - src.main:app
