@@ -49,8 +49,8 @@ spec:
                 custom: true
                 spec:
                   httpGet:
-                    path: /
-                    port: 8088
+                    path: /health
+                    port: &port 5099
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
@@ -82,7 +82,7 @@ spec:
         controller: unmonitarr
         ports:
           main:
-            port: &port 8088
+            port: *port
             targetPort: *port
     # Single Service, so app-template 5.x auto-detects the backendRef.
     route:
