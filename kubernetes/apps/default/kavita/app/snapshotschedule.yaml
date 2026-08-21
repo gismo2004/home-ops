@@ -8,7 +8,7 @@ spec:
   policyRef:
     name: kavita-config
   schedule:
-    cron: "H H * * *" # daily, at a deterministic hashed hour/minute
+    cron: "H H/12 * * *" # every 12h, at a deterministic hashed minute/offset
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
@@ -19,4 +19,4 @@ spec:
   policyRef:
     name: kavita-manga
   schedule:
-    cron: "H H * * *" # daily, at a deterministic hashed hour/minute
+    cron: "H H/12 * * *" # every 12h, at a deterministic hashed minute/offset

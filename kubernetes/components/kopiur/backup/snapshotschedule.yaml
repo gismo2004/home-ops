@@ -8,4 +8,4 @@ spec:
   policyRef:
     name: ${KOPIUR_NAME}
   schedule:
-    cron: "${KOPIUR_CRON:=H H * * *}" # daily, at a deterministic hashed hour/minute
+    cron: "${KOPIUR_CRON:=H H/12 * * *}" # every 12h, at a deterministic hashed minute/offset
