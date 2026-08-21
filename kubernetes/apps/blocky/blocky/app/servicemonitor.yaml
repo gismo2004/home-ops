@@ -1,0 +1,17 @@
+---
+# blocky hat prometheus.enable in seiner config.yml bereits gesetzt und liefert
+# unter blocky-app:4000/metrics aus -- es fehlte nur jemand, der es abholt.
+# Selektiert wird ueber app.kubernetes.io/service statt ueber name/instance,
+# sonst wuerde auch blocky-codeserver mitgefangen, das kein /metrics hat.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: blocky
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/service: blocky-app
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 1m

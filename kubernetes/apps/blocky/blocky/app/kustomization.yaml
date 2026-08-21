@@ -5,3 +5,19 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
   - ./configmap.yaml
+  - ./servicemonitor.yaml
+configMapGenerator:
+  - name: blocky-dashboard
+    files:
+      - blocky.json=./dashboards/blocky.json
+    options:
+      labels:
+        grafana_dashboard: "true"
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    # Grafana-Dashboards enthalten typischerweise ${...}-Variablen. Dieses ist
+    # zwar bereinigt, aber die Sperre bleibt als Schutz fuer kuenftige Updates:
+    # eine unaufgeloeste Variable liesse Flux' postBuild im strict mode
+    # scheitern und wuerde die ganze Kustomization blockieren.
+    kustomize.toolkit.fluxcd.io/substitute: disabled
