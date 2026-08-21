@@ -22,6 +22,7 @@ spec:
         containers:
           app:
             image:
+              # renovate: datasource=docker depName=ghcr.io/gismo2004/ice_agent
               repository: ghcr.io/gismo2004/ice_agent
               tag: v1.9.3
             probes:
