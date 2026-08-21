@@ -67,9 +67,9 @@ spec:
   externalClusters:
     - name: photoview-postgres-old
       barmanObjectStore:
-        destinationPath: s3://photoview-gismo2004/photoview/cnpg
+        destinationPath: s3://cnpg-gismo2004/photoview
         endpointURL: https://s3.eu-central-003.backblazeb2.com
-        serverName: photoview-postgres-v2
+        serverName: photoview-postgres-v4
         s3Credentials:
           accessKeyId:
             name: photoview-postgres-s3-creds

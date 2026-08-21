@@ -59,9 +59,9 @@ spec:
     # wrote under serverName "mealie-postgres".
     - name: mealie-postgres-old
       barmanObjectStore:
-        destinationPath: s3://mealie-gismo2004/mealie/cnpg
+        destinationPath: s3://cnpg-gismo2004/mealie
         endpointURL: https://s3.eu-central-003.backblazeb2.com
-        serverName: mealie-postgres-v2
+        serverName: mealie-postgres-v4
         s3Credentials:
           accessKeyId:
             name: mealie-postgres-s3-creds
