@@ -1,18 +1,18 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
-    "github>home-operations/renovate-presets#8.0.0",
-    "github>home-operations/renovate-presets//apps/cnpg.json5#8.0.0",
+    "github>home-operations/renovate-presets#8.1.0",
+    "github>home-operations/renovate-presets//apps/cnpg.json5#8.1.0",
     // Teaches Renovate about factory.talos.dev installer images AND the
     // `talosVersion:` key in talos/topf.yaml, which no generic manager
     // understands. Directly relevant here: this cluster runs a custom
     // schematic (drbd + nvidia -lts), so the installer image is factory-built.
-    "github>home-operations/renovate-presets//apps/talosFactory.json5#8.0.0",
+    "github>home-operations/renovate-presets//apps/talosFactory.json5#8.1.0",
     // Custom datasource against grafana.com/api/dashboards/{id}; rewrites the
     // pinned revision in any file named grafanadashboard.yaml. This is why the
     // dashboards are GrafanaDashboard CRs and not vendored JSON -- Renovate can
     // update a reference, but not a 457KB blob.
-    "github>home-operations/renovate-presets//apps/grafanaDashboards.json5#8.0.0",
+    "github>home-operations/renovate-presets//apps/grafanaDashboards.json5#8.1.0",
     ":timezone(Europe/Vienna)",
   ],
   lockFileMaintenance: {
