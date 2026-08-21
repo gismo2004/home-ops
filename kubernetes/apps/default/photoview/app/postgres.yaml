@@ -69,7 +69,7 @@ spec:
       barmanObjectStore:
         destinationPath: s3://photoview-gismo2004/photoview/cnpg
         endpointURL: https://s3.eu-central-003.backblazeb2.com
-        serverName: photoview-postgres
+        serverName: photoview-postgres-v2
         s3Credentials:
           accessKeyId:
             name: photoview-postgres-s3-creds
@@ -82,7 +82,7 @@ spec:
     barmanObjectStore:
       destinationPath: s3://photoview-gismo2004/photoview/cnpg
       endpointURL: https://s3.eu-central-003.backblazeb2.com
-      serverName: photoview-postgres-v3
+      serverName: photoview-postgres-v4
       data:
         compression: bzip2
         jobs: 2

@@ -56,7 +56,7 @@ spec:
       barmanObjectStore:
         destinationPath: s3://hass-gismo2004/home-assistant/cnpg
         endpointURL: https://s3.eu-central-003.backblazeb2.com
-        serverName: home-assistant-postgres
+        serverName: home-assistant-postgres-v2
         s3Credentials:
           accessKeyId:
             name: home-assistant-postgres-s3-creds
@@ -69,7 +69,7 @@ spec:
     barmanObjectStore:
       destinationPath: s3://hass-gismo2004/home-assistant/cnpg
       endpointURL: https://s3.eu-central-003.backblazeb2.com
-      serverName: home-assistant-postgres-v3
+      serverName: home-assistant-postgres-v4
       data:
         compression: bzip2
         jobs: 2
