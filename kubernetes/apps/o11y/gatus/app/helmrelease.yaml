@@ -28,7 +28,7 @@ spec:
           app:
             image:
               repository: twinproduction/gatus
-              tag: v5.16.0
+              tag: v5.36.0
             env:
               TZ: Europe/Vienna
               CUSTOM_PATH: /config/config.yaml
