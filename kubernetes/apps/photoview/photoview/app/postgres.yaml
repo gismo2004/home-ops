@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/cluster_v1.json
 # Bare, non-Helm-templated CNPG Cluster.
 #
 # barman-cloud identifies backups by the "serverName" string inside the S3
@@ -96,6 +97,7 @@ spec:
           key: ACCESS_SECRET_KEY
 
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/scheduledbackup_v1.json
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:

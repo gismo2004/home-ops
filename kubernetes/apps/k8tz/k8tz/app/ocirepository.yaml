@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/source.toolkit.fluxcd.io/ocirepository_v1.json
 # The old cluster pulled k8tz 0.20.0 from a HelmRepository at k8tz.jaconi.io.
 # That host no longer resolves at all, so that source is dead and could not be
 # carried over. home-operations' charts-mirror is the only OCI source and tops

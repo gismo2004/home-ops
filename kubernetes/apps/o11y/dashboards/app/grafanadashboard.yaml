@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 # Dashboards as references, not vendored JSON. The operator fetches them and
 # resolves the datasource inputs itself via spec.datasources -- exactly the
 # __inputs mapping that previously had to be hand-scripted (and which silently
@@ -25,6 +26,7 @@ spec:
       inputName: ds_prometheus
   url: https://grafana.com/api/dashboards/1860/revisions/45/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -39,6 +41,7 @@ spec:
       inputName: DS_PROMETHEUS
   url: https://grafana.com/api/dashboards/15757/revisions/43/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -53,6 +56,7 @@ spec:
       inputName: DS_PROMETHEUS
   url: https://grafana.com/api/dashboards/15758/revisions/46/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -67,6 +71,7 @@ spec:
       inputName: DS_PROMETHEUS
   url: https://grafana.com/api/dashboards/15759/revisions/40/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -81,6 +86,7 @@ spec:
       inputName: DS_PROMETHEUS
   url: https://grafana.com/api/dashboards/15760/revisions/39/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -95,6 +101,7 @@ spec:
       inputName: DS_OPENSHIFT_PROMETHEUS
   url: https://grafana.com/api/dashboards/11454/revisions/14/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -109,6 +116,7 @@ spec:
       inputName: DS_PROMETHEUS
   url: https://grafana.com/api/dashboards/20842/revisions/3/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -123,6 +131,7 @@ spec:
       inputName: DS_PROMETHEUS
   url: https://grafana.com/api/dashboards/24459/revisions/3/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -137,6 +146,7 @@ spec:
       inputName: DS_PROMETHEUS
   url: https://grafana.com/api/dashboards/24457/revisions/4/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -151,6 +161,7 @@ spec:
       inputName: DS_PROMETHEUS
   url: https://grafana.com/api/dashboards/24458/revisions/3/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -165,6 +176,7 @@ spec:
       inputName: DS_SIGNCL-PROMETHEUS
   url: https://grafana.com/api/dashboards/7587/revisions/3/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
@@ -179,6 +191,7 @@ spec:
       inputName: DS_PROMETHEUS
   url: https://grafana.com/api/dashboards/19105/revisions/9/download
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 # Not on grafana.com, so the Renovate preset does not cover it. The URL is
 # pinned to a tag rather than a branch so upstream changes arrive as a
 # reviewable bump instead of silently.
@@ -197,6 +210,7 @@ spec:
   # renovate: datasource=github-releases depName=cloudnative-pg/grafana-dashboards
   url: https://raw.githubusercontent.com/cloudnative-pg/grafana-dashboards/cluster-v0.0.5/charts/cluster/grafana-dashboard.json
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 # blocky ships its dashboard in its own repo. Pinned to the release tag rather
 # than main so it moves in step with the app: a custom Renovate manager (see
 # .github/renovate/grafana-dashboards.json5) bumps this tag from GitHub

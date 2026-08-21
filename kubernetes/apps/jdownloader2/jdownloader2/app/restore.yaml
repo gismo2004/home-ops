@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/restore_v1alpha1.json
 # Kept permanently alongside pvc.yaml (not one-time infrastructure like a
 # VolSync ReplicationDestination would be): pvc.yaml's dataSourceRef claims
 # this Restore as its populator, so if jdownloader2-config PVC is ever

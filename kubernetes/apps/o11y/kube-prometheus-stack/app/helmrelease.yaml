@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
 # Uebernommen von onedr0p/home-ops (o11y/kube-prometheus-stack), angepasst auf
 # diesen Cluster. Abweichungen bewusst:
 #

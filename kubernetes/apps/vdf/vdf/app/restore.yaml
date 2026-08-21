@@ -3,6 +3,7 @@
 # them would orphan every existing snapshot. Rename only in a later commit,
 # after a restore against the current names has verifiably succeeded.
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/restore_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: Restore
 metadata:
@@ -16,6 +17,7 @@ spec:
     fromPolicy: { name: vdf-config, offset: 0 }
   target: { populator: {} }
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/restore_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: Restore
 metadata:

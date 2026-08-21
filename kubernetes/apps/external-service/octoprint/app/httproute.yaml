@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/httproute_v1.json
 # octoprint spricht reines HTTP (anders als pve/truenas) und zeigt deshalb
 # direkt auf die selektorlose Service -- kein Backend, kein TLS-Handling.
 apiVersion: gateway.networking.k8s.io/v1

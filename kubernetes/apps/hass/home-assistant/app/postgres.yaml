@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/cluster_v1.json
 # Bare CNPG Cluster recovering Home Assistant's recorder database.
 #
 # The object name is kept EXACTLY as the old cluster had it. That is not
@@ -82,6 +83,7 @@ spec:
           name: home-assistant-postgres-s3-creds
           key: ACCESS_SECRET_KEY
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/scheduledbackup_v1.json
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:

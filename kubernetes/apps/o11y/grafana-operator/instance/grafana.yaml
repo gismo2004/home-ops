@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafana_v1beta1.json
 # Adapted from onedr0p/home-ops. Deviations, both deliberate:
 #
 # - auth.anonymous stays DISABLED. onedr0p enables it; on a LAN-only Grafana

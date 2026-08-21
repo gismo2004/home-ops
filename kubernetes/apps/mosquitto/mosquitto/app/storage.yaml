@@ -4,6 +4,7 @@
 # policy makes both Restores resolve to sources[0], so one PVC gets the other's
 # data. Proven the hard way on this exact app.
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotPolicy
 metadata:
@@ -20,6 +21,7 @@ spec:
     - pvc: { name: mosquitto-data }
   volumeSnapshotClassName: miroir-snap
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotPolicy
 metadata:
@@ -36,6 +38,7 @@ spec:
     - pvc: { name: mosquitto-configinc }
   volumeSnapshotClassName: miroir-snap
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotSchedule
 metadata:
@@ -44,6 +47,7 @@ spec:
   policyRef: { name: mosquitto-data }
   schedule: { cron: "H H * * *" }
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotSchedule
 metadata:
@@ -52,6 +56,7 @@ spec:
   policyRef: { name: mosquitto-configinc }
   schedule: { cron: "H H * * *" }
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/restore_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: Restore
 metadata:
@@ -66,6 +71,7 @@ spec:
     fromPolicy: { name: mosquitto-data, offset: 0 }
   target: { populator: {} }
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/restore_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: Restore
 metadata:

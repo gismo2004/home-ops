@@ -4,6 +4,7 @@
 # never declared in git at all (leftovers from the earlier VolSync migration).
 # They are plain PVCs here so the tree is now self-contained.
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotPolicy
 metadata:
@@ -27,6 +28,7 @@ spec:
     - pvc: { name: esphome-config }
   volumeSnapshotClassName: miroir-snap
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotSchedule
 metadata:
@@ -35,6 +37,7 @@ spec:
   policyRef: { name: esphome }
   schedule: { cron: "H H * * *" }
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/restore_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: Restore
 metadata:

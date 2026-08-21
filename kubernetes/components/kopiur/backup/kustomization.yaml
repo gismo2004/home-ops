@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
 # Shared Kopiur backup definition. An app opts in from its ks.yaml:
 #
 #   components:

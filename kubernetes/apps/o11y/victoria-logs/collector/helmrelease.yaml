@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
 # Unveraendert von onedr0p uebernommen -- sammelt die Container-Logs aller
 # Namespaces ein und schreibt sie an victoria-logs.
 apiVersion: helm.toolkit.fluxcd.io/v2

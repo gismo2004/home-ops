@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/miroir.home-operations.com/miroirnode_v1alpha1.json
 # The MiroirNode name must match the Kubernetes node name.
 # The device is the Talos raw volume declared in talos/all/63-miroir-volume.yaml,
 # which Talos exposes at /dev/disk/by-partlabel/r-<volume-name>.
@@ -12,6 +13,7 @@ spec:
       lvmthin:
         device: /dev/disk/by-partlabel/r-miroir
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/storage.k8s.io/storageclass_v1.json
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -27,6 +29,7 @@ parameters:
   miroir.home-operations.com/replicas: "1"
   csi.storage.k8s.io/fstype: ext4
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/snapshot.storage.k8s.io/volumesnapshotclass_v1.json
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:

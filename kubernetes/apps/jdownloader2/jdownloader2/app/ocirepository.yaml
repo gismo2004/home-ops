@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/source.toolkit.fluxcd.io/ocirepository_v1.json
 # Per-app OCIRepository + chartRef, the pattern home-ops/cluster-template use,
 # replacing the shared bjw-s HelmRepository + chart.spec.chart. Pins the chart
 # version in its own file, which Renovate tracks cleanly.

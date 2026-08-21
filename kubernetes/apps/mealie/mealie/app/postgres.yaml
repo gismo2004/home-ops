@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/cluster_v1.json
 # Bare CNPG Cluster, recovering the old cluster's data.
 #
 # barman-cloud identifies backups by the "serverName" string in the S3 path,
@@ -87,6 +88,7 @@ spec:
           name: mealie-postgres-s3-creds
           key: ACCESS_SECRET_KEY
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/scheduledbackup_v1.json
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:

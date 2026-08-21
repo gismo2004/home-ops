@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/servicemonitor_v1.json
 # blocky hat prometheus.enable in seiner config.yml bereits gesetzt und liefert
 # unter blocky-app:4000/metrics aus -- es fehlte nur jemand, der es abholt.
 # Selektiert wird ueber app.kubernetes.io/service statt ueber name/instance,

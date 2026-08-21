@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
 # 1:1 von onedr0p uebernommen (o11y/blackbox-exporter/lan). Nur die Probe-Ziele
 # in probes.yaml sind auf dieses LAN angepasst -- onedr0ps *.internal-Namen gibt
 # es hier nicht, daher IPs.

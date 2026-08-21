@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
 # Von onedr0p uebernommen. Abweichungen:
 # - ceph-block -> miroir-local, vlogs.turbo.ac -> vlogs.gismo2004.cc
 # - dashboards.grafanaOperator entfaellt: hier laeuft das Grafana aus dem
