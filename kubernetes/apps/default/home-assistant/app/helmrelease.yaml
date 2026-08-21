@@ -39,15 +39,7 @@ spec:
               repository: ghcr.io/home-operations/home-assistant
               tag: 2026.8.2@sha256:84f5b1b26e1597a3d5a19a7b6e2ed085ec8e3fffcbe46049acf62f9e25ea400e
             env:
-              # containerforge images expect this set; kept verbatim.
-              UMASK: "0022"
-              UMASK_SET: "0022"
-              PUID: "568"
-              USER_ID: "568"
-              UID: "568"
-              PGID: "568"
-              GROUP_ID: "568"
-              GID: "568"
+              TZ: Europe/Vienna
             probes:
               liveness:
                 enabled: true
@@ -59,7 +51,8 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  tcpSocket:
+                  httpGet:
+                    path: /healthz
                     port: &port 8123
                   periodSeconds: 10
                   timeoutSeconds: 5
@@ -70,28 +63,9 @@ spec:
                   failureThreshold: 30
                   periodSeconds: 10
             securityContext:
-              # Verbatim from the working release. NET_RAW is needed for the
-              # network-discovery integrations; the rest is the container's
-              # root init phase. Do not trim without curling the app after.
-              privileged: false
               allowPrivilegeEscalation: false
-              runAsUser: 0
-              runAsGroup: 0
-              runAsNonRoot: false
               readOnlyRootFilesystem: false
-              seccompProfile:
-                type: RuntimeDefault
               capabilities:
-                add:
-                  [
-                    "NET_RAW",
-                    "NET_BIND_SERVICE",
-                    "CHOWN",
-                    "SETUID",
-                    "SETGID",
-                    "FOWNER",
-                    "DAC_OVERRIDE",
-                  ]
                 drop: ["ALL"]
             resources:
               requests:
