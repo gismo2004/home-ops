@@ -36,8 +36,8 @@ spec:
         containers:
           app:
             image:
-              repository: oci.trueforge.org/containerforge/home-assistant
-              tag: 2026.8.2@sha256:3aec2b6d35db85e3a61bf479cedfbc3e27a4544fa569233e6283d2c43a694ee3
+              repository: ghcr.io/home-operations/home-assistant
+              tag: 2026.8.2@sha256:84f5b1b26e1597a3d5a19a7b6e2ed085ec8e3fffcbe46049acf62f9e25ea400e
             env:
               # containerforge images expect this set; kept verbatim.
               UMASK: "0022"
