@@ -30,6 +30,9 @@ releases:
   - name: cloudnative-pg
     namespace: cnpg-system
 
+  - name: grafana-operator
+    namespace: o11y
+
   - name: kopiur
     namespace: kopiur-system
 
@@ -38,6 +41,9 @@ releases:
 
   - name: snapshot-controller
     namespace: kube-system
+
+  - name: tuppr
+    namespace: system-upgrade
 
   - name: kube-prometheus-stack
     namespace: o11y
