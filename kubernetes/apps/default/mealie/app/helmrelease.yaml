@@ -35,6 +35,7 @@ spec:
         containers:
           app:
             image:
+              # renovate: datasource=github-releases depName=mealie-recipes/mealie
               repository: ghcr.io/mealie-recipes/mealie
               tag: v3.23.1@sha256:5fc5cebedddb3952c1ee78f20faf42ab7e49986813fd314745aa97978a4a13eb
             envFrom:
