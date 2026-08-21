@@ -22,17 +22,12 @@ spec:
         containers:
           app:
             image:
-              repository: oci.trueforge.org/containerforge/kavita
-              tag: 0.8.8.3@sha256:1e643b36c8bfc16e42fbc8f1a7c893449493da509e777dbbfcbbbb05afae1566
+              repository: ghcr.io/linuxserver/kavita
+              tag: 0.9.0@sha256:7e3be67100797e264756e9a1a9c6dd821c5dc0950b7940a645a629a429831118
             env:
-              UMASK: "0022"
-
               PUID: "568"
-              USER_ID: "568"
-              UID: "568"
               PGID: "568"
-              GROUP_ID: "568"
-              GID: "568"
+              TZ: Europe/Vienna
             securityContext:
               allowPrivilegeEscalation: false
               runAsUser: 0
