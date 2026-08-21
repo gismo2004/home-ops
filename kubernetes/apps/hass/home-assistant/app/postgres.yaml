@@ -17,6 +17,11 @@ metadata:
   name: home-assistant-postgres
 spec:
   instances: 1
+  # Exposes the Postgres metrics endpoint and creates a PodMonitor for it.
+  # Off by default, which is why these three clusters produced no metrics
+  # at all and the CNPG dashboard would have stayed empty.
+  monitoring:
+    enablePodMonitor: true
   enablePDB: false
   imageName: ghcr.io/cloudnative-pg/postgresql:16.14@sha256:93d0456be6e8e7a5d2d4e54953967f8b2d7f410c5ab7ca1739f42383436df035
   primaryUpdateMethod: switchover

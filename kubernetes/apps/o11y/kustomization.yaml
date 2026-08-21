@@ -9,5 +9,6 @@ components:
 resources:
   - ./namespace.yaml
   - ./kube-prometheus-stack/ks.yaml
+  - ./dashboards/ks.yaml
   - ./blackbox-exporter/ks.yaml
   - ./victoria-logs/ks.yaml

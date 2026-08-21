@@ -24,6 +24,11 @@ metadata:
   name: photoview-postgres
 spec:
   instances: 1
+  # Exposes the Postgres metrics endpoint and creates a PodMonitor for it.
+  # Off by default, which is why these three clusters produced no metrics
+  # at all and the CNPG dashboard would have stayed empty.
+  monitoring:
+    enablePodMonitor: true
   # Single-instance cluster, so a PodDisruptionBudget can only ever be
   # unsatisfiable: CNPG's default primary PDB uses minAvailable: 1, which
   # with one pod yields disruptionsAllowed: 0 and makes `kubectl drain`

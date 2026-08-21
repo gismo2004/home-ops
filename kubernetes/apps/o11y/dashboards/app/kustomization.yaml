@@ -1,0 +1,66 @@
+---
+# Grafana dashboards from grafana.com, pinned to the same revisions
+# onedr0p uses. They ship as GrafanaDashboard CRs over there, which needs
+# grafana-operator; here they are plain ConfigMaps picked up by the
+# sidecar of the bundled Grafana.
+#
+# Only boards whose metrics actually exist in this cluster were taken.
+# Left out on purpose: ceph, zfs, smartctl (no such hardware or metrics),
+# apc-ups, cloudflare-tunnels, qui. Also skipped 15761/15762 (api-server,
+# coredns) because the chart already ships equivalents.
+#
+# Two things are load-bearing here:
+#  - label grafana_dashboard: "1" -- the sidecar runs with LABEL_VALUE=1
+#    and silently ignores any other value.
+#  - substitute: disabled -- these JSONs are full of legitimate Grafana
+#    template variables (${namespace}, ${node}, ...). Without the
+#    annotation Flux's postBuild would try to resolve them and fail the
+#    whole Kustomization in strict mode.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+configMapGenerator:
+  - name: dashboard-blackbox-exporter
+    files:
+      - blackbox-exporter.json=./json/blackbox-exporter.json
+  - name: dashboard-cert-manager
+    files:
+      - cert-manager.json=./json/cert-manager.json
+  - name: dashboard-envoy-downstream
+    files:
+      - envoy-downstream.json=./json/envoy-downstream.json
+  - name: dashboard-envoy-overview
+    files:
+      - envoy-overview.json=./json/envoy-overview.json
+  - name: dashboard-envoy-upstream
+    files:
+      - envoy-upstream.json=./json/envoy-upstream.json
+  - name: dashboard-kubernetes-global
+    files:
+      - kubernetes-global.json=./json/kubernetes-global.json
+  - name: dashboard-kubernetes-namespaces
+    files:
+      - kubernetes-namespaces.json=./json/kubernetes-namespaces.json
+  - name: dashboard-kubernetes-nodes
+    files:
+      - kubernetes-nodes.json=./json/kubernetes-nodes.json
+  - name: dashboard-kubernetes-pods
+    files:
+      - kubernetes-pods.json=./json/kubernetes-pods.json
+  - name: dashboard-kubernetes-volumes
+    files:
+      - kubernetes-volumes.json=./json/kubernetes-volumes.json
+  - name: dashboard-node-exporter-full
+    files:
+      - node-exporter-full.json=./json/node-exporter-full.json
+  - name: dashboard-prometheus
+    files:
+      - prometheus.json=./json/prometheus.json
+  - name: dashboard-cloudnative-pg
+    files:
+      - cloudnative-pg.json=./json/cloudnative-pg.json
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: disabled
