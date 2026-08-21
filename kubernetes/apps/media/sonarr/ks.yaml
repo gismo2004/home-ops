@@ -28,6 +28,3 @@ spec:
       KOPIUR_NAME: sonarr-config
       KOPIUR_CLAIM: sonarr-config
       KOPIUR_CAPACITY: 10Gi
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

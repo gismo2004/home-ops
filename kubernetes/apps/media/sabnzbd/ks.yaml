@@ -28,6 +28,3 @@ spec:
       KOPIUR_NAME: sabnzbd-config
       KOPIUR_CLAIM: sabnzbd-config
       KOPIUR_CAPACITY: 10Gi
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

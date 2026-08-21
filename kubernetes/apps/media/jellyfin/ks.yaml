@@ -29,6 +29,3 @@ spec:
       KOPIUR_NAME: jellyfin-config
       KOPIUR_CLAIM: jellyfin-config
       KOPIUR_CAPACITY: 30Gi
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

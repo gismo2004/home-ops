@@ -28,6 +28,3 @@ spec:
       KOPIUR_NAME: radarr-config
       KOPIUR_CLAIM: radarr-config
       KOPIUR_CAPACITY: 10Gi
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

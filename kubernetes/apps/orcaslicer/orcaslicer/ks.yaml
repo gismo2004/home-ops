@@ -26,7 +26,3 @@ spec:
       KOPIUR_NAME: orcaslicer
       KOPIUR_CLAIM: orcaslicer-config
       KOPIUR_CAPACITY: 10Gi
-
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

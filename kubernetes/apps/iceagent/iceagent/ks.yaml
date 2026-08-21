@@ -26,7 +26,3 @@ spec:
       KOPIUR_NAME: iceagent
       KOPIUR_CLAIM: iceagent-config
       KOPIUR_CAPACITY: 1Gi
-
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

@@ -27,6 +27,3 @@ spec:
       KOPIUR_NAME: mealie
       KOPIUR_CLAIM: mealie-config
       KOPIUR_CAPACITY: 10Gi
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

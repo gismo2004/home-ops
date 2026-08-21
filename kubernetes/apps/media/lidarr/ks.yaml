@@ -28,6 +28,3 @@ spec:
       KOPIUR_NAME: lidarr-config
       KOPIUR_CLAIM: lidarr-config
       KOPIUR_CAPACITY: 20Gi
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

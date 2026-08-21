@@ -27,6 +27,3 @@ spec:
       KOPIUR_NAME: blocky
       KOPIUR_CLAIM: blocky-data
       KOPIUR_CAPACITY: 1Gi
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

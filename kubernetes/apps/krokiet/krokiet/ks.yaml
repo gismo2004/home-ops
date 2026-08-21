@@ -29,6 +29,3 @@ spec:
       KOPIUR_NAME: krokiet
       KOPIUR_CLAIM: krokiet-config
       KOPIUR_CAPACITY: 5Gi
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

@@ -28,6 +28,3 @@ spec:
       KOPIUR_NAME: prowlarr-config
       KOPIUR_CLAIM: prowlarr-config
       KOPIUR_CAPACITY: 10Gi
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

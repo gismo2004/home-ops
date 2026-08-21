@@ -31,6 +31,3 @@ spec:
       KOPIUR_PUID: "1000"
       KOPIUR_PGID: "1000"
       KOPIUR_CACHE: 5Gi
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret
