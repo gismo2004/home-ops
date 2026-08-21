@@ -1,0 +1,30 @@
+---
+# Unveraendert von onedr0p uebernommen -- sammelt die Container-Logs aller
+# Namespaces ein und schreibt sie an victoria-logs.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-logs-collector
+spec:
+  interval: 30m
+  chartRef:
+    kind: OCIRepository
+    name: victoria-logs-collector
+  values:
+    fullnameOverride: victoria-logs-collector
+    global:
+      image:
+        registry: quay.io
+    podMonitor:
+      enabled: true
+    remoteWrite:
+      - url: http://victoria-logs.o11y.svc.cluster.local:9428
+        maxDiskUsagePerURL: 10GB
+    collector:
+      streamFields:
+        - kubernetes.pod_name
+        - kubernetes.pod_namespace
+        - kubernetes.container_name
+        - kubernetes.pod_labels.app.kubernetes.io/name
+    extraArgs:
+      "kubernetesCollector.decolorizeFields": _msg

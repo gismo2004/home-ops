@@ -1,0 +1,39 @@
+---
+# Von onedr0p uebernommen. Abweichungen:
+# - ceph-block -> miroir-local, vlogs.turbo.ac -> vlogs.${SECRET_DOMAIN}
+# - dashboards.grafanaOperator entfaellt: hier laeuft das Grafana aus dem
+#   kube-prometheus-stack, dessen Sidecar die Dashboard-ConfigMaps
+#   namespace-uebergreifend einsammelt (searchNamespace: ALL).
+# - 30Gi / 30d statt 50Gi / 90d: ein Single-Node-Cluster erzeugt deutlich
+#   weniger Logs als onedr0ps drei Nodes. Laesst sich jederzeit hochsetzen.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-logs
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: victoria-logs
+  interval: 1h
+  values:
+    global:
+      image:
+        registry: quay.io
+    dashboards:
+      enabled: true
+    server:
+      fullnameOverride: victoria-logs
+      persistentVolume:
+        enabled: true
+        storageClassName: miroir-local
+        size: 30Gi
+      retentionPeriod: 30d
+      route:
+        enabled: true
+        hostnames:
+          - vlogs.${SECRET_DOMAIN}
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+      serviceMonitor:
+        enabled: true

@@ -1,0 +1,42 @@
+---
+# Ziele als IPs statt Hostnamen: fuer diese Geraete gibt es keine internen
+# DNS-Namen. 10.0.0.40 (octoprint) antwortet aktuell nicht -- das ist Absicht
+# so drin, genau dafuer ist die Probe da.
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: lan-icmp
+spec:
+  module: icmp
+  prober:
+    url: blackbox-exporter-lan.o11y.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      static:
+        - 10.0.0.1 # FritzBox
+        - 10.0.0.2 # truenas
+        - 10.0.0.3 # proxmox
+        - 10.0.0.40 # octoprint
+        - 10.0.0.48 # cluster-cp-1
+  metricRelabelings:
+    - targetLabel: service
+      replacement: blackbox-exporter-lan
+      action: replace
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: lan-nfs
+spec:
+  jobName: nfs_probe
+  module: tcp_connect
+  prober:
+    url: blackbox-exporter-lan.o11y.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      static:
+        - 10.0.0.2:2049
+  metricRelabelings:
+    - targetLabel: service
+      replacement: blackbox-exporter-lan
+      action: replace
