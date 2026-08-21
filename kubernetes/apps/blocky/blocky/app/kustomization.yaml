@@ -12,7 +12,7 @@ configMapGenerator:
       - blocky.json=./dashboards/blocky.json
     options:
       labels:
-        grafana_dashboard: "true"
+        grafana_dashboard: "1"
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
