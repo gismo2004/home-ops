@@ -10,6 +10,11 @@ spec:
     name: gatus
   interval: 1h
   values:
+    defaultPodOptions:
+      dnsConfig:
+        nameservers:
+          - 172.17.170.211
+          - 172.17.0.10
     controllers:
       gatus:
         annotations:
