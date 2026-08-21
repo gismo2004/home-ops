@@ -210,4 +210,4 @@ spec:
     - datasourceName: prometheus
       inputName: DS_PROMETHEUS
   # renovate: datasource=github-releases depName=0xERR0R/blocky
-  url: https://raw.githubusercontent.com/0xERR0R/blocky/v0.34.0/docs/blocky-grafana.json
+  url: v0.34.0
