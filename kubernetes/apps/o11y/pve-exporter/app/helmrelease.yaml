@@ -1,0 +1,47 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: pve-exporter
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: pve-exporter
+  interval: 1h
+  values:
+    controllers:
+      pve-exporter:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: docker.io/prompve/prometheus-pve-exporter
+              tag: 3.10.0@sha256:4867684c0a937716f11f770a32d32958bded507cf570fc334f774392afcb2f37
+            securityContext:
+              readOnlyRootFilesystem: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 10m
+                memory: 50Mi
+              limits:
+                memory: 200Mi
+    service:
+      app:
+        controller: pve-exporter
+        ports:
+          http:
+            port: 9221
+    persistence:
+      config:
+        type: secret
+        name: pve-exporter-secret
+        globalMounts:
+          - path: /etc/prometheus/pve.yml
+            subPath: pve.yml
+            readOnly: true

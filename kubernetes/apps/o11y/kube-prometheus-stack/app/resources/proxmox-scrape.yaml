@@ -28,3 +28,24 @@ spec:
         instance: proxmox
         node: proxmox
         job: smartctl-exporter
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: proxmox-pve
+  namespace: o11y
+spec:
+  metricsPath: /pve
+  params:
+    target:
+      - "10.0.0.3"
+  scrapeInterval: 30s
+  scrapeTimeout: 20s
+  staticConfigs:
+    - targets:
+        - pve-exporter.o11y.svc.cluster.local:9221
+      labels:
+        instance: proxmox
+        node: proxmox
+        job: proxmox-pve

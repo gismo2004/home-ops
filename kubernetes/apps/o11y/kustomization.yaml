@@ -13,4 +13,5 @@ resources:
   - ./grafana-operator/ks.yaml
   - ./dashboards/ks.yaml
   - ./blackbox-exporter/ks.yaml
+  - ./pve-exporter/ks.yaml
   - ./victoria-logs/ks.yaml
