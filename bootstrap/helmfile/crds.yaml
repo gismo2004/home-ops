@@ -18,38 +18,26 @@ helmDefaults:
 bases:
   - default.yaml
 
+defaultInherit: default
+
 releases:
   - name: cloudflare-dns
     namespace: network
-    inherit:
-      - template: default
 
   - name: envoy-gateway
     namespace: network
-    inherit:
-      - template: default
 
   - name: cloudnative-pg
     namespace: cnpg-system
-    inherit:
-      - template: default
 
   - name: kopiur
     namespace: kopiur-system
-    inherit:
-      - template: default
 
   - name: miroir
     namespace: miroir-system
-    inherit:
-      - template: default
 
   - name: snapshot-controller
     namespace: kube-system
-    inherit:
-      - template: default
 
-  - name: prometheus-operator-crds
-    namespace: observability
-    chart: oci://ghcr.io/prometheus-community/charts/prometheus-operator-crds
-    version: 29.0.0
+  - name: kube-prometheus-stack
+    namespace: o11y
