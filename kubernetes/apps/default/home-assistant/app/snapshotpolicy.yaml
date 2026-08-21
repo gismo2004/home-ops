@@ -9,13 +9,10 @@ spec:
     compressor: zstd
   mover:
     securityContext:
-      # Root, and runAsNonRoot: false is REQUIRED alongside runAsUser: 0 --
-      # setting runAsUser alone is a silent no-op on this kopiur version and
-      # yields a byte-identical unprivileged Job with no error anywhere.
-      # Gated by the privileged-movers annotation on the namespace.
       runAsUser: 0
       runAsGroup: 0
       runAsNonRoot: false
+      privileged: true
     cache:
       capacity: 2Gi
       # Ephemeral: a persistent cache keeps the ownership of whichever mover
