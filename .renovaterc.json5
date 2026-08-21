@@ -32,8 +32,13 @@
       customType: "regex",
       managerFilePatterns: ["/grafanadashboard\\.ya?ml$/"],
       matchStrings: [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+url: \\S+?/(?<currentValue>[a-z-]*v?\\d+\\.\\d+\\.\\d+)/\\S+",
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?<gap>\\s+url: )(?<prefix>\\S+?)/(?<currentValue>[a-z-]*v?\\d+\\.\\d+\\.\\d+)/(?<suffix>\\S+)",
       ],
+      // Without an explicit template Renovate replaces the WHOLE match with just
+      // the new version -- it rewrote the entire url: line to "url: v0.34.0" in
+      // PR #17. Prefix and suffix are replayed verbatim so only the version
+      // segment changes, and `gap` carries the whitespace so indentation survives.
+      autoReplaceStringTemplate: "# renovate: datasource={{{datasource}}} depName={{{depName}}}{{{gap}}}{{{prefix}}}/{{{newValue}}}/{{{suffix}}}",
     },
   ],
   packageRules: [

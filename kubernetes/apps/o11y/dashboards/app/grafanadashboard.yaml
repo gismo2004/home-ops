@@ -194,6 +194,7 @@ spec:
   datasources:
     - datasourceName: prometheus
       inputName: DS_PROMETHEUS
+  # renovate: datasource=github-releases depName=cloudnative-pg/grafana-dashboards
   url: https://raw.githubusercontent.com/cloudnative-pg/grafana-dashboards/cluster-v0.0.5/charts/cluster/grafana-dashboard.json
 ---
 # blocky ships its dashboard in its own repo. Pinned to the release tag rather
