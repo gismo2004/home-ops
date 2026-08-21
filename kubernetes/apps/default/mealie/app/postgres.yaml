@@ -74,7 +74,7 @@ spec:
     barmanObjectStore:
       destinationPath: s3://mealie-gismo2004/mealie/cnpg
       endpointURL: https://s3.eu-central-003.backblazeb2.com
-      serverName: mealie-postgres-v2
+      serverName: mealie-postgres-v3
       data:
         compression: bzip2
         jobs: 2
