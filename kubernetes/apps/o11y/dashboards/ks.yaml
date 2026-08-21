@@ -4,6 +4,11 @@ kind: Kustomization
 metadata:
   name: dashboards
 spec:
+  # The GrafanaDashboard CRD ships with grafana-operator. Without this the
+  # Kustomization dry-run fails with `no matches for kind "GrafanaDashboard"`
+  # on a fresh bootstrap -- which is exactly what happened on the first push.
+  dependsOn:
+    - name: grafana-operator
   interval: 1h
   path: ./kubernetes/apps/o11y/dashboards/app
   prune: true
