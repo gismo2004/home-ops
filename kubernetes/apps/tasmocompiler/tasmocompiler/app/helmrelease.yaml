@@ -65,7 +65,7 @@ spec:
         # address annotation, so metallb just handed it the first free address
         # in the pool (10.0.0.130) -- an accident of allocation order rather
         # than anything depending on it. It is reached through the Gateway at
-        # tasmocompiler.${SECRET_DOMAIN}, so a dedicated LAN address is redundant.
+        # tasmocompiler.gismo2004.cc, so a dedicated LAN address is redundant.
         # Direct access to 10.0.0.130:14003 goes away; the hostname does not.
         ports:
           main:
@@ -75,7 +75,7 @@ spec:
     route:
       app:
         hostnames:
-          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+          - "{{ .Release.Name }}.gismo2004.cc"
         parentRefs:
           - name: envoy-internal
             namespace: network

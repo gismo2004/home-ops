@@ -27,7 +27,7 @@ metadata:
   name: pve
 spec:
   hostnames:
-    - "pve.${SECRET_DOMAIN}"
+    - "pve.gismo2004.cc"
   parentRefs:
     - name: envoy-internal
       namespace: network

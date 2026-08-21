@@ -13,7 +13,7 @@ spec:
       envoyDeployment:
         replicas: 1
         container:
-          imageRepository: mirror.gcr.io/envoyproxy/envoy
+          image: mirror.gcr.io/envoyproxy/envoy:v1.39.0
           resources:
             requests:
               cpu: 100m
@@ -46,18 +46,18 @@ kind: Gateway
 metadata:
   name: envoy-external
   annotations:
-    # The APEX, not external.${SECRET_DOMAIN}. cluster-template's default
+    # The APEX, not external.gismo2004.cc. cluster-template's default
     # assumes something publishes an "external" record; nothing here does, so
     # every CNAME external-dns wrote pointed at a name that does not resolve.
     # The apex A record is the one kept current by cloudflare-ddns, so the two
     # work together: ddns tracks the WAN address, external-dns points names at
     # it.
-    external-dns.alpha.kubernetes.io/target: ${SECRET_DOMAIN}
+    external-dns.alpha.kubernetes.io/target: gismo2004.cc
 spec:
   gatewayClassName: envoy
   infrastructure:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: external.${SECRET_DOMAIN}
+      external-dns.alpha.kubernetes.io/hostname: external.gismo2004.cc
       lbipam.cilium.io/ips: "10.0.0.222"
   listeners:
     - name: http
@@ -75,19 +75,19 @@ spec:
       tls:
         certificateRefs:
           - kind: Secret
-            name: ${SECRET_DOMAIN/./-}-production-tls
+            name: gismo2004-cc-production-tls
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: envoy-internal
   annotations:
-    external-dns.alpha.kubernetes.io/target: internal.${SECRET_DOMAIN}
+    external-dns.alpha.kubernetes.io/target: internal.gismo2004.cc
 spec:
   gatewayClassName: envoy
   infrastructure:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: internal.${SECRET_DOMAIN}
+      external-dns.alpha.kubernetes.io/hostname: internal.gismo2004.cc
       lbipam.cilium.io/ips: "10.0.0.223"
   listeners:
     - name: http
@@ -105,7 +105,7 @@ spec:
       tls:
         certificateRefs:
           - kind: Secret
-            name: ${SECRET_DOMAIN/./-}-production-tls
+            name: gismo2004-cc-production-tls
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy

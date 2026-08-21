@@ -10,7 +10,7 @@ spec:
   interval: 1h
   values:
     fullnameOverride: k8s-gateway
-    domain: "${SECRET_DOMAIN}"
+    domain: "gismo2004.cc"
     ttl: 1
     service:
       type: LoadBalancer

@@ -4,7 +4,7 @@
 #
 # - storageClassName ceph-block -> miroir-local (WaitForFirstConsumer, fuer
 #   StatefulSet-PVCs unproblematisch, weil der Pod den Consumer stellt)
-# - Hostnamen *.turbo.ac -> *.${SECRET_DOMAIN}
+# - Hostnamen *.turbo.ac -> *.gismo2004.cc
 # - grafana: statt grafana-operator das im Chart enthaltene Grafana. Die Route
 #   dafuer liegt als eigenes HTTPRoute-Objekt daneben, nicht als route: im
 #   Subchart -- das Grafana-Subchart bringt keinen Gateway-API-Support mit.
@@ -33,12 +33,12 @@ spec:
         main:
           enabled: true
           hostnames:
-            - alertmanager.${SECRET_DOMAIN}
+            - alertmanager.gismo2004.cc
           parentRefs:
             - name: envoy-internal
               namespace: network
       alertmanagerSpec:
-        externalUrl: https://alertmanager.${SECRET_DOMAIN}
+        externalUrl: https://alertmanager.gismo2004.cc
         storage:
           volumeClaimTemplate:
             spec:
@@ -57,12 +57,12 @@ spec:
         main:
           enabled: true
           hostnames:
-            - prometheus.${SECRET_DOMAIN}
+            - prometheus.gismo2004.cc
           parentRefs:
             - name: envoy-internal
               namespace: network
       prometheusSpec:
-        externalUrl: https://prometheus.${SECRET_DOMAIN}
+        externalUrl: https://prometheus.gismo2004.cc
         # Ohne diese fuenf sammelt Prometheus nur Objekte mit dem Helm-Label
         # dieser Release -- die bereits vorhandenen PodMonitors (reloader,
         # envoy-proxy) und alles kuenftige aus anderen Namespaces blieben sonst

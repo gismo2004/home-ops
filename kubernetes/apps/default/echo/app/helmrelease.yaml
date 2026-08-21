@@ -17,7 +17,7 @@ spec:
     httpRoute:
       enabled: true
       hostnames:
-        - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        - "{{ .Release.Name }}.gismo2004.cc"
       parentRefs:
         - name: envoy-external
           namespace: network

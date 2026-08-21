@@ -97,7 +97,7 @@ spec:
     route:
       app:
         hostnames:
-          - "jdownloader.${SECRET_DOMAIN}"
+          - "jdownloader.gismo2004.cc"
         parentRefs:
           - name: envoy-internal
             namespace: network

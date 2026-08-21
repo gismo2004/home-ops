@@ -4,7 +4,7 @@ kind: HTTPRoute
 metadata:
   name: flux-webhook
 spec:
-  hostnames: ["flux-webhook.${SECRET_DOMAIN}"]
+  hostnames: ["flux-webhook.gismo2004.cc"]
   parentRefs:
     - name: envoy-external
       namespace: network

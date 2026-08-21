@@ -156,7 +156,7 @@ spec:
     route:
       app:
         hostnames:
-          - "homeserver.${SECRET_DOMAIN}"
+          - "homeserver.gismo2004.cc"
         parentRefs:
           - name: envoy-external
             namespace: network
@@ -166,7 +166,7 @@ spec:
                 port: main
       codeserver:
         hostnames:
-          - "homeservercs.${SECRET_DOMAIN}"
+          - "homeservercs.gismo2004.cc"
         parentRefs:
           - name: envoy-internal
             namespace: network

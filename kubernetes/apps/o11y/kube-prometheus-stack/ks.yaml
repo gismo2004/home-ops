@@ -13,7 +13,3 @@ spec:
     namespace: flux-system
   targetNamespace: o11y
   wait: false
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

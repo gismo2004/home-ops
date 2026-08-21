@@ -21,7 +21,3 @@ spec:
   # No kopiur/backup component: photoview has no config PVC. Its state lives
   # entirely in Postgres, the photos are read-only NFS, and the cache PVC is a
   # regenerable thumbnail store the old cluster also never backed up.
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

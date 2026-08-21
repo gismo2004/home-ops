@@ -35,7 +35,7 @@ spec:
               JELLYFIN_CONFIG_DIR: /config/config
               JELLYFIN_DATA_DIR: /config
               JELLYFIN_LOG_DIR: /logs
-              JELLYFIN_PublishedServerUrl: "https://{{ .Release.Name }}.${SECRET_DOMAIN}"
+              JELLYFIN_PublishedServerUrl: "https://{{ .Release.Name }}.gismo2004.cc"
             probes:
               liveness:
                 enabled: true
@@ -94,7 +94,7 @@ spec:
     route:
       app:
         hostnames:
-          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+          - "{{ .Release.Name }}.gismo2004.cc"
         parentRefs:
           - name: envoy-external
             namespace: network

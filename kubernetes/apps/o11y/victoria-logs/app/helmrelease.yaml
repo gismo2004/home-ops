@@ -1,6 +1,6 @@
 ---
 # Von onedr0p uebernommen. Abweichungen:
-# - ceph-block -> miroir-local, vlogs.turbo.ac -> vlogs.${SECRET_DOMAIN}
+# - ceph-block -> miroir-local, vlogs.turbo.ac -> vlogs.gismo2004.cc
 # - dashboards.grafanaOperator entfaellt: hier laeuft das Grafana aus dem
 #   kube-prometheus-stack, dessen Sidecar die Dashboard-ConfigMaps
 #   namespace-uebergreifend einsammelt (searchNamespace: ALL).
@@ -31,7 +31,7 @@ spec:
       route:
         enabled: true
         hostnames:
-          - vlogs.${SECRET_DOMAIN}
+          - vlogs.gismo2004.cc
         parentRefs:
           - name: envoy-internal
             namespace: network

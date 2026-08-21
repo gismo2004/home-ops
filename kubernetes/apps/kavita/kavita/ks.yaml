@@ -18,7 +18,3 @@ spec:
     namespace: flux-system
   targetNamespace: kavita
   wait: true
-  postBuild:
-    substituteFrom:
-      - name: cluster-secrets
-        kind: Secret

@@ -28,7 +28,7 @@ spec:
     sources: ["crd", "gateway-httproute"]
     txtPrefix: k8s.
     txtOwnerId: default
-    domainFilters: ["${SECRET_DOMAIN}"]
+    domainFilters: ["gismo2004.cc"]
     serviceMonitor:
       enabled: true
     podAnnotations:

@@ -135,7 +135,7 @@ spec:
     route:
       codeserver:
         hostnames:
-          - "blockycs.${SECRET_DOMAIN}"
+          - "blockycs.gismo2004.cc"
         parentRefs:
           - name: envoy-internal
             namespace: network

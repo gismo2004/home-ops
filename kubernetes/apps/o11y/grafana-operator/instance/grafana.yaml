@@ -37,7 +37,7 @@ spec:
       angular_support_enabled: "true"
     server:
       enable_gzip: "true"
-      root_url: https://grafana.${SECRET_DOMAIN}
+      root_url: https://grafana.gismo2004.cc
   deployment:
     spec:
       strategy:
@@ -69,7 +69,7 @@ spec:
   httpRoute:
     spec:
       hostnames:
-        - grafana.${SECRET_DOMAIN}
+        - grafana.gismo2004.cc
       parentRefs:
         - name: envoy-internal
           namespace: network

@@ -34,7 +34,7 @@ metadata:
   name: truenas
 spec:
   hostnames:
-    - "truenas.${SECRET_DOMAIN}"
+    - "truenas.gismo2004.cc"
   parentRefs:
     - name: envoy-internal
       namespace: network

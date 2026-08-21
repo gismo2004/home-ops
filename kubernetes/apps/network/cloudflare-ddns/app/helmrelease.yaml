@@ -37,7 +37,7 @@ spec:
                   secretKeyRef:
                     name: cloudflare-ddns-secret
                     key: api-token
-              DOMAINS: "${SECRET_DOMAIN}"
+              DOMAINS: "gismo2004.cc"
               # false: the apex is the ORIGIN that Cloudflare proxies the
               # per-app CNAMEs to. Proxying it would point Cloudflare at
               # itself.

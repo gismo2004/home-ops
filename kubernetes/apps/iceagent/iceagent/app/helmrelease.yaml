@@ -119,7 +119,7 @@ spec:
     route:
       app:
         hostnames:
-          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+          - "{{ .Release.Name }}.gismo2004.cc"
         parentRefs:
           - name: envoy-internal
             namespace: network
@@ -129,7 +129,7 @@ spec:
                 port: main
       codeserver:
         hostnames:
-          - "iceagentcs.${SECRET_DOMAIN}"
+          - "iceagentcs.gismo2004.cc"
         parentRefs:
           - name: envoy-internal
             namespace: network

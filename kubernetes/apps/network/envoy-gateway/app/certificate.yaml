@@ -2,17 +2,17 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "${SECRET_DOMAIN/./-}-production"
+  name: "gismo2004-cc-production"
 spec:
   dnsNames:
-    - "${SECRET_DOMAIN}"
-    - "*.${SECRET_DOMAIN}"
+    - "gismo2004.cc"
+    - "*.gismo2004.cc"
   duration: 160h
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
   privateKey:
     algorithm: ECDSA
-  secretName: "${SECRET_DOMAIN/./-}-production-tls"
+  secretName: "gismo2004-cc-production-tls"
   usages:
     - digital signature
