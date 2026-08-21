@@ -227,8 +227,7 @@ spec:
   datasources:
     - datasourceName: prometheus
       inputName: DS_PROMETHEUS
-  envs:
-    - name: VAR_BLOCKY_URL
-      value: "https://blocky.gismo2004.cc"
+    - datasourceName: "https://blocky.gismo2004.cc"
+      inputName: VAR_BLOCKY_URL
   # renovate: datasource=github-releases depName=0xERR0R/blocky
   url: https://raw.githubusercontent.com/0xERR0R/blocky/v0.34.0/docs/blocky-grafana.json
