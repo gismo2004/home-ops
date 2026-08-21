@@ -13,14 +13,14 @@ spec:
     fullnameOverride: coredns
     image:
       repository: mirror.gcr.io/coredns/coredns
+    replicaCount: 1
     k8sAppLabelOverride: kube-dns
+    priorityClassName: system-cluster-critical
     serviceAccount:
       create: true
     service:
       name: kube-dns
       clusterIP: "172.17.0.10"
-    replicaCount: 1
-    priorityClassName: system-cluster-critical
     servers:
       - zones:
           - zone: .
@@ -28,14 +28,6 @@ spec:
             use_tcp: true
         port: 53
         plugins:
-          # This cluster is IPv4-only (podCIDR 172.16.0.0/16, no IPv6 on the
-          # node) but upstream DNS returns AAAA records, and clients that try
-          # the AAAA without falling back fail with "connect: network is
-          # unreachable". That broke a Kopiur restore against Backblaze and a
-          # Flux OCIRepository pull, both looking like unrelated transient
-          # errors. Returning an SOA authority rather than a bare NODATA makes
-          # it a properly formed negative answer resolvers can cache, instead
-          # of re-querying upstream every time. Matches onedr0p/home-ops.
           - name: template
             parameters: ANY AAAA
             configBlock: |-

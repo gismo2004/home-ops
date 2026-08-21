@@ -5,22 +5,12 @@ kind: HelmRelease
 metadata:
   name: snapshot-controller
 spec:
-  interval: 1h
   chartRef:
     kind: OCIRepository
     name: snapshot-controller
-  install:
-    remediation:
-      retries: 3
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      retries: 3
+  interval: 1h
   values:
-    # installCRDs stays at the chart default (true). The CRDs are templated
-    # rather than shipped in crds/, so bootstrap/helmfile/crds.yaml -- which
-    # renders this same release -- only emits them while this is true.
-    controller:
-      # VolumeSnapshotClasses are owned by the storage driver (miroir ships
-      # miroir-snap), not by the controller chart.
-      volumeSnapshotClasses: []
+    replicaCount: 1
+    monitoring:
+      serviceMonitor:
+        enabled: true
