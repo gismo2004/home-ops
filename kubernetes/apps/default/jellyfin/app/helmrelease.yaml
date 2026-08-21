@@ -25,12 +25,10 @@ spec:
         containers:
           app:
             image:
-              repository: oci.trueforge.org/containerforge/jellyfin
-              tag: 10.11.11@sha256:7f5325bd23b7445a8fda17b6d2d24033e3935536789f682aed63698b7b3a97c6
+              repository: ghcr.io/jellyfin/jellyfin
+              tag: 10.11.11@sha256:45f648c382a0c8b552582fcea40e95cb17c5d475473a891cba0eb7523fb92112
             env:
-              UMASK: "0022"
               NVIDIA_DRIVER_CAPABILITIES: all
-              S6_READ_ONLY_ROOT: "1"
               JELLYFIN_CACHE_DIR: /cache
               JELLYFIN_CONFIG_DIR: /config/config
               JELLYFIN_DATA_DIR: /config
