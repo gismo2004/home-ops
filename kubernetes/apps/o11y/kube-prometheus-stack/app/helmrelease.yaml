@@ -91,19 +91,17 @@ spec:
     kube-state-metrics:
       fullnameOverride: kube-state-metrics
     grafana:
-      enabled: true
-      fullnameOverride: grafana
-      defaultDashboardsTimezone: Europe/Vienna
-      persistence:
-        enabled: true
-        storageClassName: miroir-local
-        size: 5Gi
-      sidecar:
-        dashboards:
-          enabled: true
-          searchNamespace: ALL
-        datasources:
-          enabled: true
+      # Disabled in favour of grafana-operator. The chart still renders its own
+      # dashboards, but as ConfigMaps the operator picks up via
+      # dashboardsConfigMapRefEnabled -- so the ~28 built-in Kubernetes boards
+      # survive the switch without being vendored anywhere.
+      enabled: false
+      forceDeployDashboards: true
+      operator:
+        dashboardsConfigMapRefEnabled: true
+        folder: o11y
+        matchLabels:
+          dashboards: grafana
     additionalPrometheusRulesMap:
       dockerhub-rules:
         groups:

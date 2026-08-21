@@ -8,6 +8,11 @@
     // understands. Directly relevant here: this cluster runs a custom
     // schematic (drbd + nvidia -lts), so the installer image is factory-built.
     "github>home-operations/renovate-presets//apps/talosFactory.json5#8.0.0",
+    // Custom datasource against grafana.com/api/dashboards/{id}; rewrites the
+    // pinned revision in any file named grafanadashboard.yaml. This is why the
+    // dashboards are GrafanaDashboard CRs and not vendored JSON -- Renovate can
+    // update a reference, but not a 457KB blob.
+    "github>home-operations/renovate-presets//apps/grafanaDashboards.json5#8.0.0",
     ":timezone(Europe/Vienna)",
   ],
   lockFileMaintenance: {
@@ -16,6 +21,21 @@
     commitMessageExtra: "({{manager}})",
     additionalBranchPrefix: "{{manager}}-",
   },
+  customManagers: [
+    {
+      // Dashboards that live in the app's own repo rather than on grafana.com
+      // (blocky, cloudnative-pg). The `# renovate:` comment above the URL names
+      // the datasource and repo; the version in the URL path is what gets
+      // bumped, so the dashboard moves in step with the app instead of drifting
+      // on a branch.
+      description: "Grafana dashboards pinned to an upstream release tag",
+      customType: "regex",
+      managerFilePatterns: ["/grafanadashboard\\.ya?ml$/"],
+      matchStrings: [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+url: \\S+?/(?<currentValue>[a-z-]*v?\\d+\\.\\d+\\.\\d+)/\\S+",
+      ],
+    },
+  ],
   packageRules: [
     // ---- Auto-merge -------------------------------------------------------
     // Deliberately narrow. Version bumps of cluster workloads are NOT
