@@ -242,8 +242,6 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: grafana
-  datasources:
-    - datasourceName: prometheus
-      inputName: DS_PROMETHEUS
-  # renovate: datasource=grafana-dashboards depName=10347
-  url: https://grafana.com/api/dashboards/10347/revisions/5/download
+  configMapRef:
+    name: proxmox-dashboard
+    key: proxmox.json
