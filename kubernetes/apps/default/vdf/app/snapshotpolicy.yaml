@@ -35,7 +35,7 @@ spec:
   retention:
     keepLatest: 3
     keepHourly: 24
-    keepDaily: 7
+    keepDaily: 2
     keepWeekly: 4
   sources:
     - pvc:
@@ -63,7 +63,7 @@ spec:
   retention:
     keepLatest: 3
     keepHourly: 24
-    keepDaily: 7
+    keepDaily: 2
     keepWeekly: 4
   sources:
     - pvc:

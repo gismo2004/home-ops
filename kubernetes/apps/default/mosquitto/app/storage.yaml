@@ -16,7 +16,7 @@ spec:
     cache: { capacity: 2Gi, mode: Ephemeral, storageClassName: miroir-local }
   repository: { kind: ClusterRepository, name: default }
   credentialProjection: { enabled: true }
-  retention: { keepLatest: 3, keepHourly: 24, keepDaily: 7, keepWeekly: 4 }
+  retention: { keepLatest: 3, keepHourly: 24, keepDaily: 2, keepWeekly: 4 }
   sources:
     - pvc: { name: mosquitto-data }
   volumeSnapshotClassName: miroir-snap
@@ -33,7 +33,7 @@ spec:
     cache: { capacity: 2Gi, mode: Ephemeral, storageClassName: miroir-local }
   repository: { kind: ClusterRepository, name: default }
   credentialProjection: { enabled: true }
-  retention: { keepLatest: 3, keepHourly: 24, keepDaily: 7, keepWeekly: 4 }
+  retention: { keepLatest: 3, keepHourly: 24, keepDaily: 2, keepWeekly: 4 }
   sources:
     - pvc: { name: mosquitto-configinc }
   volumeSnapshotClassName: miroir-snap

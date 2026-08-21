@@ -67,7 +67,11 @@ spec:
   backup:
     retentionPolicy: 5d
     barmanObjectStore:
-      destinationPath: s3://hass-gismo2004/home-assistant/cnpg
+      # Moved to a dedicated bucket. The old per-app buckets had accumulated
+      # six serverName generations from the migration (29GB in hass, of which
+      # the live archive was 60MB). externalClusters above still points at the
+      # old archive -- it is read-only and only consulted at bootstrap.
+      destinationPath: s3://cnpg-gismo2004/home-assistant
       endpointURL: https://s3.eu-central-003.backblazeb2.com
       serverName: home-assistant-postgres-v5
       data:

@@ -27,7 +27,7 @@ spec:
   retention:
     keepLatest: 3
     keepHourly: 24
-    keepDaily: 7
+    keepDaily: 2
     keepWeekly: 4
   sources:
     # Exactly one source per policy. A combined multi-source policy files every
