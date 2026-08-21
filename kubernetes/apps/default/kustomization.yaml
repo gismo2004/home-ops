@@ -2,11 +2,36 @@
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: default
-
-components:
-  - ../../components/sops
 
 resources:
   - ./namespace.yaml
+  - ./namespaces.yaml
+  - ./blocky/ks.yaml
+  - ./calibre/ks.yaml
   - ./echo/ks.yaml
+  - ./edgetx/ks.yaml
+  - ./esphome/ks.yaml
+  - ./home-assistant/ks.yaml
+  - ./iceagent/ks.yaml
+  - ./jdownloader2/ks.yaml
+  - ./jellyfin/ks.yaml
+  - ./kavita/ks.yaml
+  - ./krokiet/ks.yaml
+  - ./lidarr/ks.yaml
+  - ./mealie/ks.yaml
+  - ./mosquitto/ks.yaml
+  - ./octoprint/ks.yaml
+  - ./orcaslicer/ks.yaml
+  - ./oscam/ks.yaml
+  - ./photoview/ks.yaml
+  - ./prowlarr/ks.yaml
+  - ./pve/ks.yaml
+  - ./radarr/ks.yaml
+  - ./sabnzbd/ks.yaml
+  - ./sonarr/ks.yaml
+  - ./tasmoadmin/ks.yaml
+  - ./tasmobackup/ks.yaml
+  - ./tasmocompiler/ks.yaml
+  - ./truenas/ks.yaml
+  - ./unmonitarr/ks.yaml
+  - ./vdf/ks.yaml

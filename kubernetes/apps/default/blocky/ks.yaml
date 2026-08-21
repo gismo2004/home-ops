@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: blocky
+spec:
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: blocky
+      namespace: blocky
+  interval: 1h
+  path: ./kubernetes/apps/default/blocky/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: blocky
+  wait: true
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Identity blocky@blocky:/pvc/blocky-data, unchanged from the old cluster.
+      KOPIUR_NAME: blocky
+      KOPIUR_CLAIM: blocky-data
+      KOPIUR_CAPACITY: 1Gi

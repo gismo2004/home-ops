@@ -1,0 +1,33 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: edgetx
+spec:
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: edgetx
+      namespace: edgetx
+  interval: 1h
+  path: ./kubernetes/apps/default/edgetx/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: edgetx
+  wait: true
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      KOPIUR_NAME: edgetx
+      KOPIUR_CLAIM: edgetx-config
+      KOPIUR_CAPACITY: 100Gi
+      # edgetx runs as 1000:1000 (its container does its own useradd),
+      # not this cluster's usual 568.
+      KOPIUR_PUID: "1000"
+      KOPIUR_PGID: "1000"
+      KOPIUR_CACHE: 5Gi
