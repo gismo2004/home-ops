@@ -133,6 +133,16 @@ spec:
     # backend must be named. Only codeserver is exposed over HTTP; DNS is the
     # LoadBalancer above.
     route:
+      app:
+        hostnames:
+          - "blocky.gismo2004.cc"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
       codeserver:
         hostnames:
           - "blockycs.gismo2004.cc"
