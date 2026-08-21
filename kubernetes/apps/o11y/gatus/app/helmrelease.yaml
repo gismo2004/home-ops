@@ -18,7 +18,7 @@ spec:
           app:
             image:
               repository: ghcr.io/twin/gatus
-              tag: v5.16.0@sha256:bb07a4a9c68b0b8c6e26715f8a0a1969a5ad30a91ecfa9ceb2ff54efbe08d6d6
+              tag: v5.16.0
             env:
               TZ: Europe/Vienna
               CUSTOM_PATH: /config/config.yaml
