@@ -79,11 +79,18 @@ spec:
       destinationPath: s3://cnpg-gismo2004/mealie
       endpointURL: https://s3.eu-central-003.backblazeb2.com
       serverName: mealie-postgres-v4
+      # gzip, not bzip2. Measured on this node/link: the B2 upload tops out at
+      # 3.4 MB/s while bzip2 compresses at only 5.7 MB/s -- so bzip2 pegged a
+      # full core just to feed a link it could barely keep ahead of. gzip runs at
+      # 22.8 MB/s for a ratio only 4 points worse (70% vs 66%), i.e. ~16s more
+      # upload per GB for roughly a quarter of the CPU. lz4/snappy are faster
+      # still but compress worse, and since the link is the ceiling that is a
+      # net loss. CNPG's enum offers no zstd.
       data:
-        compression: bzip2
+        compression: gzip
         jobs: 2
       wal:
-        compression: bzip2
+        compression: gzip
       s3Credentials:
         accessKeyId:
           name: mealie-postgres-s3-creds
