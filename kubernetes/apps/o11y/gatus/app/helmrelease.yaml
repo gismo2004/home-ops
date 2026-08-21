@@ -11,10 +11,15 @@ spec:
   interval: 1h
   values:
     defaultPodOptions:
+      dnsPolicy: None
       dnsConfig:
         nameservers:
           - 172.17.170.211
           - 172.17.0.10
+        searches:
+          - o11y.svc.cluster.local
+          - svc.cluster.local
+          - cluster.local
     controllers:
       gatus:
         annotations:
@@ -27,6 +32,7 @@ spec:
             env:
               TZ: Europe/Vienna
               CUSTOM_PATH: /config/config.yaml
+              LOG_LEVEL: DEBUG
             probes:
               liveness:
                 type: HTTP
