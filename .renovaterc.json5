@@ -15,6 +15,12 @@
     "github>home-operations/renovate-presets//apps/grafanaDashboards.json5#8.1.0",
     ":timezone(Europe/Vienna)",
   ],
+  hostRules: [
+    {
+      matchHost: "ghcr.io",
+      enableAnonymous: true,
+    },
+  ],
   lockFileMaintenance: {
     enabled: true,
     schedule: ["before 3am on the first day of the month"],
