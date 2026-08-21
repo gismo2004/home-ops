@@ -20,3 +20,10 @@ spec:
     namespace: flux-system
   targetNamespace: tasmoadmin
   wait: true
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      KOPIUR_NAME: tasmoadmin
+      KOPIUR_CLAIM: tasmoadmin-data
+      KOPIUR_CAPACITY: 5Gi
