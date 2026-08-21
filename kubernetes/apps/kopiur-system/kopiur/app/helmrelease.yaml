@@ -25,11 +25,19 @@ spec:
         enabled: true
     monitoring:
       dashboards:
-        enabled: false
+        enabled: true
+        grafanaOperator:
+          enabled: true
+          allowCrossNamespaceImport: true
+          matchLabels:
+            dashboards: grafana
       prometheusRule:
-        enabled: false
+        enabled: true
       serviceMonitor:
-        enabled: false
+        enabled: true
+    webhook:
+      serviceMonitor:
+        enabled: true
     podSecurityContext:
       runAsNonRoot: true
       runAsUser: 1000
