@@ -65,6 +65,14 @@ spec:
         name: photoview-postgres-user
       source: photoview-postgres-old
   externalClusters:
+    # Reads from the LIVE bucket. Repointed when the old per-app buckets were
+    # deleted; kept rather than dropped because removing bootstrap.recovery
+    # makes CNPG fall back to initdb, so a rebuild-from-git would come up with
+    # an EMPTY database instead of failing loudly.
+    #
+    # On a rebuild, spec.backup.serverName below MUST be bumped so it differs
+    # from the serverName read here, or barman-cloud-check-wal-archive refuses
+    # with "Expected empty archive".
     - name: photoview-postgres-old
       barmanObjectStore:
         destinationPath: s3://cnpg-gismo2004/photoview
@@ -80,10 +88,10 @@ spec:
   backup:
     retentionPolicy: 5d
     barmanObjectStore:
-      # Moved to a dedicated bucket. The old per-app buckets had accumulated
-      # six serverName generations from the migration (29GB in hass, of which
-      # the live archive was 60MB). externalClusters above still points at the
-      # old archive -- it is read-only and only consulted at bootstrap.
+      # Dedicated bucket. The old per-app buckets had accumulated one archive
+      # per migration attempt -- six serverName generations in hass totalling
+      # 29GB, of which the live one was 60MB -- and were deleted once a base
+      # backup existed here.
       destinationPath: s3://cnpg-gismo2004/photoview
       endpointURL: https://s3.eu-central-003.backblazeb2.com
       serverName: photoview-postgres-v4
