@@ -45,3 +45,7 @@ spec:
           - path: /etc/prometheus/pve.yml
             subPath: pve.yml
             readOnly: true
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
