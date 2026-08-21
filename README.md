@@ -23,18 +23,18 @@ This repository contains the complete declarative infrastructure and application
 
 ### ⚙️ Architecture & Core Components
 
-| Component               | Technology                                                  | Description                                                               |
-| :---------------------- | :---------------------------------------------------------- | :------------------------------------------------------------------------ |
-| **Operating System**    | [Talos Linux](https://www.talos.dev/)                       | Immutable, secure, minimal Linux distribution for Kubernetes              |
-| **GitOps Controller**   | [Flux CD](https://fluxcd.io/)                               | Automated synchronization and lifecycle management from Git               |
-| **Networking & CNI**    | [Cilium](https://cilium.io/)                                | High-performance eBPF CNI with native L2 LoadBalancer IPAM                |
-| **Ingress & Gateway**   | [Envoy Gateway](https://gateway.envoyproxy.io/)             | Kubernetes Gateway API implementation for internal routing                |
-| **Certificates**        | [Cert-Manager](https://cert-manager.io/)                    | Automated TLS certificate provisioning via Cloudflare DNS-01              |
-| **Secrets Management**  | [SOPS](https://github.com/getsops/sops) + Age               | Git-encrypted secrets with automatic decryption by Flux                   |
-| **Storage Driver**      | [Miroir CSI](https://github.com/home-operations/miroir)     | Lightweight local node storage CSI with VolumeSnapshot support            |
-| **Backups & Snapshots** | [Kopiur](https://github.com/home-operations/kopiur) + Kopia | Automated snapshot schedules, deduplication, and repository management    |
-| **Database Engine**     | [CloudNativePG](https://cloudnative-pg.io/)                 | High-availability PostgreSQL operator with automated WAL archiving        |
-| **Observability**       | Prometheus, Grafana, VictoriaLogs                           | Comprehensive metrics, log aggregation, alerting, and hardware monitoring |
+| Component               | Technology                                                    | Description                                                             |
+| :---------------------- | :------------------------------------------------------------ | :---------------------------------------------------------------------- |
+| **Operating System**    | [Talos Linux](https://www.talos.dev/)                         | Immutable, secure, minimal Linux distribution for Kubernetes            |
+| **GitOps Controller**   | [Flux CD](https://fluxcd.io/)                                 | Automated synchronization and lifecycle management from Git             |
+| **Networking & CNI**    | [Cilium](https://cilium.io/)                                  | High-performance eBPF CNI with native L2 LoadBalancer IPAM              |
+| **Ingress & Gateway**   | [Envoy Gateway](https://gateway.envoyproxy.io/)               | Kubernetes Gateway API implementation for internal routing              |
+| **Certificates**        | [Cert-Manager](https://cert-manager.io/)                      | Automated TLS certificate provisioning via Cloudflare DNS-01            |
+| **Secrets Management**  | [SOPS](https://github.com/getsops/sops) + Age                 | Git-encrypted secrets with automatic decryption by Flux                 |
+| **Storage Driver**      | [Miroir CSI](https://github.com/home-operations/miroir)       | DRBD-backed local node storage CSI with VolumeSnapshot support          |
+| **Backups & Snapshots** | [Kopiur](https://github.com/home-operations/kopiur) + Kopia   | Automated snapshot schedules, deduplication, and repository management  |
+| **Database Engine**     | [CloudNativePG](https://cloudnative-pg.io/)                   | PostgreSQL operator with automated WAL archiving to object storage      |
+| **Observability**       | Prometheus, Grafana, VictoriaLogs, [Gatus](https://gatus.io/) | Metrics, log aggregation, dashboards, and external status/uptime checks |
 
 ---
 
@@ -53,17 +53,25 @@ Workloads are deployed in isolated namespaces and structured logically:
 
 ```text
 .
-├── .github/                 # GitHub Actions workflows and Renovate configuration
+├── .github/                 # GitHub Actions workflows (CI validation, label sync)
+├── .renovaterc.json5        # Renovate configuration (root, not under .github/)
+├── bootstrap/               # helmfile-driven CRD + core-component bootstrap
+├── docs/
+│   └── MIGRATION.md         # rebuild/migration runbook from the previous cluster
 ├── kubernetes/
-│   ├── apps/                # Application manifests grouped by namespace
-│   │   ├── default/         # User applications and services
-│   │   ├── network/         # Ingress, Gateway API, and DNS routing
-│   │   ├── o11y/            # Observability (Prometheus, Grafana, VictoriaLogs)
-│   │   ├── kopiur-system/   # Backup and snapshot policies
-│   │   └── kube-system/     # Core CNI, CoreDNS, and snapshot controller
-│   ├── components/          # Reusable Kustomize components (SOPS, Kopiur, Gatus)
-│   └── flux/                # Flux cluster bootstrap and root Kustomizations
-└── talos/                   # Talos Linux machine configurations and patches
+│   ├── apps/                # Application manifests, one Flux Kustomization per app
+│   │   ├── default/         # User applications and services (own namespace per app)
+│   │   ├── network/         # Cilium LB IPAM, Envoy Gateway, DNS (external-dns, k8s-gateway)
+│   │   ├── o11y/            # Prometheus, Grafana, VictoriaLogs, blackbox-exporter, Gatus
+│   │   ├── kopiur-system/   # Backup repository + operator (per-app backup policies live
+│   │   │                    #   alongside each app instead, under apps/<group>/<app>/)
+│   │   ├── cnpg-system/     # CloudNativePG operator
+│   │   ├── cert-manager/    # TLS certificate issuance
+│   │   ├── miroir-system/   # Storage CSI
+│   │   └── kube-system/     # CNI, CoreDNS, metrics-server, snapshot-controller
+│   ├── components/          # Reusable Kustomize components: sops/, kopiur/backup/
+│   └── flux/                # Flux root Kustomization (applies kubernetes/apps)
+└── talos/                   # Talos Linux machine config (topf-rendered)
 ```
 
 ---
