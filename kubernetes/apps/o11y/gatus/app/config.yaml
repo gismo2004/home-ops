@@ -8,7 +8,7 @@ ui:
 endpoints:
   - name: Home Assistant
     group: Core
-    url: "https://home-assistant.gismo2004.cc"
+    url: "https://homeserver.gismo2004.cc"
     interval: 1m
     conditions:
       - "[STATUS] == 200"
