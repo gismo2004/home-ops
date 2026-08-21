@@ -18,8 +18,11 @@ spec:
     matchLabels:
       dashboards: grafana
   datasources:
+    # NOT DS_PROMETHEUS: this board references ${ds_prometheus} (lowercase, and
+    # a plain template variable rather than an __input). The operator matches
+    # inputName literally, so a wrong name silently leaves panels unresolved.
     - datasourceName: prometheus
-      inputName: DS_PROMETHEUS
+      inputName: ds_prometheus
   url: https://grafana.com/api/dashboards/1860/revisions/45/download
 ---
 apiVersion: grafana.integreatly.org/v1beta1
@@ -89,7 +92,7 @@ spec:
       dashboards: grafana
   datasources:
     - datasourceName: prometheus
-      inputName: DS_PROMETHEUS
+      inputName: DS_OPENSHIFT_PROMETHEUS
   url: https://grafana.com/api/dashboards/11454/revisions/14/download
 ---
 apiVersion: grafana.integreatly.org/v1beta1
@@ -159,7 +162,7 @@ spec:
       dashboards: grafana
   datasources:
     - datasourceName: prometheus
-      inputName: DS_PROMETHEUS
+      inputName: DS_SIGNCL-PROMETHEUS
   url: https://grafana.com/api/dashboards/7587/revisions/3/download
 ---
 apiVersion: grafana.integreatly.org/v1beta1
