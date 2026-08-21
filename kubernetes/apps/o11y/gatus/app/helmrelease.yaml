@@ -17,7 +17,7 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/twin/gatus
+              repository: twinproduction/gatus
               tag: v5.16.0
             env:
               TZ: Europe/Vienna
