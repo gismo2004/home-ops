@@ -24,15 +24,6 @@ spec:
             image:
               repository: ghcr.io/unmonitarr/unmonitarr
               tag: latest@sha256:9a8cc3683a633c36739189d23c66f0beef9419b2eee04a4eb16fd9eea7524d47
-            args:
-              - uvicorn
-              - src.main:app
-              - --host
-              - 0.0.0.0
-              - --port
-              - "8088"
-              - --proxy-headers
-              - --forwarded-allow-ips=*
             env:
               JELLYFIN_URL: "http://jellyfin.media.svc.cluster.local:8096"
               JELLYFIN_API_KEY: "17ba6e6e5c0e4ed1a4f3f55baad37834"
