@@ -34,7 +34,7 @@ spec:
               - --proxy-headers
               - --forwarded-allow-ips=*
             env:
-              JELLYFIN_URL: "http://jellyfin.media.svc.cluster.local:8096"
+              JELLYFIN_URL: "http://jellyfin-app.media.svc.cluster.local:8096"
               JELLYFIN_API_KEY: "17ba6e6e5c0e4ed1a4f3f55baad37834"
               SONARR_URL: "http://sonarr.media.svc.cluster.local:8989"
               SONARR_API_KEY: "c1d00fd0de9c4b31a7de6a24745ed143"
