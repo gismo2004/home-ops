@@ -8,4 +8,8 @@ spec:
   policyRef:
     name: ${KOPIUR_NAME}
   schedule:
-    cron: "${KOPIUR_CRON:=H H/12 * * *}" # every 12h, at a deterministic hashed minute/offset
+    cron: "${KOPIUR_CRON:=H 0,12 * * *}" # every 12h (00:00/12:00), at a deterministic hashed minute
+    # NOTE: "H H/12 * * *" (Jenkins-style hash-with-step) is rejected by
+    # Kopiur's admission webhook: "CronPattern contains illegal character
+    # 'H' in part 'H/12'" -- H can't combine with a step. Confirmed working
+    # via `kubectl apply --dry-run=server` before use.

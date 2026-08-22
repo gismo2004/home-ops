@@ -8,4 +8,4 @@ spec:
   policyRef:
     name: jdownloader2
   schedule:
-    cron: "H H/12 * * *" # every 12h, at a deterministic hashed minute/offset
+    cron: "H 0,12 * * *" # every 12h, at a deterministic hashed minute

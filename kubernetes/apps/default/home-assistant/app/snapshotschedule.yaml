@@ -8,4 +8,4 @@ spec:
   policyRef:
     name: home-assistant
   schedule:
-    cron: "H H/12 * * *"
+    cron: "H 0,12 * * *"
