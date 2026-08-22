@@ -19,7 +19,7 @@ spec:
     name: flux-system
     namespace: flux-system
   targetNamespace: oscam
-  wait: true
+  wait: false
   components:
     - ../../../../components/kopiur/backup
   postBuild:

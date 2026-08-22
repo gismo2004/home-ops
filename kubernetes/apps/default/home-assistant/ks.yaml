@@ -19,4 +19,4 @@ spec:
     name: flux-system
     namespace: flux-system
   targetNamespace: hass
-  wait: true
+  wait: false

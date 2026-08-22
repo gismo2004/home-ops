@@ -19,4 +19,4 @@ spec:
     name: flux-system
     namespace: flux-system
   targetNamespace: mosquitto
-  wait: true
+  wait: false
