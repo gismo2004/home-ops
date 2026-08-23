@@ -25,8 +25,15 @@ spec:
               repository: ghcr.io/jlesage/jdownloader-2
               tag: v26.08.2@sha256:f16d47986bf6a5db6d67484e3b7e76404bce74f6f212809127a79eb76aa1c641
             env:
-              PUID: "568"
-              PGID: "568"
+              # ghcr.io/jlesage/jdownloader-2 is a jlesage/docker-baseimage-gui
+              # image: it reads USER_ID/GROUP_ID, not the linuxserver.io-style
+              # PUID/PGID. Setting the wrong pair silently no-ops and the app
+              # process runs as the image's default uid/gid 1000, which can't
+              # write into the /output NFS share (owned 568:568) -> JDownloader
+              # reports "Bad download folder" for any package whose destination
+              # subfolder doesn't already exist.
+              USER_ID: "568"
+              GROUP_ID: "568"
               VNC_PASSWORD: "tesalonicher"
               VNC_EXTRA_ARGS: "-BlacklistThreshold 0 -BlacklistTimeout 0"
             securityContext:
