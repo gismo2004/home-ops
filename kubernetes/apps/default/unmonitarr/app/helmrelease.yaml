@@ -122,6 +122,13 @@ spec:
           - path: /app/static/main.js
             subPath: main.js
             readOnly: true
+      webhook-handler:
+        type: configMap
+        name: unmonitarr-webhook-handler
+        globalMounts:
+          - path: /app/src/webhook_handler.py
+            subPath: webhook_handler.py
+            readOnly: true
     configMaps:
       # referenced by identifier from persistence.main-js above, so the
       # generated name does not matter.

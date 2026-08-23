@@ -9,3 +9,9 @@ resources:
   - ./snapshotschedule.yaml
   - ./restore.yaml
   - ./pvc.yaml
+configMapGenerator:
+  - name: unmonitarr-webhook-handler
+    files:
+      - webhook_handler.py=./webhook_handler.py
+generatorOptions:
+  disableNameSuffixHash: true
