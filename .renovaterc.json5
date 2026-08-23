@@ -61,7 +61,6 @@
       matchUpdateTypes: ["minor", "patch", "digest"],
       automerge: true,
       automergeType: "branch",
-      minimumReleaseAge: "3 days",
       ignoreTests: true,
     },
     {
@@ -76,15 +75,18 @@
     },
     {
       // Normal applications: minor and patch merge unattended. Major never
-      // does -- that is where behaviour changes. minimumReleaseAge gives a
-      // broken release time to be pulled before it lands here.
+      // does -- that is where behaviour changes.
       description: "Auto-merge app minor/patch",
       matchDatasources: ["docker", "helm"],
       matchUpdateTypes: ["minor", "patch"],
       automerge: true,
       automergeType: "pr",
-      minimumReleaseAge: "3 days",
       ignoreTests: false,
+    },
+    {
+      description: "Require 3 days stability for major updates",
+      matchUpdateTypes: ["major"],
+      minimumReleaseAge: "3 days",
     },
     {
       // MUST come after the rule above -- later packageRules win. These are the
