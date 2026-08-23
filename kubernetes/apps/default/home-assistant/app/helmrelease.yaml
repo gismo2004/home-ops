@@ -63,6 +63,9 @@ spec:
                   periodSeconds: 10
             securityContext:
               allowPrivilegeEscalation: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
               readOnlyRootFilesystem: false
               capabilities:
                 drop: ["ALL"]
