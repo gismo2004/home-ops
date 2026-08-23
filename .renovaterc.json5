@@ -15,6 +15,13 @@
     "github>home-operations/renovate-presets//apps/grafanaDashboards.json5#8.1.0",
     ":timezone(Europe/Vienna)",
   ],
+  // main has no branch protection requiring branches to be up to date, so there's no need to
+  // force-rebase a branch just because an unrelated PR merged and moved main's tip. Without this,
+  // automerge=true branches default to rebaseWhen=behind-base-branch, which means merging any one
+  // automerge PR invalidates the CI status of every other open automerge PR (forces a rebase,
+  // wiping their green checks) even when they touch completely disjoint files -- serializing what
+  // should be independent merges to ~one per Renovate run.
+  rebaseWhen: "conflicted",
   lockFileMaintenance: {
     enabled: true,
     schedule: ["before 3am on the first day of the month"],
