@@ -26,7 +26,7 @@ spec:
   # (minAvailable 1 -> disruptionsAllowed 0), which makes `kubectl drain` block
   # forever and would stall a Talos node upgrade.
   enablePDB: false
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.14@sha256:93d0456be6e8e7a5d2d4e54953967f8b2d7f410c5ab7ca1739f42383436df035
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.15@sha256:e38d10bb2c7420e62efe9afabf207c005d93cdcf30f19f692d047f7dc660271e
   primaryUpdateMethod: switchover
   enableSuperuserAccess: true
   postgresUID: 26
