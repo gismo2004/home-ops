@@ -9,3 +9,4 @@ spec:
     name: jdownloader2
   schedule:
     cron: "H 0,12 * * *" # every 12h, at a deterministic hashed minute
+    jitter: 6h # deterministic per-object offset (scheduleUID, slot), spreads the actual fire time

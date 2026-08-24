@@ -13,3 +13,6 @@ spec:
     # Kopiur's admission webhook: "CronPattern contains illegal character
     # 'H' in part 'H/12'" -- H can't combine with a step. Confirmed working
     # via `kubectl apply --dry-run=server` before use.
+    jitter: "${KOPIUR_JITTER:=6h}" # deterministic per-object offset (scheduleUID, slot),
+    # so the ~20+ apps sharing the 00:00/12:00 anchors don't all fire in the
+    # same hour-wide burst. Auto-scales to new apps with zero manual tuning.
