@@ -5,3 +5,41 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
+patches:
+  # /workspace is a code-server dev environment, not just app config: ~90% of
+  # its ~17G is regenerable IDE/editor tooling cache (cpptools' C++ IntelliSense
+  # index, code-server's own cache, vscode-server's downloaded extensions,
+  # playwright browser binaries) that reappears on its own the next time
+  # code-server/an extension starts. Only edgetx/ (the actual firmware repo)
+  # is real data. The shared Kopiur component has no ignoreRules knob, so scope
+  # the exclusion to just this app's SnapshotPolicy here.
+  #
+  # This MUST live in the app's Kustomization, not in ks.yaml's spec.patches:
+  # the root cluster-apps Kustomization patches spec.patches onto every child
+  # Kustomization and that merge REPLACES the list wholesale, so a Flux-level
+  # patch is silently dropped (this exclusion sat dead from 761dea5 until
+  # 2026-08-24 for exactly that reason).
+  #
+  # Note an explicit ignoreRules list replaces Kopiur's defaults wholesale,
+  # hence the OS-artifact entries repeated below.
+  - target:
+      group: kopiur.home-operations.com
+      kind: SnapshotPolicy
+    patch: |-
+      apiVersion: kopiur.home-operations.com/v1alpha1
+      kind: SnapshotPolicy
+      metadata:
+        # The component's object is still literally named ${KOPIUR_NAME} at
+        # build time (postBuild.substitute runs later), so match by kind only.
+        name: placeholder
+      spec:
+        files:
+          ignoreRules:
+            - /lost+found
+            - System Volume Information
+            - $$RECYCLE.BIN
+            - "@eaDir"
+            - .snapshot
+            - /.cache
+            - /.vscode-server
+            - /.antigravity-ide-server

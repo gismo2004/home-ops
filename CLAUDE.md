@@ -101,6 +101,23 @@ get their own per-app `app/secret.sops.yaml`, which is the pattern that's actual
 the literal placeholder string into the live object. Push to git and let Flux substitute, or use
 `kubectl patch` against already-substituted fields for narrow, temporary debugging only.
 
+## Per-app patches go in `app/kustomization.yaml`, never in `ks.yaml`'s `spec.patches`
+
+The root `cluster-apps` Kustomization (`kubernetes/flux/cluster/ks.yaml`) patches a `spec.patches`
+block (the shared HelmRelease install/upgrade defaults) onto **every** child Kustomization. That
+merge **replaces the list wholesale**, so anything a child `ks.yaml` puts in its own
+`spec.patches` is silently dropped — no error, no warning, the field just isn't there on the live
+object. Check with `kubectl -n default get kustomization <app> -o yaml` if in doubt: if the only
+entry under `spec.patches` is the HelmRelease one, yours was eaten.
+
+Patch at the Kustomize layer instead — a `patches:` block in the app's own
+`app/kustomization.yaml`. It applies to component-generated resources too (verified against
+`components/kopiur/backup`), and unlike the Flux-level version it's visible in a local
+`kustomize build`. Target by `group`+`kind` only: `postBuild.substitute` runs _after_ the build,
+so at patch time the object is still literally named `${KOPIUR_NAME}` and a name filter never
+matches. `edgetx`'s Kopiur cache exclusion sat dead this way from commit `761dea5` until it was
+found and moved on 2026-08-24.
+
 ## Workflow: git+Flux for configuration, kubectl for state changes
 
 **Configuration** (a resource's desired spec) belongs in git, applied by Flux. **State changes**

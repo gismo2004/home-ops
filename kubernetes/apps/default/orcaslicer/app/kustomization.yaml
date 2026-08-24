@@ -5,3 +5,38 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
+patches:
+  # The app container runs as root (privileged; PUID/PGID 568 are handled inside
+  # by LSIO's init), so a root process can create root-owned paths anywhere under
+  # /config. procps does exactly that -- it creates ~/.config/procps as
+  # root:568 mode 0700, which the mover, running as 568, cannot traverse. kopia
+  # treats an unreadable directory as a FATAL error and fails the entire
+  # snapshot (first hit 2026-08-24, scheduled run 10:29Z). The directory is
+  # empty and regenerable, so exclude it rather than escalate the mover to root.
+  #
+  # This patch lives here, in the app's Kustomization, NOT in ks.yaml's
+  # spec.patches: the root cluster-apps Kustomization patches spec.patches onto
+  # every child Kustomization, and that merge REPLACES the list wholesale, so a
+  # Flux-level patch here would be silently dropped.
+  #
+  # Note an explicit ignoreRules list replaces Kopiur's defaults wholesale,
+  # hence the OS-artifact entries repeated below.
+  - target:
+      group: kopiur.home-operations.com
+      kind: SnapshotPolicy
+    patch: |-
+      apiVersion: kopiur.home-operations.com/v1alpha1
+      kind: SnapshotPolicy
+      metadata:
+        # The component's object is still literally named ${KOPIUR_NAME} at
+        # build time (postBuild.substitute runs later), so match by kind only.
+        name: placeholder
+      spec:
+        files:
+          ignoreRules:
+            - /lost+found
+            - System Volume Information
+            - $$RECYCLE.BIN
+            - "@eaDir"
+            - .snapshot
+            - /.config/procps

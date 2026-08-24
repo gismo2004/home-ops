@@ -32,37 +32,3 @@ spec:
       KOPIUR_PUID: "1000"
       KOPIUR_PGID: "1000"
       KOPIUR_CACHE: 5Gi
-  # /workspace is a code-server dev environment, not just app config: ~90% of
-  # its ~17G is regenerable IDE/editor tooling cache (cpptools' C++ IntelliSense
-  # index, code-server's own cache, vscode-server's downloaded extensions,
-  # playwright browser binaries) that reappears on its own the next time
-  # code-server/an extension starts. Only edgetx/ (the actual firmware repo)
-  # is real data. The shared component has no ignoreRules knob and patching
-  # it here would apply to the other 15 apps sharing it, so scope the
-  # exclusion to just this app's SnapshotPolicy via a Kustomization patch,
-  # same style as kubernetes/flux/cluster/ks.yaml.
-  patches:
-    - patch: |-
-        apiVersion: kopiur.home-operations.com/v1alpha1
-        kind: SnapshotPolicy
-        metadata:
-          # postBuild.substitute runs AFTER patches are applied, so the
-          # object's real name is still the literal ${KOPIUR_NAME}
-          # placeholder at patch time -- name: edgetx here would never
-          # match. No name filter needed below either: this component
-          # produces exactly one SnapshotPolicy within this Kustomization.
-          name: placeholder
-        spec:
-          files:
-            ignoreRules:
-              - /lost+found
-              - System Volume Information
-              - $RECYCLE.BIN
-              - "@eaDir"
-              - .snapshot
-              - /.cache
-              - /.vscode-server
-              - /.antigravity-ide-server
-      target:
-        group: kopiur.home-operations.com
-        kind: SnapshotPolicy
