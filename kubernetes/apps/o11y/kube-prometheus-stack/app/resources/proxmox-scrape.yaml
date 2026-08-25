@@ -44,6 +44,35 @@ spec:
       separator: ";"
       regex: "node_hwmon_in_(alarm|beep_enabled|min_volts|max_volts);platform_nct6775_656"
       action: drop
+    # Having dropped the six phantom nct6791 fans above, feed the REAL ones in.
+    # The host already exports them: the Debian node-exporter package ships
+    # prometheus-node-exporter-ipmitool-sensor.timer, which writes
+    # node_ipmi_speed_rpm to the textfile collector every 60s. No extra exporter
+    # is needed -- the readings were there all along, just under a metric name
+    # no dashboard looks at.
+    #
+    # node-exporter-full's "Hardware Fan Speed" panel queries:
+    #   node_hwmon_fan_rpm * on(chip) group_left(chip_name) node_hwmon_chip_names
+    # so a renamed series also needs a `chip` that has a chip_names entry, or the
+    # join silently drops it. platform_eeepc_wmi is used because it carries a
+    # chip_names entry (chip_name="asus", value 1 -- the join multiplies, so a 0
+    # would zero the RPMs) while exposing no sensors of its own, making it a free
+    # slot. It also reads more honestly than borrowing platform_nct6775_656:
+    # these come from the board's ASPEED BMC, not from the Super I/O.
+    #
+    # Order matters -- `chip` is set while the metric still has its original
+    # name, then the rename happens. Note this consumes node_ipmi_speed_rpm:
+    # relabeling renames rather than duplicates, so that name disappears.
+    - sourceLabels: [__name__]
+      regex: "node_ipmi_speed_rpm"
+      targetLabel: chip
+      replacement: "platform_eeepc_wmi"
+      action: replace
+    - sourceLabels: [__name__]
+      regex: "node_ipmi_speed_rpm"
+      targetLabel: __name__
+      replacement: "node_hwmon_fan_rpm"
+      action: replace
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/scrapeconfig_v1alpha1.json
 apiVersion: monitoring.coreos.com/v1alpha1
