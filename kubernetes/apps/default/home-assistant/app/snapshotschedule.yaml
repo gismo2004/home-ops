@@ -8,5 +8,5 @@ spec:
   policyRef:
     name: home-assistant
   schedule:
-    cron: "H 0,12 * * *"
+    cron: "H 0,6,12,18 * * *"
     jitter: 6h # deterministic per-object offset (scheduleUID, slot), spreads the actual fire time

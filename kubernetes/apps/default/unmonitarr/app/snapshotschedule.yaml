@@ -8,7 +8,7 @@ spec:
   policyRef:
     name: unmonitarr-config
   schedule:
-    cron: "H 0,12 * * *" # every 12h, at a deterministic hashed minute
+    cron: "H 0,6,12,18 * * *" # every 6h, at a deterministic hashed minute
     jitter: 6h # deterministic per-object offset (scheduleUID, slot), spreads the actual fire time
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
@@ -20,5 +20,5 @@ spec:
   policyRef:
     name: unmonitarr-data
   schedule:
-    cron: "H 0,12 * * *" # every 12h, at a deterministic hashed minute
+    cron: "H 0,6,12,18 * * *" # every 6h, at a deterministic hashed minute
     jitter: 6h # deterministic per-object offset (scheduleUID, slot), spreads the actual fire time

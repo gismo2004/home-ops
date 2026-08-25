@@ -8,11 +8,25 @@ spec:
   policyRef:
     name: ${KOPIUR_NAME}
   schedule:
-    cron: "${KOPIUR_CRON:=H 0,12 * * *}" # every 12h (00:00/12:00), at a deterministic hashed minute
+    cron: "${KOPIUR_CRON:=H 0,6,12,18 * * *}" # every 6h, at a deterministic hashed minute
     # NOTE: "H H/12 * * *" (Jenkins-style hash-with-step) is rejected by
     # Kopiur's admission webhook: "CronPattern contains illegal character
-    # 'H' in part 'H/12'" -- H can't combine with a step. Confirmed working
-    # via `kubectl apply --dry-run=server` before use.
+    # 'H' in part 'H/12'" -- H can't combine with a step. An explicit hour list
+    # is fine. Confirmed working via `kubectl apply --dry-run=server` before use.
     jitter: "${KOPIUR_JITTER:=6h}" # deterministic per-object offset (scheduleUID, slot),
-    # so the ~20+ apps sharing the 00:00/12:00 anchors don't all fire in the
-    # same hour-wide burst. Auto-scales to new apps with zero manual tuning.
+    # so the ~20+ apps sharing these anchors don't all fire in the same hour-wide
+    # burst. Auto-scales to new apps with zero manual tuning.
+    #
+    # KEEP JITTER EQUAL TO THE SLOT INTERVAL. Jitter is additive over [0, +j], so
+    # a window only covers `j` hours after each anchor; anything shorter than the
+    # interval leaves dead time. The previous 12h/6h pairing covered just half of
+    # every cycle -- measured over the days after jitter was introduced, every run
+    # landed in 00:00-06:00 or 12:00-18:00 and hours 07-11 and 19-23 were empty.
+    #
+    # Matching them (6h interval + 6h jitter) makes the windows contiguous, so
+    # firing times spread across all 24h. It also tightens the worst case rather
+    # than loosening it: consecutive runs of one policy are `interval + (j_next -
+    # j_prev)` apart, so this is 0-12h, against 6-18h before. Simply raising
+    # jitter to 12h would also have filled the day, but at 0-24h.
+    #
+    # Four runs a day instead of two: cheap, since kopia only ships incrementals.
