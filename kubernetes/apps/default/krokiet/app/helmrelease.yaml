@@ -62,7 +62,25 @@ spec:
       securityContext:
         fsGroup: 568
         fsGroupChangePolicy: OnRootMismatch
-        supplementalGroups: [568]
+        # 568 = apps. 545 = builtin_users, 1001 = a_user -- both needed to read
+        # the Incomming NFS export: most of that tree is owned a_user:builtin_users
+        # or a_user:a_user with mode 770/660, i.e. no `other` bits at all, so uid
+        # 568 was denied on ~360k files and Krokiet's scan reported them as
+        # "Permission denied (os error 13)".
+        #
+        # This replaces the obvious fix of chown/chmod -R over the share, which is
+        # NOT safe here: Backup/private has aclmode=discard plus live POSIX ACLs
+        # (and the tempDrive SMB share sits on it), so a recursive chmod would
+        # silently drop those ACLs -- and the pool has ~56 MB free, so rewriting
+        # metadata for ~1M objects while 14 snapshots pin the old copies would
+        # hit ENOSPC partway and leave permissions half-applied.
+        #
+        # The NFS export sets no mapall, and the server has manage-gids disabled
+        # (/etc/nfs.conf manage-gids=n, nfs.config userd_manage_gids=false), so
+        # AUTH_SYS carries this gid list from the client and the server honours it.
+        # Verified: reading a 770 a_user:builtin_users file as uid 568 goes from
+        # EACCES to a valid JPEG once 545 is present.
+        supplementalGroups: [568, 545, 1001]
     service:
       app:
         ports:
