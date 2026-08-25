@@ -23,6 +23,22 @@ spec:
               USER_ID: 568
               GROUP_ID: 568
               KEEP_APP_RUNNING: "1"
+              # 545 = builtin_users, 1001 = a_user. Required to read the Incomming
+              # NFS export: most of that tree is a_user:builtin_users or
+              # a_user:a_user with mode 770/660 -- no `other` bits -- so uid 568
+              # was denied on ~360k files, which Krokiet's scan reported as
+              # "Permission denied (os error 13)".
+              #
+              # This env var, NOT defaultPodOptions.supplementalGroups, is what
+              # actually fixes it. The kubelet does apply supplementalGroups, but
+              # only to PID 1 (root); jlesage's s6 supervisor then drops to uid 568
+              # and rebuilds the supplementary list from the image's own
+              # /etc/group, where `app` is only in group 568 -- so 545/1001 are
+              # discarded before Krokiet ever starts. Confirmed via /proc: PID 1
+              # had "Groups: 0 545 568 1001" while /usr/bin/krokiet had "Groups:
+              # 568". SUP_GROUP_IDS is consumed by /etc/cont-init.d/10-init-users.sh
+              # and written to /etc/services.d/app/sgid, so it survives the drop.
+              SUP_GROUP_IDS: "545,1001"
             probes:
               liveness:
                 type: HTTP
@@ -62,24 +78,21 @@ spec:
       securityContext:
         fsGroup: 568
         fsGroupChangePolicy: OnRootMismatch
-        # 568 = apps. 545 = builtin_users, 1001 = a_user -- both needed to read
-        # the Incomming NFS export: most of that tree is owned a_user:builtin_users
-        # or a_user:a_user with mode 770/660, i.e. no `other` bits at all, so uid
-        # 568 was denied on ~360k files and Krokiet's scan reported them as
-        # "Permission denied (os error 13)".
+        # 545/1001 here cover root-level helpers inside the container (and any
+        # non-s6 process). They do NOT reach Krokiet itself -- see the
+        # SUP_GROUP_IDS comment on the container env above, which is the setting
+        # that actually grants the app access to the Incomming NFS export.
         #
-        # This replaces the obvious fix of chown/chmod -R over the share, which is
-        # NOT safe here: Backup/private has aclmode=discard plus live POSIX ACLs
-        # (and the tempDrive SMB share sits on it), so a recursive chmod would
-        # silently drop those ACLs -- and the pool has ~56 MB free, so rewriting
-        # metadata for ~1M objects while 14 snapshots pin the old copies would
-        # hit ENOSPC partway and leave permissions half-applied.
+        # Why the group route at all, rather than chown/chmod -R over the share:
+        # Backup/private has aclmode=discard plus live POSIX ACLs (and the
+        # tempDrive SMB share sits on it), so a recursive chmod would silently
+        # drop those ACLs -- and the pool has ~56 MB free, so rewriting metadata
+        # for ~1M objects while 14 snapshots pin the old copies would hit ENOSPC
+        # partway and leave permissions half-applied.
         #
-        # The NFS export sets no mapall, and the server has manage-gids disabled
+        # The NFS export sets no mapall and the server has manage-gids disabled
         # (/etc/nfs.conf manage-gids=n, nfs.config userd_manage_gids=false), so
-        # AUTH_SYS carries this gid list from the client and the server honours it.
-        # Verified: reading a 770 a_user:builtin_users file as uid 568 goes from
-        # EACCES to a valid JPEG once 545 is present.
+        # AUTH_SYS carries the client's gid list and the server honours it.
         supplementalGroups: [568, 545, 1001]
     service:
       app:
