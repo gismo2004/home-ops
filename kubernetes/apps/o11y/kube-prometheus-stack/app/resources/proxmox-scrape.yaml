@@ -13,6 +13,37 @@ spec:
         instance: proxmox
         node: proxmox
         job: node-exporter
+  # The board is an ASUS X99-WS/IPMI, which has an ASPEED BMC. On that board the
+  # BMC -- not the nct6791 Super I/O -- owns fan control and fan tach, and most
+  # of the Super I/O's remaining inputs are simply not wired to anything. The
+  # nct6791 therefore reports a pile of convincing-looking nonsense, which
+  # node-exporter faithfully exports (it reads sysfs directly, so an
+  # /etc/sensors.d ignore rule on the host would NOT suppress these metrics --
+  # it only affects the `sensors` CLI. Dropping has to happen here).
+  #
+  # Dropped, all from chip platform_nct6775_656:
+  #   temp3-temp6   AUXTIN0-3   floating thermistor inputs; AUXTIN1 reads ~79 C
+  #                             while measuring nothing at all
+  #   temp7-temp12  PCH_*       unpopulated, permanently 0.0 C
+  #   fan1-fan6                 permanently 0 RPM -- not wired. Real speeds are
+  #                             1500/1500/1200/900/900 RPM via IPMI.
+  #   pwm1-pwm6                 drives those same unwired headers
+  #   in0-in14 alarms           min==max==0, so every rail alarms permanently
+  #   intrusion0/1              spurious ALARM on a chassis that is not open
+  #
+  # Deliberately KEPT: temp1 (SYSTIN) and temp2 (CPUTIN) are real, and
+  # node_hwmon_in_volts still carries usable rail voltages. Authoritative CPU
+  # temperature comes from coretemp (chip platform_coretemp_0), which IPMI
+  # independently corroborates at 56 C.
+  metricRelabelings:
+    - sourceLabels: [chip, sensor]
+      separator: ";"
+      regex: "platform_nct6775_656;(temp([3-9]|1[0-2])|fan[1-6]|pwm[1-6]|intrusion[0-9]+)"
+      action: drop
+    - sourceLabels: [__name__, chip]
+      separator: ";"
+      regex: "node_hwmon_in_(alarm|beep_enabled|min_volts|max_volts);platform_nct6775_656"
+      action: drop
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/scrapeconfig_v1alpha1.json
 apiVersion: monitoring.coreos.com/v1alpha1
