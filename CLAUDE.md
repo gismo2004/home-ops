@@ -242,11 +242,33 @@ not).
 
 ## Renovate
 
-`.renovaterc.json5` extends `home-operations/renovate-presets`. **Auto-merge is deliberately
-narrow** — trusted-image digests and GitHub Actions only, everything else needs a manual merge.
-This is a direct reaction to an incident on the prior cluster where unrestricted auto-merge took
-cilium two minor versions in an hour, unattended, on a cluster with no second node to absorb a bad
-one.
+`.renovaterc.json5` extends `home-operations/renovate-presets`. **Auto-merge is the default**:
+OCI digests, plus minor/patch for apps, GitHub Actions, Renovate presets and mise tooling. Majors
+never auto-merge and additionally wait out a 3-day `minimumReleaseAge`.
+
+**The denylist that blocks auto-merge is scoped by recoverability, not by category.** Because every
+change here is a git commit Flux applies, the question for any unattended merge is "can a bad one
+be walked back with a revert?" — for almost everything it can, within a minute. The packages that
+stay manual are the ones where it can't: `cilium`/`coredns` (Flux can't pull, nothing resolves),
+`flux-operator`/`flux-instance` (breaks the mechanism that would apply the revert), `miroir`
+(CSI/DRBD on 0.11.x — a revert doesn't unbreak an unmountable volume), `cloudnative-pg`,
+`talos`/`kubelet`, `kopiur` (a break is silent until a restore is needed) and `app-template` (one
+chart behind ~26 apps). Note these projects don't use semver the way applications do — a cilium or
+coredns "minor" is a feature release, which is how an unrestricted auto-merge once took cilium
+1.18.6 → 1.20.0 unattended on the prior cluster. Things like `cert-manager`, `envoy`,
+`external-dns`, `metrics-server` were on this list and were deliberately removed on 2026-08-27:
+breaking them costs ingress or telemetry, not the cluster or its data.
+
+**What CI actually gates.** The automerge rules set `ignoreTests: false` for anything touching
+`kubernetes/**`, but the only check is `flate` — it proves the manifests render and the dependency
+graph resolves, it never starts a container. Auto-merge here means "the YAML is valid", not "the
+app works"; the real safety net is the revert path above.
+
+**A rule only applies if some `matchUpdateTypes` actually covers the update.** `digest` is not
+`patch` — a rule listing `["minor", "patch"]` silently skips digest bumps, which is why third-party
+digest PRs (calibre, kavita) sat unmerged for days with `Automerge: Disabled by config` and no
+error anywhere. When an unexpected PR won't auto-merge, trace it rule by rule against its datasource
+_and_ its update type before assuming the denylist caught it.
 
 Grafana dashboards are `GrafanaDashboard` CRs referencing a URL (grafana.com or an upstream repo),
 not vendored JSON, specifically so Renovate can bump the pinned revision automatically — the

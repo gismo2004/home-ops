@@ -50,14 +50,25 @@
   ],
   packageRules: [
     // ---- Auto-merge -------------------------------------------------------
-    // Deliberately narrow. Version bumps of cluster workloads are NOT
-    // auto-merged: a Renovate automerge previously took cilium 1.18.6 -> 1.20.0
-    // unattended, which is exactly what these rules avoid.
+    // Default is to merge unattended: digests, and minor/patch for apps, GitHub
+    // Actions, Renovate presets and mise tooling. Majors never auto-merge, and
+    // the denylist further down carves out the handful of packages where a bad
+    // update cannot be walked back with a git revert. Read that rule's comment
+    // before adding anything to it -- the criterion is recoverability, not
+    // whether something feels like "infrastructure".
     {
-      description: "Auto-merge trusted OCI digests",
+      // Images here are pinned `tag: <version>@sha256:...`, so a digest bump is
+      // the same application version rebuilt on a newer base layer -- almost
+      // always a base-OS CVE patch with no change to the app itself. That makes
+      // a digest the lowest-risk update in this repo, lower than a patch bump,
+      // so it is not restricted by registry. The denylist below still applies
+      // on top. Four images use `tag: latest@sha256:...` (tasmocompiler,
+      // unmonitarr, krokiet, edgetx) where a digest bump IS an unlabelled
+      // version change -- all four are leaf apps whose config PVCs are backed
+      // up by Kopiur, so they carry no more risk than any other app patch.
+      description: "Auto-merge OCI digests",
       matchDatasources: ["docker"],
-      matchUpdateTypes: ["digest"], // digest only, never a version change
-      matchPackageNames: ["/home-operations/"],
+      matchUpdateTypes: ["digest"],
       automerge: true,
       automergeType: "pr",
       ignoreTests: false,
@@ -91,40 +102,62 @@
       ignoreTests: false,
     },
     {
+      // mise pins developer tooling (kubectl, kustomize, sops, helm) -- a bad
+      // bump breaks a local command, not a workload. talosctl is the exception
+      // and the Talos Group rule below pulls it into its own PR, where the
+      // denylist catches it.
+      description: "Auto-merge mise tools minor/patch",
+      matchManagers: ["mise"],
+      matchUpdateTypes: ["minor", "patch"],
+      automerge: true,
+      automergeType: "branch",
+      ignoreTests: true,
+    },
+    {
       description: "Require 3 days stability for major updates",
       matchUpdateTypes: ["major"],
       minimumReleaseAge: "3 days",
     },
     {
-      // MUST come after the rule above -- later packageRules win. These are the
-      // things that take the whole cluster down when they go wrong, so they
-      // always wait for a human regardless of update type. Cilium 1.18.6 ->
-      // 1.20.0 once auto-merged itself on the old cluster; coredns took DNS
-      // down cluster-wide during this migration.
-      description: "Never auto-merge infrastructure",
+      // MUST come after the rules above -- later packageRules win. The line
+      // drawn here is NOT "infrastructure vs application". It is "can a bad
+      // update be undone by a git revert?". For everything else on this cluster
+      // it can: push a revert and Flux reapplies it within a minute, so an
+      // unattended merge is recoverable by definition. The entries below break
+      // that recovery path itself, so they wait for a human regardless of
+      // update type:
+      //
+      //   cilium, coredns          Flux cannot pull and nothing in-cluster resolves
+      //   flux-operator/-instance  breaks the mechanism that would apply the revert
+      //   miroir                   CSI/DRBD on 0.11.x; a bad release can leave PVCs
+      //                            unmountable, and a revert does not unbreak a volume
+      //   cloudnative-pg           operator upgrades roll the PG clusters
+      //   talos, kubelet           node-level, single node, no drain target
+      //   kopiur                   a break is silent -- you find out at restore time
+      //   app-template             one chart behind ~26 apps; its 5.x naming rules
+      //                            have already silently renamed PVCs here
+      //
+      // Cilium 1.18.6 -> 1.20.0 once auto-merged itself on the old cluster.
+      // Note that these projects do not use semver the way applications do: a
+      // "minor" for cilium or coredns is a feature release, not a bugfix, which
+      // is why the app minor/patch rule above must not reach them.
+      //
+      // Deliberately NOT here (removed 2026-08-27): cert-manager,
+      // snapshot-controller, gateway-helm, envoy, k8s-gateway, external-dns,
+      // nvidia-device-plugin, tuppr, k8tz, metrics-server. Breaking any of them
+      // costs ingress or telemetry, not the cluster or its data, and kubectl
+      // and Flux both keep working -- so a revert is a normal one.
+      description: "Never auto-merge anything a git revert cannot undo",
       matchPackageNames: [
         "/cilium/",
         "/coredns/",
-        "/cert-manager/",
         "/cloudnative-pg/",
         "/miroir/",
         "/kopiur/",
-        "/snapshot-controller/",
-        "/gateway-helm/",
-        "/envoy/",
-        "/k8s-gateway/",
-        "/external-dns/",
         "/flux-operator/",
         "/flux-instance/",
-        "/nvidia-device-plugin/",
-        "/tuppr/",
-        "/k8tz/",
-        "/metrics-server/",
         "/kubelet/",
         "siderolabs/talos",
-        // app-template is one chart behind ~26 apps, so a single bump changes
-        // every workload at once. Its 5.x naming rules have already silently
-        // renamed PVCs here; that blast radius belongs with infrastructure.
         "/app-template/",
       ],
       automerge: false,
