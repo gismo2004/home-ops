@@ -25,6 +25,16 @@ spec:
               repository: ghcr.io/home-operations/lidarr
               tag: 3.1.3.4987@sha256:7ad5061bcf71c7b07e6096a65586ea195b7afc87efe06d8f1d202816514fe144
             env:
+              # Pre-emptive: this core does not have the TrustedNetworks key yet,
+              # but the Servarr release that adds it (CVE-2026-30975 hardening)
+              # is fail-closed -- any request carrying X-Forwarded-For loses the
+              # DisabledForLocalAddresses exemption unless the proxy is trusted.
+              # Sonarr hit exactly this on an unattended 4.0.19.3007 bump. See
+              # sonarr/app/helmrelease.yaml. 172.16.0.0/24 is the pod CIDR, where
+              # envoy-internal lives. Do not remove as an "unused" env var.
+              LIDARR__SERVER__TRUSTEDNETWORKS: 172.16.0.0/24
+              # Empty is a no-op: it falls through to config.xml's
+              # AuthenticationMethod. It does NOT disable auth.
               LIDARR__AUTH__METHOD: ""
               LIDARR__AUTH__REQUIRED: DisabledForLocalAddresses
               LIDARR__SERVER__PORT: &port 8686
