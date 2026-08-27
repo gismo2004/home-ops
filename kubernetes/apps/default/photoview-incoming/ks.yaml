@@ -27,3 +27,4 @@ spec:
       KOPIUR_NAME: photoview-incoming
       KOPIUR_CLAIM: photoview-incoming-config
       KOPIUR_CAPACITY: 10Gi
+      KOPIUR_ONMISSING: Continue
