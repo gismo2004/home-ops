@@ -124,6 +124,13 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: photoview-incoming
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: tasmoadmin
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled

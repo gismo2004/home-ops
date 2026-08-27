@@ -1,0 +1,132 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: photoview-incoming
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: photoview-incoming
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 568
+    controllers:
+      photoview-incoming:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: docker.io/viktorstrate/photoview
+              tag: 2.4.0@sha256:f914c44b202fc8175e09bd56f35bb1a4a7c04dc451652306f240aabc3eea133e
+            env:
+              MAPBOX_TOKEN: ""
+              PHOTOVIEW_DATABASE_DRIVER: sqlite
+              PHOTOVIEW_SQLITE_PATH: /config/photoview.db
+              PHOTOVIEW_DISABLE_FACE_RECOGNITION: "false"
+              PHOTOVIEW_DISABLE_RAW_PROCESSING: "false"
+              PHOTOVIEW_DISABLE_VIDEO_ENCODING: "false"
+              PHOTOVIEW_LISTEN_IP: 127.0.0.1
+              PHOTOVIEW_LISTEN_PORT: &port 10159
+              PHOTOVIEW_MEDIA_CACHE: /cache
+            probes:
+              liveness:
+                type: HTTP
+                path: /
+                port: *port
+              readiness:
+                type: HTTP
+                path: /
+                port: *port
+              startup:
+                type: HTTP
+                path: /
+                port: *port
+                spec:
+                  failureThreshold: 60
+                  periodSeconds: 5
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 75m
+                memory: 200Mi
+              limits:
+                cpu: 10000m
+                memory: 16Gi
+    service:
+      app:
+        controller: photoview-incoming
+        ports:
+          main:
+            port: *port
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.gismo2004.cc"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: photoview-incoming-config
+      cache:
+        forceRename: photoview-incoming-cache
+        size: 100Gi
+        storageClass: miroir-local
+        accessMode: ReadWriteOnce
+      photos:
+        type: nfs
+        server: "10.0.0.2"
+        path: "/mnt/Backup/private/WD_15_backup/Seagate/Incomming/"
+        globalMounts:
+          - path: /mnt/photos
+            readOnly: true
+      devshm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 16Gi
+        globalMounts:
+          - path: /dev/shm
+      shared:
+        type: emptyDir
+        globalMounts:
+          - path: /shared
+      tmp:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 16Gi
+        globalMounts:
+          - path: /tmp
+      varlogs:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 16Gi
+        globalMounts:
+          - path: /var/logs
+      varrun:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 16Gi
+        globalMounts:
+          - path: /var/run

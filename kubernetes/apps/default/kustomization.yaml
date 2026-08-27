@@ -24,6 +24,7 @@ resources:
   - ./orcaslicer/ks.yaml
   - ./oscam/ks.yaml
   - ./photoview/ks.yaml
+  - ./photoview-incoming/ks.yaml
   - ./prowlarr/ks.yaml
   - ./pve/ks.yaml
   - ./radarr/ks.yaml
