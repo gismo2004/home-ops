@@ -20,11 +20,3 @@ spec:
     namespace: flux-system
   targetNamespace: photoview-incoming
   wait: false
-  components:
-    - ../../../../components/kopiur/backup
-  postBuild:
-    substitute:
-      KOPIUR_NAME: photoview-incoming
-      KOPIUR_CLAIM: photoview-incoming-config
-      KOPIUR_CAPACITY: 10Gi
-      KOPIUR_ONMISSING: Continue

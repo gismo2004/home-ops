@@ -89,7 +89,10 @@ spec:
             namespace: network
     persistence:
       config:
-        existingClaim: photoview-incoming-config
+        forceRename: photoview-incoming-config
+        size: 10Gi
+        storageClass: miroir-local
+        accessMode: ReadWriteOnce
       cache:
         forceRename: photoview-incoming-cache
         size: 100Gi
