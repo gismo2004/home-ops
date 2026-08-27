@@ -19,15 +19,26 @@ spec:
       photoview-incoming:
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          wait-for-db:
+            image:
+              repository: ghcr.io/cloudnative-pg/postgresql
+              tag: "16.15"
+            command:
+              - /bin/sh
+              - -c
+              - until pg_isready -U photoview -d photoview -h photoview-incoming-postgres-rw; do sleep 5; done
         containers:
           app:
             image:
               repository: docker.io/viktorstrate/photoview
               tag: 2.4.0@sha256:f914c44b202fc8175e09bd56f35bb1a4a7c04dc451652306f240aabc3eea133e
+            envFrom:
+              - secretRef:
+                  name: photoview-incoming-secrets
             env:
               MAPBOX_TOKEN: ""
-              PHOTOVIEW_DATABASE_DRIVER: sqlite
-              PHOTOVIEW_SQLITE_PATH: /config/photoview.db
+              PHOTOVIEW_DATABASE_DRIVER: postgres
               PHOTOVIEW_DISABLE_FACE_RECOGNITION: "false"
               PHOTOVIEW_DISABLE_RAW_PROCESSING: "false"
               PHOTOVIEW_DISABLE_VIDEO_ENCODING: "false"
@@ -88,11 +99,6 @@ spec:
           - name: envoy-internal
             namespace: network
     persistence:
-      config:
-        forceRename: photoview-incoming-config
-        size: 10Gi
-        storageClass: miroir-local
-        accessMode: ReadWriteOnce
       cache:
         forceRename: photoview-incoming-cache
         size: 100Gi

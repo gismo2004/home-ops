@@ -1,0 +1,69 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: photoview-incoming-postgres
+spec:
+  instances: 1
+  monitoring:
+    enablePodMonitor: true
+  enablePDB: false
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.15@sha256:2df439412099abae19e8d2ccba95a9bc21ee58af4462c9f62d02cd6bdd026dba
+  primaryUpdateMethod: switchover
+  enableSuperuserAccess: true
+  postgresUID: 26
+  postgresGID: 26
+  storage:
+    storageClass: miroir-local
+    size: 20Gi
+    resizeInUseVolumes: true
+  walStorage:
+    storageClass: miroir-local
+    size: 20Gi
+    resizeInUseVolumes: true
+  resources:
+    requests:
+      cpu: 75m
+      memory: 256Mi
+    limits:
+      cpu: 10000m
+      memory: 16Gi
+  bootstrap:
+    initdb:
+      database: photoview
+      owner: photoview
+      secret:
+        name: photoview-incoming-postgres-user
+  backup:
+    retentionPolicy: 5d
+    barmanObjectStore:
+      destinationPath: s3://cnpg-gismo2004/photoview-incoming
+      endpointURL: https://s3.eu-central-003.backblazeb2.com
+      serverName: photoview-incoming-postgres-v1
+      data:
+        compression: gzip
+        jobs: 2
+      wal:
+        compression: gzip
+      s3Credentials:
+        accessKeyId:
+          name: photoview-incoming-postgres-s3-creds
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: photoview-incoming-postgres-s3-creds
+          key: ACCESS_SECRET_KEY
+
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/scheduledbackup_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: photoview-incoming-postgres-daily
+spec:
+  schedule: "0 0 0 * * *"
+  backupOwnerReference: self
+  cluster:
+    name: photoview-incoming-postgres
+  method: barmanObjectStore
+  immediate: true
