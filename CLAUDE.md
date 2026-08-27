@@ -240,6 +240,46 @@ HelmRelease claims to have failed, it's stale — `flux reconcile helmrelease <n
 clears it (asks helm-controller to actually retry; a bare `flux reconcile` without `--reset` does
 not).
 
+## The arr suite: `TrustedNetworks` gates the reverse-proxy auth exemption
+
+`sonarr`, `radarr`, `lidarr` and `prowlarr` all run `*__AUTH__REQUIRED:
+DisabledForLocalAddresses`, which only works if the app can identify the real client behind
+`envoy-internal`. Servarr's CVE-2026-30975 hardening added a `TrustedNetworks` config key that
+gates exactly that, and it is **fail-closed**: if a request carries `X-Forwarded-For` and the
+sender is not listed, the app refuses the local-address exemption _without evaluating the
+forwarded address at all_. It defaults to empty, i.e. trust nothing.
+
+Sonarr picked this up on an unattended `4.0.19.3006 → .3007` patch bump on 2026-08-26 and started
+challenging every request through the gateway. All four apps now set
+`<APP>__SERVER__TRUSTEDNETWORKS: 172.16.0.0/24` (the pod CIDR, where `envoy-internal` lives).
+radarr/lidarr/prowlarr were still on cores without the key and were set pre-emptively — an older
+core starts clean with the env var present, verified.
+
+**The env var is runtime-only — it never appears in `config.xml` or the Sonarr UI**
+(`_serverOptions.TrustedNetworks ?? GetValue(...)`), so the live config shows
+`<TrustedNetworks></TrustedNetworks>` even when it is working. Nothing in the cluster records why
+it is there except the comment in each HelmRelease. Commit `de2bbd5` once stripped this exact env
+block as "redundant TrustedCharts leftovers"; doing that again silently reintroduces the failure.
+
+Diagnosing this class of problem: vary only the forwarded address and compare siblings. A local
+address failing while a _pod_ address in the app's own `/24` also fails is the tell that header
+_presence_ is the trigger, not address evaluation.
+
+```
+kubectl -n media exec deploy/sonarr -c app -- \
+  curl -s -o /dev/null -w '%{http_code}\n' -H 'X-Forwarded-For: 10.0.0.61' \
+  http://radarr.media.svc.cluster.local:7878/
+```
+
+Note the apps do not answer uniformly even when healthy: `Basic` (sonarr) returns `401` and a
+browser popup, `Forms` (radarr/lidarr) returns `302` to a login page. A `200` from radarr is
+therefore not evidence that sonarr should also be returning `200`.
+
+Also note `*__AUTH__METHOD: ""` on all four is a **no-op** — an empty value falls through to
+`config.xml`'s `AuthenticationMethod`. It reads as if it disables authentication; it does not.
+`prowlarr` is currently `External` with `AuthenticationRequired=0`, meaning it performs no
+authentication of its own and its `__AUTH__REQUIRED` env var is ignored outright.
+
 ## Renovate
 
 `.renovaterc.json5` extends `home-operations/renovate-presets`. **Auto-merge is the default**:
