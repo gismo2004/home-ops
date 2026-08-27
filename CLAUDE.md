@@ -259,7 +259,7 @@ core starts clean with the env var present, verified.
 (`_serverOptions.TrustedNetworks ?? GetValue(...)`), so the live config shows
 `<TrustedNetworks></TrustedNetworks>` even when it is working. Nothing in the cluster records why
 it is there except the comment in each HelmRelease. Commit `de2bbd5` once stripped this exact env
-block as "redundant TrustedCharts leftovers"; doing that again silently reintroduces the failure.
+block as "redundant TrueCharts env vars"; doing that again silently reintroduces the failure.
 
 Diagnosing this class of problem: vary only the forwarded address and compare siblings. A local
 address failing while a _pod_ address in the app's own `/24` also fails is the tell that header
