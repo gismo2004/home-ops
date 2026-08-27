@@ -25,6 +25,16 @@ spec:
               repository: ghcr.io/home-operations/radarr
               tag: 6.4.2.10590@sha256:01ab4edc881b117e30972482ae4362c13ca76ee73c891a7581cffe597d43ca31
             env:
+              # Pre-emptive: this core does not have the TrustedNetworks key yet,
+              # but the Servarr release that adds it (CVE-2026-30975 hardening)
+              # is fail-closed -- any request carrying X-Forwarded-For loses the
+              # DisabledForLocalAddresses exemption unless the proxy is trusted.
+              # Sonarr hit exactly this on an unattended 4.0.19.3007 bump. See
+              # sonarr/app/helmrelease.yaml. 172.16.0.0/24 is the pod CIDR, where
+              # envoy-internal lives. Do not remove as an "unused" env var.
+              RADARR__SERVER__TRUSTEDNETWORKS: 172.16.0.0/24
+              # Empty is a no-op: it falls through to config.xml's
+              # AuthenticationMethod. It does NOT disable auth.
               RADARR__AUTH__METHOD: ""
               RADARR__AUTH__REQUIRED: DisabledForLocalAddresses
               RADARR__SERVER__PORT: &port 7878
