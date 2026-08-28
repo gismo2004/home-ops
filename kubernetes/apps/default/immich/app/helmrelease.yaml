@@ -103,17 +103,18 @@ spec:
             image:
               repository: ghcr.io/immich-app/immich-machine-learning
               tag: v3.1.0-cuda@sha256:82d3f6a093455964508052e0b3bc55a91075b48b65be35e78b40774a72c1ebb3
-            env:
-              # Default is 300s. This 12GB card also feeds jellyfin
-              # transcoding, and OCR has a confirmed unfixed upstream VRAM
-              # leak (immich-app/immich#26739, duplicate of #23462) that
-              # accumulates until CUBLAS allocation fails -- observed live,
-              # twice. Disabling OCR in the admin UI removes the actual
-              # trigger; this shortens how long an idle model (loaded but
-              # unused between job bursts) sits pinned in VRAM regardless,
-              # so a smaller standing footprint is the norm rather than
-              # everything staying resident indefinitely.
-              MACHINE_LEARNING_MODEL_TTL: "60"
+            # Deliberately NOT setting MACHINE_LEARNING_MODEL_TTL below the
+            # 300s default. Tried 60s to shrink the standing VRAM footprint
+            # after a confirmed OCR-specific VRAM leak (immich#26739,
+            # duplicate of #23462) -- but TTL expiry doesn't just unload
+            # model weights, it recycles the whole worker process ("Shutting
+            # down due to inactivity" -> SIGINT -> reboot, several seconds of
+            # downtime each time). At 60s that happens roughly every minute
+            # during normal gaps between job bursts, which repeatedly flapped
+            # "Machine learning server became unhealthy" and cascaded into
+            # "No microservices worker is connected" on the server side --
+            # confirmed live. OCR is disabled in the admin UI now (the actual
+            # leak trigger), so the shorter TTL bought nothing but instability.
             probes:
               liveness:
                 type: HTTP
