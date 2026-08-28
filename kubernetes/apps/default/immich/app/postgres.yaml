@@ -27,6 +27,13 @@ spec:
   # upgrade for no benefit, same reasoning as every other CNPG cluster here.
   enablePDB: false
   imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17-0.4.3@sha256:acebb38ca309938bc05ce268b019c98aa718cb554dd54e4443654d9d00a0d498
+  # VectorChord isn't a plain extension -- it must be loaded at server start,
+  # not just CREATE EXTENSION'd. Confirmed live: without this, initdb's
+  # postInitApplicationSQL below fails with "vchord must be loaded via
+  # shared_preload_libraries" and the bootstrap job crash-loops.
+  postgresql:
+    shared_preload_libraries:
+      - vchord
   primaryUpdateMethod: switchover
   enableSuperuserAccess: true
   postgresUID: 26
