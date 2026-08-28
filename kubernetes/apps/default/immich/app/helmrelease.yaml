@@ -51,6 +51,16 @@ spec:
             env:
               REDIS_HOSTNAME: immich-redis
               IMMICH_MACHINE_LEARNING_URL: http://immich-machine-learning:3003
+              # Confirmed live: the microservices worker thread crashed with
+              # ERR_WORKER_OUT_OF_MEMORY ("JS heap out of memory") crawling
+              # this library (100k+ files and still counting), which killed
+              # the whole api process and restarted the pod -- a known
+              # upstream pattern on large libraries (immich-app/immich#7373,
+              # #11168). This is Node's own V8 heap ceiling for that worker
+              # thread, well below and independent of the container's
+              # cgroup memory limit below (actual container usage never got
+              # near 6Gi when this crashed).
+              NODE_OPTIONS: --max-old-space-size=6144
             probes:
               liveness:
                 type: HTTP
@@ -88,8 +98,14 @@ spec:
               requests:
                 cpu: 200m
                 memory: 1Gi
+              # Raised alongside NODE_OPTIONS above: a 6Gi heap ceiling needs
+              # real headroom above it for non-heap V8/Node overhead, or the
+              # container just gets OOMKilled by the cgroup instead of the
+              # worker thread hitting its own limit -- same failure, moved up
+              # one layer. Node has 63Gi allocatable at ~35% used, plenty of
+              # room to give this the space it's actually asking for.
               limits:
-                memory: 6Gi
+                memory: 10Gi
       machine-learning:
         pod:
           runtimeClassName: nvidia
