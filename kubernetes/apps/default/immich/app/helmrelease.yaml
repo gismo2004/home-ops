@@ -164,6 +164,13 @@ spec:
               seccompProfile:
                 type: RuntimeDefault
               capabilities:
+                # Dropping ALL blocks the entrypoint's chown of /data even
+                # while still running as root -- capabilities gate this, not
+                # just UID (confirmed live: "Operation not permitted").
+                add:
+                  - CHOWN
+                  - FOWNER
+                  - DAC_OVERRIDE
                 drop:
                   - ALL
             resources:
