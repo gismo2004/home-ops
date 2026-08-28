@@ -60,8 +60,18 @@ spec:
         name: immich-postgres-user
       # Runs once, with sufficient privilege, against the newly created
       # `immich` database -- the immich role itself is not a superuser and
-      # cannot CREATE EXTENSION on its own.
+      # cannot CREATE EXTENSION on its own. Confirmed live: Immich's own
+      # first-run migration (1744910873969-InitialMigration.ts) attempts to
+      # create every one of these itself and fails with "permission denied"
+      # / "Must be superuser" on all but the trusted ones (pg_trgm). Its
+      # CREATE EXTENSION IF NOT EXISTS calls are idempotent, so pre-creating
+      # the full set here is a safe no-op for it to hit afterward.
       postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+        - CREATE EXTENSION IF NOT EXISTS "unaccent";
+        - CREATE EXTENSION IF NOT EXISTS "cube";
+        - CREATE EXTENSION IF NOT EXISTS "earthdistance";
+        - CREATE EXTENSION IF NOT EXISTS "pg_trgm";
         - CREATE EXTENSION IF NOT EXISTS vchord CASCADE;
   backup:
     retentionPolicy: 5d
