@@ -1,0 +1,247 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+# Trial deployment against the same NFS "Incoming" library photoview-incoming
+# already serves (photoview-incoming is left running, untouched, for
+# comparison -- see kubernetes/apps/default/photoview-incoming).
+#
+# Three controllers for one logical app (no other HelmRelease in this repo
+# has needed more than one, but Immich genuinely is server + GPU ML worker +
+# redis job queue as one lifecycle). Object names follow app-template's
+# `<release>-<key>` convention, confirmed by rendering this chart locally
+# before writing service/env references below -- controller/service keys are
+# deliberately `server`/`machine-learning`/`redis` (not `immich-server` etc.)
+# to avoid a doubled-up `immich-immich-server` object name.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: immich
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: immich
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 568
+    controllers:
+      server:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          wait-for-db:
+            image:
+              repository: ghcr.io/cloudnative-pg/postgresql
+              tag: "16.15"
+            command:
+              - /bin/sh
+              - -c
+              - until pg_isready -U immich -d immich -h immich-postgres-rw; do sleep 5; done
+        containers:
+          app:
+            image:
+              repository: ghcr.io/immich-app/immich-server
+              tag: v3.1.0@sha256:b434cb9287eea1471c9974845914d4dd328c9c2d652e446ed4930f99944f0ceb
+            envFrom:
+              - secretRef:
+                  name: immich-secrets
+            env:
+              REDIS_HOSTNAME: immich-redis
+              IMMICH_MACHINE_LEARNING_URL: http://immich-machine-learning:3003
+            probes:
+              liveness:
+                type: HTTP
+                path: /api/server/ping
+                port: &port 2283
+              readiness:
+                type: HTTP
+                path: /api/server/ping
+                port: *port
+              startup:
+                type: HTTP
+                path: /api/server/ping
+                port: *port
+                spec:
+                  failureThreshold: 60
+                  periodSeconds: 5
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 200m
+                memory: 1Gi
+              limits:
+                memory: 6Gi
+      machine-learning:
+        pod:
+          runtimeClassName: nvidia
+          securityContext:
+            # 44 = video, 107 = render. Both are needed for the container to
+            # open the GPU device nodes -- copied from jellyfin, the only
+            # other GPU consumer in this cluster.
+            supplementalGroups: [44, 107, 568]
+        containers:
+          app:
+            image:
+              repository: ghcr.io/immich-app/immich-machine-learning
+              tag: v3.1.0-cuda@sha256:82d3f6a093455964508052e0b3bc55a91075b48b65be35e78b40774a72c1ebb3
+            probes:
+              liveness:
+                type: HTTP
+                path: /ping
+                port: &mlport 3003
+              readiness:
+                type: HTTP
+                path: /ping
+                port: *mlport
+              startup:
+                type: HTTP
+                path: /ping
+                port: *mlport
+                spec:
+                  # Generous: first start downloads the face-detection and
+                  # CLIP ONNX models over the network before /ping succeeds.
+                  failureThreshold: 60
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 500m
+                memory: 2Gi
+                nvidia.com/gpu: 1
+              limits:
+                memory: 8Gi
+                nvidia.com/gpu: 1
+      redis:
+        containers:
+          app:
+            image:
+              repository: docker.io/valkey/valkey
+              tag: 9.1.1@sha256:70739f85ad2ee01a726a965584a0f94895f01b0c60b3cc8b0aeef11eaa6888cf
+            # Pure job queue/cache, not a source of truth -- disable RDB/AOF
+            # persistence entirely so it doesn't fight the emptyDir for no
+            # benefit. Losing it just means in-flight jobs get retried.
+            args:
+              - --save
+              - ""
+              - --appendonly
+              - "no"
+            probes:
+              liveness:
+                type: TCP
+                port: &redisport 6379
+              readiness:
+                type: TCP
+                port: *redisport
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 25m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
+    service:
+      server:
+        controller: server
+        ports:
+          main:
+            port: *port
+      machine-learning:
+        controller: machine-learning
+        ports:
+          main:
+            port: *mlport
+      redis:
+        controller: redis
+        ports:
+          main:
+            port: *redisport
+    # Three Services, so the backend is named explicitly (same reasoning as
+    # jellyfin's app/autodiscovery split).
+    route:
+      app:
+        hostnames:
+          - "immich.gismo2004.cc"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: server
+                port: main
+    persistence:
+      # Immich's own generated data (thumbnails, previews, re-encoded video,
+      # face crops) at its fixed in-container path -- disposable/regenerable
+      # by rescanning the external library, same reasoning as photoview's
+      # cache PVC. No Kopiur backup.
+      upload:
+        forceRename: immich-upload
+        size: 100Gi
+        storageClass: miroir-local
+        accessMode: ReadWriteOnce
+        advancedMounts:
+          server:
+            app:
+              - path: /usr/src/app/upload
+      # Same NFS export as photoview-incoming, read-only, mounted at the same
+      # path -- registered as an Immich External Library (import path
+      # /mnt/photos) post-deploy via the UI, not git-managed.
+      photos:
+        type: nfs
+        server: "10.0.0.2"
+        path: "/mnt/Backup/private/WD_15_backup/Seagate/Incomming/"
+        advancedMounts:
+          server:
+            app:
+              - path: /mnt/photos
+                readOnly: true
+      # Downloaded ONNX face-detection/CLIP models -- keep across restarts so
+      # they aren't re-fetched every time the pod restarts.
+      ml-cache:
+        forceRename: immich-ml-cache
+        size: 10Gi
+        storageClass: miroir-local
+        accessMode: ReadWriteOnce
+        advancedMounts:
+          machine-learning:
+            app:
+              - path: /cache
+      redis-data:
+        type: emptyDir
+        advancedMounts:
+          redis:
+            app:
+              - path: /data

@@ -1,0 +1,91 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/cluster_v1.json
+# Fresh CNPG Cluster -- no bootstrap.recovery, there is no prior Immich data to
+# migrate (this is a from-scratch trial deployment against the same NFS
+# library photoview-incoming already serves).
+#
+# imageName is NOT the standard ghcr.io/cloudnative-pg/postgresql used by every
+# other app here. Immich's own ghcr.io/immich-app/postgres image bundles the
+# VectorChord extension but is a plain Postgres image, not built for CNPG's
+# operator contract -- it does not work as a CNPG operand image. TensorChord
+# publishes a CNPG-compatible operand image with VectorChord built in
+# (ghcr.io/tensorchord/cloudnative-vectorchord) specifically for this.
+# Immich validates the extension version at startup (VECTORCHORD_VERSION_RANGE
+# '>=0.3 <2' as of server v3.1.0) and refuses to start on a mismatch -- keep
+# the tag here in step with whatever immich-server release is pinned in
+# helmrelease.yaml.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: immich-postgres
+spec:
+  instances: 1
+  monitoring:
+    enablePodMonitor: true
+  # Single-instance cluster: the default primary PDB (minAvailable: 1) would
+  # be permanently unsatisfiable and block `kubectl drain` during a Talos node
+  # upgrade for no benefit, same reasoning as every other CNPG cluster here.
+  enablePDB: false
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17-0.4.3@sha256:acebb38ca309938bc05ce268b019c98aa718cb554dd54e4443654d9d00a0d498
+  primaryUpdateMethod: switchover
+  enableSuperuserAccess: true
+  postgresUID: 26
+  postgresGID: 26
+  storage:
+    storageClass: miroir-local
+    size: 50Gi
+    resizeInUseVolumes: true
+  walStorage:
+    storageClass: miroir-local
+    size: 20Gi
+    resizeInUseVolumes: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 4Gi
+  bootstrap:
+    initdb:
+      database: immich
+      owner: immich
+      secret:
+        name: immich-postgres-user
+      # Runs once, with sufficient privilege, against the newly created
+      # `immich` database -- the immich role itself is not a superuser and
+      # cannot CREATE EXTENSION on its own.
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS vchord CASCADE;
+  backup:
+    retentionPolicy: 5d
+    barmanObjectStore:
+      destinationPath: s3://cnpg-gismo2004/immich
+      endpointURL: https://s3.eu-central-003.backblazeb2.com
+      serverName: immich-postgres-v1
+      # gzip, not bzip2 -- see photoview/app/postgres.yaml for the measured
+      # rationale (B2 upload is the ceiling here, not CPU).
+      data:
+        compression: gzip
+        jobs: 2
+      wal:
+        compression: gzip
+      s3Credentials:
+        accessKeyId:
+          name: immich-postgres-s3-creds
+          key: ACCESS_KEY_ID
+        secretAccessKey:
+          name: immich-postgres-s3-creds
+          key: ACCESS_SECRET_KEY
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/scheduledbackup_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: immich-postgres-daily
+spec:
+  schedule: "0 0 0 * * *"
+  backupOwnerReference: self
+  cluster:
+    name: immich-postgres
+  method: barmanObjectStore
+  immediate: true
