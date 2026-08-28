@@ -191,9 +191,13 @@ spec:
             resources:
               requests:
                 cpu: 25m
-                memory: 64Mi
+                memory: 128Mi
+              # Confirmed live: OOMKilled at 256Mi once job concurrency was
+              # raised -- more concurrent workers means more BullMQ job
+              # payloads queued in Redis at once, not just a bigger app
+              # footprint.
               limits:
-                memory: 256Mi
+                memory: 1Gi
     service:
       server:
         controller: server
