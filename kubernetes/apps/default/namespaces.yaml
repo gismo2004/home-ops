@@ -61,6 +61,13 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: immich
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: jdownloader2
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
