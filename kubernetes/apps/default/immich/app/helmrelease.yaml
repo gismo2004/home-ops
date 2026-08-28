@@ -103,6 +103,17 @@ spec:
             image:
               repository: ghcr.io/immich-app/immich-machine-learning
               tag: v3.1.0-cuda@sha256:82d3f6a093455964508052e0b3bc55a91075b48b65be35e78b40774a72c1ebb3
+            env:
+              # Default is 300s. This 12GB card also feeds jellyfin
+              # transcoding, and OCR has a confirmed unfixed upstream VRAM
+              # leak (immich-app/immich#26739, duplicate of #23462) that
+              # accumulates until CUBLAS allocation fails -- observed live,
+              # twice. Disabling OCR in the admin UI removes the actual
+              # trigger; this shortens how long an idle model (loaded but
+              # unused between job bursts) sits pinned in VRAM regardless,
+              # so a smaller standing footprint is the norm rather than
+              # everything staying resident indefinitely.
+              MACHINE_LEARNING_MODEL_TTL: "60"
             probes:
               liveness:
                 type: HTTP
