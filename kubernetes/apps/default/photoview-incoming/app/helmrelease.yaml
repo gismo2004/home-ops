@@ -41,7 +41,14 @@ spec:
               PHOTOVIEW_DATABASE_DRIVER: postgres
               PHOTOVIEW_DISABLE_FACE_RECOGNITION: "false"
               PHOTOVIEW_DISABLE_RAW_PROCESSING: "false"
-              PHOTOVIEW_DISABLE_VIDEO_ENCODING: "false"
+              # Unlike the main photoview instance, this library's legacy .wmv
+              # videos (e.g. Videos/M_plus_M/5lin02.wmv) repeatedly trigger a
+              # still-unresolved upstream Go nil-pointer panic in the video
+              # scanner (photoview/photoview#626, #239, #781), which segfaults
+              # the whole pod mid-scan -- not just that file. That crash-loop
+              # was why the scan never ran to completion and face recognition
+              # never caught up on the bulk of the 165k+ photo backlog.
+              PHOTOVIEW_DISABLE_VIDEO_ENCODING: "true"
               PHOTOVIEW_LISTEN_IP: 127.0.0.1
               PHOTOVIEW_LISTEN_PORT: &port 10159
               PHOTOVIEW_MEDIA_CACHE: /cache
