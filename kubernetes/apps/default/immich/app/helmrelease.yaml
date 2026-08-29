@@ -208,13 +208,22 @@ spec:
             resources:
               requests:
                 cpu: 25m
-                memory: 128Mi
-              # Confirmed live: OOMKilled at 256Mi once job concurrency was
-              # raised -- more concurrent workers means more BullMQ job
-              # payloads queued in Redis at once, not just a bigger app
-              # footprint.
+                memory: 256Mi
+              # Sized for the queue, not the process. BullMQ keeps one hash
+              # per queued job, and this library is 1.35M assets that each
+              # pass through metadataExtraction -> thumbnailGeneration ->
+              # faceDetection -> duplicateDetection, so a full pass can hold
+              # millions of job hashes at ~400B each across the queues.
+              # OOMKilled at 256Mi, then again at 1Gi (exit 137, after ~6h).
+              #
+              # This matters more than a normal cache OOM: persistence is
+              # deliberately off (--save "" --appendonly no), so an OOMKill
+              # discards the entire queue and every job has to be rebuilt
+              # from scratch -- which is what repeatedly "reset" scan
+              # progress. Node has 63Gi and sits ~35% used, so the headroom
+              # is cheap insurance against losing hours of work.
               limits:
-                memory: 1Gi
+                memory: 6Gi
     service:
       server:
         controller: server
