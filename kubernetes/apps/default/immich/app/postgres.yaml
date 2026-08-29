@@ -73,36 +73,19 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS "earthdistance";
         - CREATE EXTENSION IF NOT EXISTS "pg_trgm";
         - CREATE EXTENSION IF NOT EXISTS vchord CASCADE;
-  backup:
-    retentionPolicy: 5d
-    barmanObjectStore:
-      destinationPath: s3://cnpg-gismo2004/immich
-      endpointURL: https://s3.eu-central-003.backblazeb2.com
-      serverName: immich-postgres-v1
-      # gzip, not bzip2 -- see photoview/app/postgres.yaml for the measured
-      # rationale (B2 upload is the ceiling here, not CPU).
-      data:
-        compression: gzip
-        jobs: 2
-      wal:
-        compression: gzip
-      s3Credentials:
-        accessKeyId:
-          name: immich-postgres-s3-creds
-          key: ACCESS_KEY_ID
-        secretAccessKey:
-          name: immich-postgres-s3-creds
-          key: ACCESS_SECRET_KEY
----
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/scheduledbackup_v1.json
-apiVersion: postgresql.cnpg.io/v1
-kind: ScheduledBackup
-metadata:
-  name: immich-postgres-daily
-spec:
-  schedule: "0 0 0 * * *"
-  backupOwnerReference: self
-  cluster:
-    name: immich-postgres
-  method: barmanObjectStore
-  immediate: true
+# NO spec.backup / ScheduledBackup here, deliberately -- this is the one CNPG
+# cluster in the repo that is NOT backed up, and that is a considered choice,
+# not an oversight. Unlike hass/mealie/photoview, every row in this database
+# is derived state: the assets themselves live read-only on NFS and are never
+# written by Immich, so a lost database is recovered by re-adding the external
+# library and rescanning. What is genuinely lost in that case is only manual
+# curation (named people, albums, favourites) -- accepted, this is a trial
+# instance evaluated against photoview-incoming.
+#
+# If this instance ever stops being a trial and accumulates curation worth
+# keeping, re-add a backup block modelled on photoview/app/postgres.yaml and
+# pick a NEW, never-used serverName (the s3://cnpg-gismo2004/immich prefix
+# already holds one generation's archive from when this was enabled; reusing
+# immich-postgres-v1 would fail barman-cloud-check-wal-archive's "Expected
+# empty archive" pre-flight). The immich-postgres-s3-creds Secret is left in
+# place for exactly that, and is simply unused for now.

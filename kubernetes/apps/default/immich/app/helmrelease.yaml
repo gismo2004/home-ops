@@ -251,7 +251,14 @@ spec:
       # cache PVC. No Kopiur backup.
       upload:
         forceRename: immich-upload
-        size: 100Gi
+        # 100Gi was sized against photoview-incoming's ~166k media rows. The
+        # real figure is 1,345,028 assets -- Immich indexes far more of this
+        # NFS tree than photoview did. At 1.28M generated files / 87G the
+        # volume hit 91% with thumbnailing still unfinished, so this was
+        # heading for a full-disk failure mid-scan. miroir is thin
+        # provisioned (998g pool, ~26% used), so this reserves logical room
+        # without consuming it up front.
+        size: 400Gi
         storageClass: miroir-local
         accessMode: ReadWriteOnce
         advancedMounts:
