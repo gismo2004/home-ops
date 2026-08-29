@@ -23,7 +23,7 @@ spec:
           app:
             image:
               repository: ghcr.io/linuxserver/kavita
-              tag: 0.9.0@sha256:e8bb2c61e8669a557d53a9fe2ae72393df29308c1134b68bf13f5697d1801e24
+              tag: 0.9.1@sha256:f6377475ea8e0189257222fdf72ebe3351128c2fa09951300f9cbecdfe6baa29
             env:
               PUID: "568"
               PGID: "568"
