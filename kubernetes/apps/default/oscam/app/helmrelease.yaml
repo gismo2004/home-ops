@@ -27,15 +27,40 @@ spec:
             env:
               PUID: "568"
               PGID: "568"
+            # These were written in app-template 3.x syntax (type/path/port) which
+            # 5.x ignores without error -- the live pod had no probes at all, so
+            # oscam sat dead for six days while the pod reported 2/2 Ready.
+            # tcpSocket rather than httpGet on purpose: oscam.conf's `httpallowed`
+            # filters the webif by source address, and kubelet probes come from the
+            # node, so an HTTP probe could fail on the ACL rather than on liveness.
+            # Listening on 8888 is exactly the signal we want.
             probes:
               liveness:
-                type: HTTP
-                path: /
-                port: 8888
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 8888
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
               readiness:
-                type: HTTP
-                path: /
-                port: 8888
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 8888
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 8888
+                  failureThreshold: 30
+                  periodSeconds: 10
             securityContext:
               privileged: true
               allowPrivilegeEscalation: true
@@ -144,6 +169,15 @@ spec:
           - backendRefs:
               - identifier: codeserver
                 port: http
+    # `globalMounts` mounts into EVERY container. Both images here are
+    # LinuxServer s6-overlay builds, and s6-rc writes its service directories to
+    # /run/s6-rc -- i.e. /var/run. Sharing that emptyDir made the two s6
+    # instances clobber each other: code-server won, oscam's svc-oscam and
+    # svc-pcsd servicedirs were wiped, and oscam never started (broken from
+    # 2026-08-23 until 2026-08-29). It is a race, so it "worked" at first.
+    # Everything except the config PVC is therefore scoped to the app container
+    # via advancedMounts. code-server has readOnlyRootFilesystem: false and needs
+    # none of it -- least of all the /dev/ttyUSB0 card reader.
     persistence:
       config:
         existingClaim: oscam-config
@@ -151,32 +185,44 @@ spec:
         type: emptyDir
         medium: Memory
         sizeLimit: 2400Mi
-        globalMounts:
-          - path: /dev/shm
+        advancedMounts:
+          oscam:
+            app:
+              - path: /dev/shm
       shared:
         type: emptyDir
-        globalMounts:
-          - path: /shared
+        advancedMounts:
+          oscam:
+            app:
+              - path: /shared
       tmp:
         type: emptyDir
         medium: Memory
         sizeLimit: 2400Mi
-        globalMounts:
-          - path: /tmp
+        advancedMounts:
+          oscam:
+            app:
+              - path: /tmp
       varlogs:
         type: emptyDir
         medium: Memory
         sizeLimit: 2400Mi
-        globalMounts:
-          - path: /var/logs
+        advancedMounts:
+          oscam:
+            app:
+              - path: /var/logs
       varrun:
         type: emptyDir
         medium: Memory
         sizeLimit: 2400Mi
-        globalMounts:
-          - path: /var/run
+        advancedMounts:
+          oscam:
+            app:
+              - path: /var/run
       usb:
         type: hostPath
         hostPath: /dev/ttyUSB-oscam
-        globalMounts:
-          - path: /dev/ttyUSB0
+        advancedMounts:
+          oscam:
+            app:
+              - path: /dev/ttyUSB0
