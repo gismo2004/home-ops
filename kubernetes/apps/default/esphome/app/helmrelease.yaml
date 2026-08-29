@@ -29,13 +29,34 @@ spec:
               ESPHOME_DASHBOARD_USE_PING: "true"
             probes:
               liveness:
-                type: HTTP
-                path: /
-                port: 6052
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 6052
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
               readiness:
-                type: HTTP
-                path: /
-                port: 6052
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 6052
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 6052
+                  failureThreshold: 30
+                  periodSeconds: 10
             resources:
               requests:
                 cpu: 100m

@@ -55,26 +55,32 @@ spec:
                   - ALL
             probes:
               liveness:
-                type: TCP
-                port: 5800
+                enabled: true
+                custom: true
                 spec:
+                  tcpSocket:
+                    port: 5800
                   initialDelaySeconds: 12
                   periodSeconds: 15
                   timeoutSeconds: 5
                   failureThreshold: 5
               readiness:
-                type: TCP
-                port: 5800
+                enabled: true
+                custom: true
                 spec:
+                  tcpSocket:
+                    port: 5800
                   initialDelaySeconds: 10
                   periodSeconds: 12
                   timeoutSeconds: 5
                   failureThreshold: 4
                   successThreshold: 2
               startup:
-                type: TCP
-                port: 5800
+                enabled: true
+                custom: true
                 spec:
+                  tcpSocket:
+                    port: 5800
                   initialDelaySeconds: 10
                   periodSeconds: 5
                   timeoutSeconds: 3

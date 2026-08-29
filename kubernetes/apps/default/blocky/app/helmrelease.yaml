@@ -40,16 +40,33 @@ spec:
               repository: ghcr.io/0xerr0r/blocky
               tag: v0.34.0@sha256:595136fb127f4c952b621113e668c09acdcf15ac054d96ee6d4c51a76c35f5fd
             probes:
-              liveness: &probe
-                type: HTTP
-                path: /
-                port: 4000
-              readiness: *probe
-              startup:
-                type: HTTP
-                path: /
-                port: 4000
+              liveness:
+                enabled: true
+                custom: true
                 spec:
+                  httpGet:
+                    path: /
+                    port: 4000
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 4000
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 4000
                   failureThreshold: 30
                   periodSeconds: 5
             securityContext:

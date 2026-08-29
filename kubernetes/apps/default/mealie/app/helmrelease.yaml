@@ -59,16 +59,33 @@ spec:
               OPENAI_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai/
               OPENAI_MODEL: gemini-2.5-flash-lite
             probes:
-              liveness: &probe
-                type: HTTP
-                path: /
-                port: &port 10018
-              readiness: *probe
-              startup:
-                type: HTTP
-                path: /
-                port: *port
+              liveness:
+                enabled: true
+                custom: true
                 spec:
+                  httpGet:
+                    path: /
+                    port: &port 10018
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: *port
                   failureThreshold: 60
                   periodSeconds: 5
             securityContext:

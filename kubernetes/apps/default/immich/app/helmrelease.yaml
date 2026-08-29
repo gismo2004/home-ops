@@ -63,18 +63,32 @@ spec:
               NODE_OPTIONS: --max-old-space-size=6144
             probes:
               liveness:
-                type: HTTP
-                path: /api/server/ping
-                port: &port 2283
-              readiness:
-                type: HTTP
-                path: /api/server/ping
-                port: *port
-              startup:
-                type: HTTP
-                path: /api/server/ping
-                port: *port
+                enabled: true
+                custom: true
                 spec:
+                  httpGet:
+                    path: /api/server/ping
+                    port: &port 2283
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/server/ping
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/server/ping
+                    port: *port
                   failureThreshold: 60
                   periodSeconds: 5
             securityContext:
@@ -133,20 +147,32 @@ spec:
             # leak trigger), so the shorter TTL bought nothing but instability.
             probes:
               liveness:
-                type: HTTP
-                path: /ping
-                port: &mlport 3003
-              readiness:
-                type: HTTP
-                path: /ping
-                port: *mlport
-              startup:
-                type: HTTP
-                path: /ping
-                port: *mlport
+                enabled: true
+                custom: true
                 spec:
-                  # Generous: first start downloads the face-detection and
-                  # CLIP ONNX models over the network before /ping succeeds.
+                  httpGet:
+                    path: /ping
+                    port: &mlport 3003
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /ping
+                    port: *mlport
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /ping
+                    port: *mlport
                   failureThreshold: 60
                   periodSeconds: 10
             securityContext:
@@ -181,11 +207,23 @@ spec:
               - "no"
             probes:
               liveness:
-                type: TCP
-                port: &redisport 6379
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: &redisport 6379
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
               readiness:
-                type: TCP
-                port: *redisport
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: *redisport
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true

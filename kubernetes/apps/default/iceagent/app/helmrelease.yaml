@@ -27,17 +27,34 @@ spec:
               tag: v1.9.3@sha256:e8ebb8cd1af4711b1d974227cb388b7cac208656b1d1b22c193e926846d5e7b6
             probes:
               liveness:
-                type: HTTP
-                path: /
-                port: &port 8080
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: &port 8080
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
               readiness:
-                type: HTTP
-                path: /
-                port: *port
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
               startup:
-                type: HTTP
-                path: /
-                port: *port
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: *port
+                  failureThreshold: 30
+                  periodSeconds: 10
             securityContext:
               allowPrivilegeEscalation: false
               runAsUser: 568

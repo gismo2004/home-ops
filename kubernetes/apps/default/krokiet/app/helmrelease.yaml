@@ -41,13 +41,34 @@ spec:
               SUP_GROUP_IDS: "545,1001"
             probes:
               liveness:
-                type: HTTP
-                path: /
-                port: 5800
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 5800
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
               readiness:
-                type: HTTP
-                path: /
-                port: 5800
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 5800
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 5800
+                  failureThreshold: 30
+                  periodSeconds: 10
             securityContext:
               # Restored verbatim from the working TrueCharts-era release.
               # Trimming this is what broke the app: dropping privileged (and
