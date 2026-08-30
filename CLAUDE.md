@@ -349,3 +349,52 @@ extension was added) — this cluster's BOOT partition is 2.2 GB, confirmed larg
 `v1.13.7 → v1.13.9` and the matching kubelet bump already went through cleanly post-rebuild. Full
 rebuild narrative, the bootstrap CRD-ordering traps hit along the way, and the per-app restore
 procedure are in `docs/MIGRATION.md`.
+
+### The Talos release caps the Kubernetes version, and Renovate does not know that
+
+**Talos 1.13.x cannot run Kubernetes 1.37.** `machinery/constants` in v1.13.9 sets
+`DefaultKubernetesVersion = "1.36.3"` and supports 6 releases backwards, so 1.36.x is the ceiling
+for the entire 1.13 line; 1.37 needs Talos 1.14 (still `v1.14.0-rc.2` as of 2026-08-30).
+`talosctl upgrade-k8s` enforces this itself and refuses before touching anything:
+
+```
+automatically detected the lowest Kubernetes version 1.36.4
+unsupported upgrade path 1.36->1.37 (from "1.36.4" to "1.37.0")
+```
+
+Renovate tracks `ghcr.io/siderolabs/kubelet` as a plain container image and has no knowledge of
+this matrix, so it will keep proposing versions Talos cannot run. `.renovaterc.json5` therefore
+caps it with `allowedVersions: "<1.37"`. **When lifting that cap, the order is Talos 1.13 → 1.14
+first, then Kubernetes 1.36 → 1.37** — never the other way round. The kubelet version lives in two
+files that share one `# renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet` marker, so
+a bump moves both together: `talos/topf.yaml`'s `kubernetesVersion:` and the tuppr
+`KubernetesUpgrade` CR at `kubernetes/apps/system-upgrade/tuppr/upgrades/kubernetesupgrade.yaml`.
+
+This happened on 2026-08-30 (PR #48). Two things are worth knowing about the aftermath, because
+neither is obvious:
+
+- **The failure is clean but leaves a landmine.** talosctl refuses before doing any work, so the
+  control plane, the kubelet machine config and the node all stay on the old version — nothing to
+  repair. But `topf.yaml` is left pointing at a `kubernetesVersion` this Talos cannot run, so the
+  next `just talos apply` would push a broken kubelet image. Fixing the CR alone is not enough;
+  revert both files.
+- **tuppr latches into a terminal state and blocks its own Kustomization.** The `KubernetesUpgrade`
+  goes `phase: Failed` and the controller then logs `Kubernetes upgrade in terminal state,
+skipping` every 5 minutes forever — it will not retry on its own. Meanwhile the `tuppr-upgrades`
+  Flux Kustomization sits `Unknown / Reconciliation in progress`, because its health check waits on
+  a CR that can never become healthy (`timeout waiting for: [KubernetesUpgrade/kubernetes status:
+'InProgress']`). Both clear only when `spec` changes and the generation bumps — the controller
+  logs `Spec generation changed, resetting Kubernetes upgrade process`. Editing the live CR with
+  `kubectl` does not count as a durable fix: Flux restores it from git on the next reconcile.
+
+To check a proposed Kubernetes version before merging anything, dry-run it — this is
+non-destructive and gives the exact error the tuppr job would hit:
+
+```
+talosctl -n <node-ip> upgrade-k8s --to=<version> --dry-run
+```
+
+The tuppr job's own pods are cleaned up quickly, so by the time a failure is noticed the logs are
+usually gone; the surviving evidence is `status.history[]` on the CR plus the controller's own log
+around the `startedAt` timestamp. Note those CR timestamps are **UTC** while the controller logs
+are `+02:00` — do not grep the log for the CR's own timestamp.
