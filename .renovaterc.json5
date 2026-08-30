@@ -180,6 +180,30 @@
       matchUpdateTypes: ["major"],
       enabled: false,
     },
+    {
+      // Talos 1.13.9 caps Kubernetes at 1.36.x: machinery/constants sets
+      // DefaultKubernetesVersion = "1.36.3" and supports 6 releases back, so
+      // `talosctl upgrade-k8s --to=v1.37.0` refuses outright with
+      // "unsupported upgrade path 1.36->1.37" and does nothing.
+      //
+      // Renovate treats kubelet as a plain container image and knows nothing
+      // about the Talos <-> Kubernetes support matrix, so it proposed v1.37.0
+      // anyway. The denylist correctly held it back from auto-merging, but a
+      // manual merge only helps if the reviewer knows the constraint exists --
+      // PR #48 merged on 2026-08-30, tuppr ran the job, and it failed
+      // permanently 5 minutes later. Nothing was damaged (talosctl refused
+      // before touching the node) but topf.yaml was left pointing at a
+      // kubernetesVersion this Talos cannot run.
+      //
+      // Lift this when Talos v1.14.0 is stable (v1.14.0-rc.2 as of 2026-08-30).
+      // Order matters: Talos 1.13 -> 1.14 FIRST, then Kubernetes 1.36 -> 1.37.
+      // The same marker annotates talos/topf.yaml and the tuppr
+      // KubernetesUpgrade CR, so this one rule covers both.
+      description: "Cap kubelet at what the running Talos release supports",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/siderolabs/kubelet"],
+      allowedVersions: "<1.37",
+    },
     // ---- Grouping ---------------------------------------------------------
     {
       description: "Flux Operator Group",
