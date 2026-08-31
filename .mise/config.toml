@@ -25,7 +25,7 @@ sops = "3.13.3"
 talosctl = "1.13.9"
 "github:postfinance/topf" = "v0.5.0"
 yq = "4.53.6"
-zizmor = "1.29.0"
+zizmor = "1.30.0"
 
 [hooks]
 postinstall = "lefthook install"
