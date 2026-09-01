@@ -83,9 +83,18 @@ spec:
 # instance evaluated against photoview-incoming.
 #
 # If this instance ever stops being a trial and accumulates curation worth
-# keeping, re-add a backup block modelled on photoview/app/postgres.yaml and
-# pick a NEW, never-used serverName (the s3://cnpg-gismo2004/immich prefix
-# already holds one generation's archive from when this was enabled; reusing
-# immich-postgres-v1 would fail barman-cloud-check-wal-archive's "Expected
-# empty archive" pre-flight). The immich-postgres-s3-creds Secret is left in
-# place for exactly that, and is simply unused for now.
+# keeping, re-add a backup block modelled on photoview/app/postgres.yaml. The
+# immich-postgres-s3-creds Secret is left in place for exactly that, and is
+# simply unused for now.
+#
+# The s3://cnpg-gismo2004/immich prefix held one generation's archive under
+# serverName immich-postgres-v1, written while backup was briefly enabled.
+# Nothing had referenced it since (spec.backup is null), so it was 36.9 GiB of
+# orphaned WAL and base backups that no restore path could use -- purged on
+# 2026-09-01, taking the bucket from 51.3 GiB to 14.4 GiB.
+#
+# That prefix is now empty, so immich-postgres-v1 is free to reuse: barman's
+# "Expected empty archive" pre-flight guards against two timelines writing into
+# one catalog, and there is no longer a catalog there to collide with. Pick a
+# fresh serverName anyway if a v1 archive has been recreated in the meantime --
+# check the prefix is empty before trusting this note.
