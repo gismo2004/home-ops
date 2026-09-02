@@ -20,7 +20,15 @@ spec:
       hostnames:
         - "{{ .Release.Name }}.gismo2004.cc"
       parentRefs:
-        - name: envoy-external
+        # cluster-template ships echo on envoy-external as a canary for the
+        # public path. Nothing depends on it here -- the GitHub webhook is its
+        # own route (flux-webhook.gismo2004.cc, flux-system/flux-instance), and
+        # no gatus check or manifest references echo -- so it does not need to
+        # be internet-facing. It reflects pod/namespace/node metadata back
+        # (config.kubernetes: true), which is not worth publishing for a test
+        # app. jellyfin and home-assistant remain on envoy-external if the
+        # external path ever needs verifying.
+        - name: envoy-internal
           namespace: network
     monitoring:
       serviceMonitor:
