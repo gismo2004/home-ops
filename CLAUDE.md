@@ -192,6 +192,49 @@ If caught stuck: scale the Deployment to 0 (releases the finalizer, PVC actually
 reconcile (recreates the PVC from git, `Pending` per the WFC note above), scale back to 1
 (triggers the restore), verify real content — not just `Bound` status.
 
+### Retiring an app without stranding its backup data in B2
+
+Two settings decide whether deleting an app also removes its kopia data, and the **order of
+operations is the whole thing**:
+
+```
+Snapshot.spec.deletionPolicy              Delete | Retain | Orphan
+  "Produced backups default to Delete; discovered snapshots are forced to Retain"
+  -- every policy-produced Snapshot here carries Delete (Kopiur's own default;
+     the shared component does not set it)
+
+ClusterRepository.spec.onNamespaceDelete  Orphan | Delete   -- ours is Orphan
+```
+
+**To deliberately retire an app and reclaim its space:** while the app is still deployed and its
+`SnapshotPolicy` still exists, delete that policy's `Snapshot` CRs. They carry
+`deletionPolicy: Delete`, so the underlying kopia snapshots go with them. _Then_ remove the app
+from git. The nightly `full` maintenance (03:00, `Maintenance/default` in `kopiur-system`)
+reclaims the blobs; watch `status.full.lastContentReclaimedBytes` to confirm it actually happened.
+
+**The wrong order strands the data permanently.** Delete the namespace/app first and
+`onNamespaceDelete: Orphan` keeps the kopia data while the CRs disappear with the namespace. A
+later catalog scan rediscovers those identities as `phase: Discovered`, which the CRD forces to
+`deletionPolicy: Retain` — from that point Kopiur will never delete them and only kopia CLI can.
+The same applies to any rename, which is how the 11 orphans cleaned up on 2026-09-02 came about
+(9 from TrueCharts-era PVC names, 2 from policy renames: `vdf`→`vdf-config`,
+`mosquitto`→`mosquitto-data`).
+
+**Orphans never age out.** Retention (`keepLatest`/`keepHourly`/`keepDaily`/`keepWeekly`) is
+enforced _by the owning policy_. An orphan has no policy, so no retention applies and nothing ever
+expires it — it pins its content blobs in B2 indefinitely, and full maintenance will keep
+reporting `lastContentReclaimedBytes: 0` because that content is still referenced. Do not expect
+an orphan to disappear on its own; it will not.
+
+**`onNamespaceDelete` must stay `Orphan`. Do not "fix" the orphan problem by setting `Delete`.**
+That would make any accidental namespace removal destroy the backups too — and this cluster has
+already had Flux delete live objects it should not have, in the components/prune race documented
+above, which left a PVC stuck `Terminating`. A stray `kubectl delete ns`, a bad prune, or a
+mis-scoped Kustomization would become unrecoverable data loss instead of a cleanup task. Orphaned
+data is the recoverable failure mode; the other direction is not. `Orphan` is also what makes the
+`docs/MIGRATION.md` restore procedure possible at all — retired history survives, so a `Restore`
+can still reach it by pinning `spec.source.identity` to the old values explicitly.
+
 **Discovered/orphaned snapshots are a recurring cleanup, not a one-time fix.** A `Snapshot` CR with
 `status.phase: Discovered` means the kopia repository holds history under an identity nothing
 currently owns (a retired policy name, a renamed PVC, a pre-split combined policy). These are
