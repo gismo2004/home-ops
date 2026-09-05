@@ -11,7 +11,7 @@ spec:
     # plan would silently stay pinned while topf.yaml moved on, and the two
     # would drift. Matches onedr0p/home-ops.
     # renovate: datasource=custom.talos-factory depName=siderolabs/talos
-    version: v1.13.9
+    version: v1.14.0
   policy:
     rebootMode: default
     placement: soft
