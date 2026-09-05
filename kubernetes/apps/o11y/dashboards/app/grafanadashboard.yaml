@@ -230,7 +230,7 @@ spec:
     - datasourceName: "https://blocky.gismo2004.cc"
       inputName: VAR_BLOCKY_URL
   # renovate: datasource=github-releases depName=0xERR0R/blocky
-  url: https://raw.githubusercontent.com/0xERR0R/blocky/v0.34.0/docs/blocky-grafana.json
+  url: v0.35.0
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
