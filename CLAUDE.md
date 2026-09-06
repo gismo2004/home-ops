@@ -163,6 +163,11 @@ files everything under `sources[0]`'s path and the others become unrestorable) a
 non-default mover identity (`home-assistant`, `esphome` run root movers; `jdownloader2` needs the
 `privileged-movers` namespace annotation).
 
+**Repository defaults and concurrency:** `ClusterRepository/default` in `kopiur-system` sets
+`scheduleDefaults` (`timezone: Europe/Vienna`, `jitter: 6h`) and `concurrency.maxConcurrentJobs: 3`.
+All `SnapshotSchedule` crons inherit both timezone and 6h jitter from the repository automatically;
+do not repeat `jitter: 6h` in individual schedule files.
+
 **The snapshot identity is `<policy-name>@<namespace>:/pvc/<claim-name>` — all three parts.** When
 using the shared component, `KOPIUR_NAME` and `KOPIUR_CLAIM` are two separate substitution
 variables specifically because they frequently differ (policy `calibre` backs up claim

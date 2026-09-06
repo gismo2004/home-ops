@@ -12,7 +12,6 @@ spec:
     name: vdf-config
   schedule:
     cron: "H 0,6,12,18 * * *"
-    jitter: 6h # deterministic per-object offset (scheduleUID, slot), spreads the actual fire time
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
@@ -24,4 +23,3 @@ spec:
     name: vdf-state
   schedule:
     cron: "H 0,6,12,18 * * *"
-    jitter: 6h # deterministic per-object offset (scheduleUID, slot), spreads the actual fire time

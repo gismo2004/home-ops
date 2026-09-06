@@ -31,3 +31,6 @@ spec:
       key: KOPIA_PASSWORD
   scheduleDefaults:
     timezone: Europe/Vienna
+    jitter: 6h
+  concurrency:
+    maxConcurrentJobs: 3
