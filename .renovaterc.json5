@@ -28,6 +28,14 @@
     commitMessageExtra: "({{manager}})",
     additionalBranchPrefix: "{{manager}}-",
   },
+  hostRules: [
+    {
+      description: "Throttle requests to grafana.com to prevent burst rate-limiting",
+      matchHost: "grafana.com",
+      concurrentRequestLimit: 1,
+      maxRequestsPerSecond: 1,
+    },
+  ],
   customManagers: [
     {
       // Dashboards that live in the app's own repo rather than on grafana.com
