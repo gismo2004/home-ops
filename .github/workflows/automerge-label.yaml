@@ -1,0 +1,72 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "Automerge Labeler"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+      - auto_merge_enabled
+      - auto_merge_disabled
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/automerge-label.yaml
+  workflow_dispatch:
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  label-automerge:
+    name: Label Automerge PRs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update Automerge Labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          AUTO_MERGE: ${{ github.event.pull_request.auto_merge }}
+        run: |
+          gh label create "automerge" --color "0e8a16" --description "Automatically merged when checks pass" --force || true
+
+          process_pr() {
+            local pr_number="$1"
+            local pr_body="$2"
+            local auto_merge="$3"
+
+            local is_automerge=false
+            if echo "$pr_body" | grep -qE '\*\*Automerge\*\*:\s*Enabled'; then
+              is_automerge=true
+            elif [ -n "$auto_merge" ] && [ "$auto_merge" != "null" ]; then
+              is_automerge=true
+            fi
+
+            if [ "$is_automerge" = true ]; then
+              echo "PR #$pr_number has automerge enabled. Adding 'automerge' label..."
+              gh pr edit "$pr_number" --add-label "automerge" || true
+            else
+              echo "PR #$pr_number does not have automerge enabled. Removing 'automerge' label if present..."
+              gh pr edit "$pr_number" --remove-label "automerge" || true
+            fi
+          }
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            process_pr "$PR_NUMBER" "$PR_BODY" "$AUTO_MERGE"
+          else
+            echo "Processing all open PRs..."
+            gh pr list --state open --json number,body,autoMergeRequest | jq -c '.[]' | while read -r pr; do
+              num=$(echo "$pr" | jq -r .number)
+              body=$(echo "$pr" | jq -r .body)
+              am=$(echo "$pr" | jq -r .autoMergeRequest)
+              process_pr "$num" "$body" "$am"
+            done
+          fi
