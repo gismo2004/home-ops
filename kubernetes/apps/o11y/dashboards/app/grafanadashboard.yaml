@@ -207,7 +207,7 @@ spec:
   datasources:
     - datasourceName: prometheus
       inputName: DS_PROMETHEUS
-  # renovate: datasource=github-releases depName=cloudnative-pg/grafana-dashboards
+  # renovate: depName=cloudnative-pg/grafana-dashboards datasource=github-releases
   url: https://raw.githubusercontent.com/cloudnative-pg/grafana-dashboards/cluster-v0.0.5/charts/cluster/grafana-dashboard.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
@@ -229,7 +229,7 @@ spec:
       inputName: DS_PROMETHEUS
     - datasourceName: "https://blocky.gismo2004.cc"
       inputName: VAR_BLOCKY_URL
-  # renovate: datasource=github-releases depName=0xERR0R/blocky
+  # renovate: depName=0xERR0R/blocky datasource=github-releases
   url: https://raw.githubusercontent.com/0xERR0R/blocky/v0.34.0/docs/blocky-grafana.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
