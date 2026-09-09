@@ -1,8 +1,6 @@
 cluster:
   allowSchedulingOnControlPlanes: true
   apiServer:
-    admissionControl:
-      $patch: delete
     certSANs:
       - "127.0.0.1"
       - "10.0.0.120"
@@ -35,3 +33,19 @@ cluster:
                   - maxSkew: 1
                     topologyKey: kubernetes.io/hostname
                     whenUnsatisfiable: ScheduleAnyway
+---
+apiVersion: v1alpha1
+kind: KubeProxyConfig
+$patch: delete
+---
+apiVersion: v1alpha1
+kind: KubeFlannelCNIConfig
+$patch: delete
+---
+apiVersion: v1alpha1
+kind: KubeCoreDNSConfig
+enabled: false
+---
+apiVersion: v1alpha1
+kind: SecurityProfileConfig
+workloadIsolation: false
