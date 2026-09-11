@@ -78,7 +78,7 @@ spec:
           codeserver:
             image:
               repository: ghcr.io/linuxserver/code-server
-              tag: 4.136.2@sha256:5d7aa5dbcf0ba770ee1a25151d110beefe37f400fa7a9108508f11f49627a548
+              tag: 4.137.0@sha256:35c66180741213ad9d8a4a31271fa7e84f290b681ece3fb84359c1ca7013da89
             env:
               PUID: "568"
               PGID: "568"
