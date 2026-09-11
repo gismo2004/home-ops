@@ -44,7 +44,7 @@ spec:
           app:
             image:
               repository: ghcr.io/immich-app/immich-server
-              tag: v3.1.0@sha256:b434cb9287eea1471c9974845914d4dd328c9c2d652e446ed4930f99944f0ceb
+              tag: v3.2.0@sha256:ae13784ffcfcce8f4178113eb6661602a1fd1912f3d539880b8ac0dd95fc8ac2
             envFrom:
               - secretRef:
                   name: immich-secrets
@@ -132,7 +132,7 @@ spec:
           app:
             image:
               repository: ghcr.io/immich-app/immich-machine-learning
-              tag: v3.1.0-cuda@sha256:82d3f6a093455964508052e0b3bc55a91075b48b65be35e78b40774a72c1ebb3
+              tag: v3.2.0-cuda@sha256:2ae48a3234d153a4c8a90abc490e069fa16f8d8da7e16aee5339b96f3ad750d4
             # Deliberately NOT setting MACHINE_LEARNING_MODEL_TTL below the
             # 300s default. Tried 60s to shrink the standing VRAM footprint
             # after a confirmed OCR-specific VRAM leak (immich#26739,
