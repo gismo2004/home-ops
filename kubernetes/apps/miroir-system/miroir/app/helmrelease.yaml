@@ -17,45 +17,16 @@ spec:
     remediation:
       retries: 3
   values:
-    resources:
-      requests:
-        cpu: 10m
-        memory: 64Mi
-      limits:
-        memory: 512Mi
-    sidecars:
-      provisioner:
-        resources:
-          requests:
-            cpu: 10m
-            memory: 64Mi
-          limits:
-            memory: 256Mi
-      snapshotter:
-        resources:
-          requests:
-            cpu: 10m
-            memory: 64Mi
-          limits:
-            memory: 256Mi
-      resizer:
-        resources:
-          requests:
-            cpu: 10m
-            memory: 64Mi
-          limits:
-            memory: 256Mi
+    # Chart defaults (128Mi limit) are used everywhere except agent below.
+    # 30-day container_memory_working_set_bytes peaks (2026-09-11): controller
+    # 57Mi, csi-provisioner 74Mi, csi-resizer 70Mi, csi-snapshotter 61Mi,
+    # node-driver-registrar 24Mi — all comfortably under the 128Mi/64Mi
+    # chart defaults, no OOMKilled events recorded.
     agent:
       resources:
-        requests:
-          cpu: 10m
-          memory: 64Mi
         limits:
-          memory: 512Mi
-      registrar:
-        resources:
-          requests:
-            cpu: 5m
-            memory: 16Mi
-          limits:
-            memory: 128Mi
+          # Chart default is 128Mi; clean-baseline peak alone is 118Mi (and
+          # 165Mi during the stuck-reconcile-loop incident, see
+          # github.com/home-operations/miroir/issues/490), too tight to trust
+          # the default.
+          memory: 256Mi
