@@ -1,317 +1,245 @@
 # CLAUDE.md
 
 Guidance for Claude Code (or any agent) working in this repository. Treat this as authoritative
-for how this specific cluster behaves — it documents load-bearing facts and known landmines that
+for how this specific cluster behaves: it records load-bearing facts and known landmines that
 aren't obvious from reading the manifests alone.
 
 ## What this is
 
-A FluxCD GitOps repo for a bare-metal-equivalent (single Proxmox VM) Talos Linux Kubernetes
-homelab cluster. Every cluster change is a git commit to `origin/main` — Flux reconciles the live
-cluster to match the repo, not the other way around. Modelled on
+A FluxCD GitOps repo for a single-node Talos Linux Kubernetes homelab cluster running as a Proxmox
+VM. Every cluster change is a git commit to `origin/main`; Flux reconciles the live cluster to
+match the repo, not the other way around. Modelled on
 [onedr0p/home-ops](https://github.com/onedr0p/home-ops) and bootstrapped from
-[siderolabs/cluster-template](https://github.com/siderolabs/cluster-template); apps and data were
-migrated from a prior cluster (`gismo2004/HomeCluster`, now historical-only — see
-`docs/MIGRATION.md`).
+[siderolabs/cluster-template](https://github.com/siderolabs/cluster-template). Apps and data were
+migrated from a prior cluster (`gismo2004/HomeCluster`, historical only, see `docs/MIGRATION.md`).
 
-There is no traditional build/lint/test suite. "Correct" means valid Kubernetes/Kustomize/Helm
-YAML that Flux can reconcile without errors — use `kustomize build`, `kubeconform`, and CI's
-`flate` check accordingly (see "Validating a change" below).
+There is no traditional test suite. "Correct" means valid Kubernetes/Kustomize/Helm YAML that
+Flux can reconcile, see "Validating a change" below.
 
 ## Environment & tooling
 
-Tool versions are pinned via `mise` (`.mise/config.toml`, **not** the empty top-level `mise.toml`
-— that's a vestigial file from the cluster-template scaffold with nothing in it; `.mise/config.toml`
-is what's actually loaded, confirmed via `mise config`). Run `mise install` once per checkout.
-`.mise/config.toml`'s `[env]` block exports `KUBECONFIG`, `SOPS_AGE_KEY_FILE`, `SOPS_CONFIG`, and
-`TALOSCONFIG` from repo-relative paths — no `direnv` needed, mise handles it.
+Tool versions are pinned in `.mise/config.toml` (the top-level `mise.toml` is an empty leftover
+of the template). Run `mise install` once per checkout; its `[env]` block exports `KUBECONFIG`,
+`SOPS_AGE_KEY_FILE`, `SOPS_CONFIG` and `TALOSCONFIG` from repo-relative paths. `kubectl` and
+`talosctl` pins track the live cluster.
 
-Current pins worth knowing: `flux2` 2.9.4, `kubectl`/`talosctl` tracking the live cluster
-(currently k8s v1.36.4, Talos v1.13.9), `kustomize` 5.8.1, `sops` 3.13.3, `helm` 4.2.4.
+Common commands (`just --list --list-submodules` for the full menu):
 
-Common commands (`just`, loading `bootstrap/mod.just`, `kubernetes/mod.just`, `talos/mod.just` as
-modules — run `just --list --list-submodules` to see the full menu):
-
-- `just kube reconcile` — force Flux to pull; a GitHub webhook triggers this automatically on
-  push, so this is only for when reconciliation genuinely seems stuck.
-- `just talos diff` — preview pending Talos machine-config changes; `just talos apply`/
-  `apply-node <node>` to apply (shows a diff and asks first), `just talos upgrade-node <node>` for
-  a Talos upgrade, `just talos upgrade-k8s` for a Kubernetes upgrade.
-- `just bootstrap talos` / `just bootstrap apps` — the two-phase cluster bootstrap.
-- `sops -d <file>` — decrypt a `*.sops.yaml`; never print/commit decrypted content.
-- `kustomize build kubernetes/apps/<group>/<app>/app` — render one app's manifests locally before
-  trusting a change.
-- Pre-commit (`lefthook`, `.lefthook.toml`) auto-formats staged YAML/JSON/Markdown with `oxfmt`,
-  formats staged `.justfile`s and mise config, and runs `zizmor` against GitHub Actions workflows.
-  **It does not auto-encrypt sops files** — that's a manual `sops -e -i <file>` step (the
-  `path_regex` rules in `.sops.yaml` only take effect when `sops` is actually invoked, not on
-  save). If a hook fails with `oxfmt: not found`, mise's shims aren't on `$PATH` — run
+- `just kube reconcile`: force Flux to pull. A GitHub webhook does this on every push, so only
+  use it when reconciliation genuinely seems stuck.
+- `just talos diff` / `just talos apply` / `apply-node <node>`: preview and apply machine config
+  (shows a diff and asks first). `just talos upgrade-node <node>`, `just talos upgrade-k8s`.
+- `just bootstrap talos` / `just bootstrap apps`: the two-phase cluster bootstrap.
+- `sops -d <file>`: decrypt a `*.sops.yaml`. Never print or commit decrypted content. Encryption
+  is a manual `sops -e -i <file>`; no hook does it.
+- Pre-commit (`lefthook`) formats staged YAML/JSON/Markdown with `oxfmt`, formats `.justfile`s and
+  mise config, and runs `zizmor` on workflows. If it fails with `oxfmt: not found`, run
   `export PATH="$HOME/.local/share/mise/shims:$PATH"` rather than skipping the hook.
 
 ## Repository layout
 
 ```
 kubernetes/
-  flux/cluster/ks.yaml     — the root Kustomization ("cluster-apps"), applies ./kubernetes/apps
+  flux/cluster/ks.yaml     the root Kustomization ("cluster-apps"), applies ./kubernetes/apps
   apps/<group>/<app>/
-    ks.yaml                — the Flux Kustomization, points at ./app, sets targetNamespace
-    app/kustomization.yaml — lists that app's resource files
-    app/helmrelease.yaml   — almost always app-template, via chartRef → app/ocirepository.yaml
+    ks.yaml                the Flux Kustomization, points at ./app, sets targetNamespace
+    app/kustomization.yaml lists that app's resource files
+    app/helmrelease.yaml   almost always app-template, via chartRef -> app/ocirepository.yaml
   components/
-    sops/                  — the cluster-secrets sops component (some namespaces pull it in;
-                              see "Variable substitution" below — its one key is currently unused)
-    kopiur/backup/         — shared backup wiring, see "Backups: Kopiur" below
-bootstrap/                 — helmfile-driven CRD/core-component bootstrap (crds.yaml, apps.yaml)
-talos/                     — topf-rendered machine config (topf.yaml + fragments)
-docs/MIGRATION.md          — the HomeCluster→home-ops rebuild runbook (historical, but the
-                              per-app landmines it documents — identity, dual-serverName — are
-                              still live facts, not just history)
+    sops/                  cluster-secrets component (its one key is unused, see below)
+    kopiur/backup/         shared backup wiring, see "Backups: Kopiur"
+bootstrap/                 helmfile-driven CRD/core-component bootstrap
+talos/                     topf-rendered machine config (topf.yaml + fragments)
+docs/MIGRATION.md          the HomeCluster -> home-ops rebuild runbook; its per-app landmines
+                           (backup identity, dual serverName) are still live facts
 ```
 
-**`apps/default/` is a directory grouping, not the literal Kubernetes `default` namespace.** It's
-named after cluster-template's own convention. Only the `echo` test app actually deploys into the
-real `default` namespace — every other app under `apps/default/` gets `targetNamespace: <app-name>`,
-its own dedicated namespace, in its `ks.yaml`.
+**`apps/default/` is a directory grouping, not the `default` namespace.** Only `echo` deploys
+there; every other app gets `targetNamespace: <app-name>` in its `ks.yaml`. Exception: `jellyfin`,
+`lidarr`, `prowlarr`, `radarr`, `sabnzbd` and `sonarr` share `media`, inherited from the old stack.
+Splitting them is **not** a rename, because the namespace is part of the backup identity (see
+"Backups: Kopiur") and needs the identity-preserving procedure from `docs/MIGRATION.md`.
 
-**Known exception, not yet resolved:** six apps (`jellyfin`, `lidarr`, `prowlarr`, `radarr`,
-`sabnzbd`, `sonarr`) share `targetNamespace: media` instead of getting their own namespace —
-inherited from the old TrueCharts-era stack. There's no technical requirement forcing this (the
-shared NFS downloads mount isn't namespace-scoped, cross-app references already use full FQDNs
-like `jellyfin.media.svc.cluster.local`). If this is ever split into per-app namespaces, it is
-**not** a simple rename — see "Backups: Kopiur" below for why, and follow the same
-identity-preserving procedure documented in `docs/MIGRATION.md` for the original rebuild.
+**Hostnames and IPs are literal values, not `${VAR}` substitutions.** The `cluster-secrets` Secret
+behind `components/sops` still defines `SECRET_DOMAIN`, but nothing references it. Copy the
+convention from a recent sibling app, not from older examples. Genuinely sensitive values get a
+per-app `app/secret.sops.yaml`.
 
-## Variable substitution — mostly unused; check before assuming it's live
-
-`kubernetes/components/sops` is a Kustomize `Component` some apps pull in via
-`components: [../../components/sops]`, which would give `postBuild.substitute`/`substituteFrom`
-access to the `cluster-secrets` sops Secret. That Secret currently defines exactly one key,
-`SECRET_DOMAIN` (`gismo2004.cc`) — **and nothing in the repo actually references
-`${SECRET_DOMAIN}`.** Every hostname across all 42 files that have one (checked repo-wide) is a
-literal `gismo2004.cc` string, not a substituted variable. This is **not** the old HomeCluster
-pattern of one monolithic ~57-key secret feeding widespread `${VAR}` substitution — that pattern
-was deliberately abandoned; most of what used to live there (LoadBalancer IPs, NFS paths, cluster
-facts) are literal values here, and apparently the domain ended up literal too somewhere along the
-way rather than staying substituted. Don't assume a new app needs `${SECRET_DOMAIN}` just because
-older docs/examples show it — check a recent sibling app's manifest for the current convention
-(currently: hardcode the literal hostname). Genuinely sensitive values (DB passwords, API tokens)
-get their own per-app `app/secret.sops.yaml`, which is the pattern that's actually load-bearing.
-
-**Never `kubectl apply -f` a repo file containing unresolved `${...}` placeholders** — it writes
-the literal placeholder string into the live object. Push to git and let Flux substitute, or use
-`kubectl patch` against already-substituted fields for narrow, temporary debugging only.
-
-## Per-app patches go in `app/kustomization.yaml`, never in `ks.yaml`'s `spec.patches`
-
-The root `cluster-apps` Kustomization (`kubernetes/flux/cluster/ks.yaml`) patches a `spec.patches`
-block (the shared HelmRelease install/upgrade defaults) onto **every** child Kustomization. That
-merge **replaces the list wholesale**, so anything a child `ks.yaml` puts in its own
-`spec.patches` is silently dropped — no error, no warning, the field just isn't there on the live
-object. Check with `kubectl -n default get kustomization <app> -o yaml` if in doubt: if the only
-entry under `spec.patches` is the HelmRelease one, yours was eaten.
-
-Patch at the Kustomize layer instead — a `patches:` block in the app's own
-`app/kustomization.yaml`. It applies to component-generated resources too (verified against
-`components/kopiur/backup`), and unlike the Flux-level version it's visible in a local
-`kustomize build`. Target by `group`+`kind` only: `postBuild.substitute` runs _after_ the build,
-so at patch time the object is still literally named `${KOPIUR_NAME}` and a name filter never
-matches. `edgetx`'s Kopiur cache exclusion sat dead this way from commit `761dea5` until it was
-found and moved on 2026-08-24.
+**Never `kubectl apply -f` a repo file containing unresolved `${...}` placeholders:** it writes the
+literal placeholder into the live object.
 
 ## Workflow: git+Flux for configuration, kubectl for state changes
 
-**Configuration** (a resource's desired spec) belongs in git, applied by Flux. **State changes**
-(scaling a Deployment, triggering an existing CR, deleting a stray cache PVC) are fine directly
-via `kubectl`. A push triggers reconciliation automatically via webhook — no need to
-`flux reconcile` after every push, only if reconciliation genuinely seems stuck.
+Configuration (a resource's desired spec) belongs in git. State changes (scaling a Deployment,
+deleting a pod or a stray cache PVC, triggering an existing CR) are fine via `kubectl`. A live
+`kubectl patch` on something that _is_ configuration is silently reverted on the next reconcile.
 
-A live `kubectl patch`/`apply` on something that _is_ configuration gets silently reverted on the
-next reconcile of that Kustomization, with no error, because git is the source of truth Flux
-restores to.
+**Per-app patches go in `app/kustomization.yaml`, never in `ks.yaml`'s `spec.patches`.** The root
+`cluster-apps` Kustomization patches a `spec.patches` block onto every child, and that merge
+replaces the list wholesale, so a child's own entries are dropped without any error. A `patches:`
+block in `app/kustomization.yaml` works, also on component-generated resources, and shows up in a
+local `kustomize build`. Target by `group`+`kind` only: `postBuild.substitute` runs after the
+build, so at patch time a component object is still literally named `${KOPIUR_NAME}`.
+
+## Validating a change before merge
+
+- `kustomize build kubernetes/apps/<group>/<app>/app`, optionally piped into
+  `kubeconform -strict -ignore-missing-schemas`. Literal `${KOPIUR_*}` placeholders in the output
+  are expected; Flux substitutes them.
+- CI's `flate` workflow runs `flate test all` against `kubernetes/flux/cluster` on every PR touching
+  `kubernetes/**`. It is the closest thing to a dry-run of Flux's dependency graph; a clean
+  `kustomize build` does not guarantee it passes. It never starts a container.
+- For anything touching Kopiur/CNPG backup identity, don't trust a `Succeeded` status alone:
+  restore into a throwaway object and check real content.
+
+## Networking: Multus for LAN-facing pods
+
+Pods live on Cilium's pod network (`172.16.0.0/24`) and never see link-local multicast from the
+home LAN (`10.0.0.0/24`), so mDNS discovery does not reach them. Multus (`kube-system/multus`)
+gives selected pods a second, macvlan interface on `bond0` via the `lan`
+`NetworkAttachmentDefinition` and a `k8s.v1.cni.cncf.io/networks` pod annotation.
+
+- **Addresses are pinned per pod** and must stay outside the FRITZ!Box DHCP range (`.10`-`.60`) and
+  the Cilium LoadBalancer pool (`.130`-`.240`). In use: `10.0.0.250` home-assistant,
+  `10.0.0.251` esphome. The Service LoadBalancer IPs are unaffected.
+- **`sbr` in the network definition is load-bearing.** A macvlan child cannot reach its own parent
+  host, and that host answers every LoadBalancer IP (blocky, mosquitto, ...). Without `sbr` the pod
+  would route all of `10.0.0.0/24` out of the macvlan and lose those services; with it only traffic
+  sourced from the LAN address uses the second interface.
+- **A pod created before Multus is running gets no second interface**, and nothing retries it. After
+  (re)installing Multus, check the pod's `k8s.v1.cni.cncf.io/network-status` annotation lists
+  `kube-system/lan`, and delete the pod if not.
+- Home Assistant only uses the new interface for zeroconf once it is ticked under Settings ->
+  System -> Network; its automatic choice picks the default-route interface only.
+- Pods resolve through CoreDNS, which forwards to the node's nameservers (`1.1.1.1`, `8.8.8.8`),
+  so `*.fritz.box` names do not resolve in the cluster.
 
 ## Storage: miroir
 
-DRBD-based CSI (`miroir.home-operations.com`), StorageClass `miroir-local`,
-`VolumeBindingMode: WaitForFirstConsumer`.
+DRBD-based CSI, StorageClass `miroir-local`, `VolumeBindingMode: WaitForFirstConsumer`.
 
-**A `Restore`'s claiming PVC will not bind, and its populator will not run, until a pod actually
-tries to mount it.** The old "hold replicas at 0 while the restore completes" pattern used on the
-previous cluster's storage driver (Longhorn) **stalls forever** on miroir — WFC means nothing
-happens until there's a consumer. The correct sequence for a from-scratch or post-delete restore
-is: PVC exists (`Pending` is expected and fine) → scale the Deployment to 1 → the pod's scheduling
-attempt triggers the CSI populator → PVC binds once the restore completes → pod starts.
+**A `Restore`'s claiming PVC will not bind, and its populator will not run, until a pod tries to
+mount it.** The Longhorn-era "hold replicas at 0 while the restore completes" pattern stalls
+forever. Sequence: PVC exists (`Pending` is fine) -> scale the Deployment to 1 -> the scheduling
+attempt triggers the populator -> PVC binds -> pod starts.
 
-**Known failure mode: a dropped populator handoff under concurrent restores.** Restoring two PVCs
-at the same time can leave one of them stuck — its "prime" staging PVC provisions and binds fine,
-its populate job completes fine, but the final handoff to the real claiming PVC never fires. Zero
-errors logged anywhere in `miroir-controller` or the agent. Tell: compare
-`pv.kubernetes.io/bind-completed` between the stuck PVC and a sibling that worked — the stuck one
-is missing it. Fix: `kubectl -n miroir-system rollout restart deploy/miroir-controller` (single
-replica, safe to restart, doesn't touch the already-successful sibling). Binds within ~90s of the
-restart. Don't delete/recreate the PVC to "retry" — that just restarts the whole restore for no
-reason; the data staged in the prime PVC was never at risk.
+**Concurrent restores can drop the populator handoff.** One PVC's staging PVC binds and its populate
+job completes, but the final handoff never fires, with no errors logged. Tell: the stuck PVC lacks
+`pv.kubernetes.io/bind-completed` that a working sibling has. Fix:
+`kubectl -n miroir-system rollout restart deploy/miroir-controller` (binds within ~90 s). Don't
+delete and recreate the PVC; that restarts the whole restore for nothing.
+
+## Backups: Backblaze B2
+
+Two buckets in `eu-central-003`: `kopiur` (Kopia repository) and `cnpg-gismo2004` (barman archives
+of the CNPG databases).
+
+**Every bucket needs a lifecycle rule that actually deletes hidden files.** B2 buckets default to
+"keep all versions": a delete only hides the file and it stays billed. Barman and Kopia both
+expect deletes to free space. `cnpg-gismo2004` had no rule until 2026-09-17 and had accumulated
+52.6 GB of deleted-but-kept versions against 15.6 GB live, growing by the full ~2.5 GB daily
+upload; earlier manual purges there (e.g. the immich prefix on 2026-09-01) freed nothing billed.
+Both buckets now carry `daysFromHidingToDeleting: 1`. The rule lives in B2, not in this repo, so set
+it on any new or recreated bucket (B2 console: Lifecycle Settings -> "Keep only the last version",
+or `b2_update_bucket`). When judging bucket size, count hidden versions (`b2_list_file_versions`),
+not just what `b2 ls` or barman reports.
 
 ## Backups: Kopiur
 
-Every app's backup wiring is either the shared `components/kopiur/backup` component (16 apps as
-of writing — `blocky`, `calibre`, `edgetx`, `iceagent`, `jellyfin`, `krokiet`, `lidarr`, `mealie`,
-`orcaslicer`, `oscam`, `prowlarr`, `radarr`, `sabnzbd`, `sonarr`, `tasmoadmin`, `tasmobackup`) or
-hand-rolled `snapshotpolicy.yaml`/`snapshotschedule.yaml` files for apps the component can't
-express: multi-PVC apps (`kavita`, `mosquitto`, `unmonitarr`, `vdf` — each backs up two
-independent PVCs; **never combine them into one policy's `sources: [...]`**, a multi-source policy
-files everything under `sources[0]`'s path and the others become unrestorable) and apps needing a
-non-default mover identity (`home-assistant`, `esphome` run root movers; `jdownloader2` needs the
-`privileged-movers` namespace annotation).
+Backup wiring is either the shared `components/kopiur/backup` component or hand-rolled
+`snapshotpolicy.yaml`/`snapshotschedule.yaml` for what the component can't express:
 
-**Repository defaults and concurrency:** `ClusterRepository/default` in `kopiur-system` sets
-`scheduleDefaults` (`timezone: Europe/Vienna`, `jitter: 6h`) and `concurrency.maxConcurrentJobs: 3`.
-All `SnapshotSchedule` crons inherit both timezone and 6h jitter from the repository automatically;
-do not repeat `jitter: 6h` in individual schedule files.
+- **Multi-PVC apps** (`kavita`, `mosquitto`, `unmonitarr`, `vdf`) get one policy per PVC. **Never
+  combine PVCs in one policy's `sources: [...]`**: everything is filed under `sources[0]`'s path
+  and the rest become unrestorable.
+- **Non-default mover identity:** `home-assistant` and `esphome` run root movers; `jdownloader2`
+  needs the `privileged-movers` namespace annotation.
 
-**The snapshot identity is `<policy-name>@<namespace>:/pvc/<claim-name>` — all three parts.** When
-using the shared component, `KOPIUR_NAME` and `KOPIUR_CLAIM` are two separate substitution
-variables specifically because they frequently differ (policy `calibre` backs up claim
-`calibre-config`). Changing any one of the three — policy name, namespace, or PVC name — computes
-a _different_ identity, and a `Restore` against it finds nothing. With the default
-`onMissingSnapshot: Continue` this **silently populates an empty PVC** rather than failing. This is
-why the six `media`-namespace apps can't be casually moved to their own namespaces (see "Repository
-layout" above) and why any future rename needs the same staged procedure `docs/MIGRATION.md` used:
-pin `Restore.spec.source.identity` to the _old_ values explicitly, set `onMissingSnapshot: Fail`,
-verify real content lands, only _then_ flip back to `fromPolicy` and rename in a follow-up commit.
+`ClusterRepository/default` sets `scheduleDefaults` (`Europe/Vienna`, `jitter: 6h`) and
+`concurrency.maxConcurrentJobs: 3`; schedules inherit both, so don't repeat the jitter per app.
+
+**The snapshot identity is `<policy-name>@<namespace>:/pvc/<claim-name>`, all three parts.**
+`KOPIUR_NAME` and `KOPIUR_CLAIM` are separate variables because they often differ (policy
+`calibre`, claim `calibre-config`). Changing any part computes a different identity, and a `Restore`
+with the default `onMissingSnapshot: Continue` then **silently populates an empty PVC**. For any
+rename: pin `Restore.spec.source.identity` to the old values, set `onMissingSnapshot: Fail`, verify
+real content, only then switch back to `fromPolicy` and rename in a follow-up commit.
 
 **Landmine: converting an app from standalone backup files to the shared component can make Flux
-delete-then-recreate the live objects in the same push.** Observed converting `tasmoadmin`/
-`tasmobackup`: kustomize-controller's first apply pass within that reconcile only rendered the
-literal-resource objects (HelmRelease, OCIRepository), missing the four component-sourced ones, so
-prune/GC ran against an incomplete build and deleted the live `SnapshotPolicy`/`SnapshotSchedule`/
-`Restore`/`PersistentVolumeClaim`. The very next reconcile (~4s later) rebuilt correctly and
-recreated everything with the same identity, and Kopiur's auto-adoption reattached all existing
-snapshots with no data loss — but the **live PVC gets a `deletionTimestamp` and sits stuck
-`Terminating`**, held open only by the `pvc-protection` finalizer as long as its pod keeps running.
-If that pod is ever restarted afterward for any unrelated reason, the finalizer releases and the
-volume actually deletes, forcing an unplanned restore at an uncontrolled time.
-After any commit that adds `spec.components:` to a Kustomization that didn't have it while also
-removing the previously-inline resource files it replaces, immediately check
-`kubectl get pvc -A | grep -i terminating` — don't assume a clean push means a clean conversion.
-If caught stuck: scale the Deployment to 0 (releases the finalizer, PVC actually deletes), force a
-reconcile (recreates the PVC from git, `Pending` per the WFC note above), scale back to 1
-(triggers the restore), verify real content — not just `Bound` status.
+delete and recreate the live objects in the same push.** The first apply pass rendered only the
+literal resources, so prune deleted the live `SnapshotPolicy`/`SnapshotSchedule`/`Restore`/PVC; the
+next reconcile recreated them and Kopiur re-adopted the snapshots, but **the live PVC sits
+`Terminating`**, held only by `pvc-protection` while its pod runs, and deletes for real on the next
+pod restart. After such a commit, check `kubectl get pvc -A | grep -i terminating`. If stuck: scale
+to 0 (the PVC deletes), reconcile (recreated, `Pending`), scale to 1 (restore runs), verify content.
 
-### Retiring an app without stranding its backup data in B2
-
-Two settings decide whether deleting an app also removes its kopia data, and the **order of
-operations is the whole thing**:
+### Retiring an app without stranding its backup data
 
 ```
 Snapshot.spec.deletionPolicy              Delete | Retain | Orphan
-  "Produced backups default to Delete; discovered snapshots are forced to Retain"
-  -- every policy-produced Snapshot here carries Delete (Kopiur's own default;
-     the shared component does not set it)
-
+  policy-produced Snapshots here carry Delete; discovered ones are forced to Retain
 ClusterRepository.spec.onNamespaceDelete  Orphan | Delete   -- ours is Orphan
 ```
 
-**To deliberately retire an app and reclaim its space:** while the app is still deployed and its
-`SnapshotPolicy` still exists, delete that policy's `Snapshot` CRs. They carry
-`deletionPolicy: Delete`, so the underlying kopia snapshots go with them. _Then_ remove the app
-from git. The nightly `full` maintenance (03:00, `Maintenance/default` in `kopiur-system`)
-reclaims the blobs; watch `status.full.lastContentReclaimedBytes` to confirm it actually happened.
+**Order matters.** While the app and its `SnapshotPolicy` still exist, delete that policy's
+`Snapshot` CRs (their kopia snapshots go with them), _then_ remove the app from git. The nightly
+full maintenance (03:00, `Maintenance/default`) reclaims the blobs; confirm with
+`status.full.lastContentReclaimedBytes`.
 
-**The wrong order strands the data permanently.** Delete the namespace/app first and
-`onNamespaceDelete: Orphan` keeps the kopia data while the CRs disappear with the namespace. A
-later catalog scan rediscovers those identities as `phase: Discovered`, which the CRD forces to
-`deletionPolicy: Retain` — from that point Kopiur will never delete them and only kopia CLI can.
-The same applies to any rename, which is how the 11 orphans cleaned up on 2026-09-02 came about
-(9 from TrueCharts-era PVC names, 2 from policy renames: `vdf`→`vdf-config`,
-`mosquitto`→`mosquitto-data`).
+**The wrong order strands the data permanently.** Removing the app first orphans its kopia data; a
+later catalog scan rediscovers it as `phase: Discovered`, forced to `deletionPolicy: Retain`, and
+from then on only the kopia CLI can delete it. Renames do the same. **Orphans never age out:**
+retention is enforced by the owning policy, so an orphan pins its blobs indefinitely and full
+maintenance keeps reporting `0` reclaimed bytes.
 
-**Orphans never age out.** Retention (`keepLatest`/`keepHourly`/`keepDaily`/`keepWeekly`) is
-enforced _by the owning policy_. An orphan has no policy, so no retention applies and nothing ever
-expires it — it pins its content blobs in B2 indefinitely, and full maintenance will keep
-reporting `lastContentReclaimedBytes: 0` because that content is still referenced. Do not expect
-an orphan to disappear on its own; it will not.
+**`onNamespaceDelete` must stay `Orphan`.** `Delete` would turn a stray `kubectl delete ns` or a bad
+prune (see the landmine above) into unrecoverable data loss. Orphaned data is the recoverable
+failure mode, and it is what lets `docs/MIGRATION.md`-style restores reach retired history.
 
-**`onNamespaceDelete` must stay `Orphan`. Do not "fix" the orphan problem by setting `Delete`.**
-That would make any accidental namespace removal destroy the backups too — and this cluster has
-already had Flux delete live objects it should not have, in the components/prune race documented
-above, which left a PVC stuck `Terminating`. A stray `kubectl delete ns`, a bad prune, or a
-mis-scoped Kustomization would become unrecoverable data loss instead of a cleanup task. Orphaned
-data is the recoverable failure mode; the other direction is not. `Orphan` is also what makes the
-`docs/MIGRATION.md` restore procedure possible at all — retired history survives, so a `Restore`
-can still reach it by pinning `spec.source.identity` to the old values explicitly.
+**Before deleting a `Discovered` snapshot, compare its full identity** (`username` = policy name
+_and_ `sourcePath` = PVC name) against every live `SnapshotPolicy` in that namespace. A live PVC can
+keep an old name while the policy writing to it was renamed (`vdf` -> `vdf-config`), so a matching
+PVC name alone proves nothing. The repository has no `spec.catalog.periodicRefresh`, but a rebuild
+or re-bootstrap rescans and rediscovers every retired identity still in the repository.
 
-**Discovered/orphaned snapshots are a recurring cleanup, not a one-time fix.** A `Snapshot` CR with
-`status.phase: Discovered` means the kopia repository holds history under an identity nothing
-currently owns (a retired policy name, a renamed PVC, a pre-split combined policy). These are
-CRD-forced to `deletionPolicy: Retain`, so deleting the CR is safe for the Kubernetes side, but the
-underlying kopia data in B2 is never reclaimed by it, and — because this `ClusterRepository` has no
-`spec.catalog.periodicRefresh` — a fresh catalog scan (a rebuild, a repository re-bootstrap) will
-rediscover the same retired identities again. **Before deleting one, compare its full identity
-(`username`/policy-name _and_ `sourcePath`/PVC-name) against every currently-live
-`SnapshotPolicy` in that namespace — matching on PVC name alone is not enough.** A live PVC can
-still exist under an old name (e.g. `vdf-app-template-config`) while the _policy_ name that wrote
-history to it has since changed (`vdf` → `vdf-config`); the orphan's `username` field is what tells
-these apart, not whether a same-named PVC exists.
+## Backups: CNPG / barman, a separate system
 
-## Backups: CNPG / barman — a separate system, easy to miss
+`home-assistant`, `mealie`, `photoview` and `photoview-incoming` run CloudNativePG clusters that
+back up via barman to `s3://cnpg-gismo2004/<app>/`, **not** covered by Kopiur. A Kopiur-only
+restore of one of these apps brings back its config with an empty database. `immich` deliberately
+has no database backup (see the comment in its `postgres.yaml`). Read the comment in each `Cluster`
+manifest before touching `spec.backup`/`externalClusters`.
 
-`hass`, `mealie`, `photoview` run CloudNativePG clusters that back up via barman to
-`s3://cnpg-gismo2004/<app>/` — **not** covered by any Kopiur `SnapshotPolicy`. A Kopiur-only
-backup of one of these apps restores its config with an empty database. Every CNPG `Cluster`
-manifest carries a comment on this; read it before touching `spec.backup`/`externalClusters`.
+- **A cluster recovering via `bootstrap.recovery` must use a different
+  `spec.backup.barmanObjectStore.serverName` than its `externalClusters` source**, or the restore
+  pre-flight refuses with `Expected empty archive`. The same `destinationPath` is fine.
+- Compression is `gzip`, deliberately: bzip2 pegged a core compressing slower than the ~3.4 MB/s B2
+  uplink for a ratio only marginally better. CNPG offers no zstd.
+- `monitoring.enablePodMonitor` is unset by default; check it first when a CNPG dashboard is empty.
+- Archive volume follows database write volume. Home Assistant's recorder is by far the largest
+  source (about 6 GB of WAL a day before compression); a sensor updating every second shows up
+  directly in B2.
 
-**A CNPG cluster recovering via `bootstrap.recovery` must use a _different_
-`spec.backup.barmanObjectStore.serverName` than its `externalClusters` recovery source**, or the
-restore job's own `barman-cloud-check-wal-archive` pre-flight refuses with
-`Expected empty archive` — it exists specifically to stop two cluster timelines writing into the
-same catalog. Same `destinationPath` is fine (barman namespaces by serverName underneath it).
+## HelmRelease status can lie
 
-`monitoring.enablePodMonitor` defaults to unset (effectively `false`) — if a CNPG dashboard shows
-no data for an app, check this before assuming a scrape config problem.
-
-Compression is `gzip`, not the CNPG-common default of `bzip2` — deliberately, measured against
-this specific link: B2 upload here tops out at ~3.4 MB/s, bzip2 only compresses at ~5.7 MB/s (so
-it was pegging a full CPU core just to feed a link it could barely keep ahead of) for a ratio only
-4 points better than gzip's ~22.8 MB/s. CNPG's compression enum is `bzip2|gzip|lz4|snappy` — no
-zstd option exists.
-
-## HelmRelease status can lie — check the age of the failure, not just its presence
-
-A `HelmRelease` can report `Stalled: MissingRollbackTarget` / `Ready=False` for hours after the
-underlying Deployment fully recovered on its own — helm-controller stops retrying once neither
-Helm revision succeeded (no rollback target exists), and just re-reports the cached failure
-forever. `metadata.generation == status.observedGeneration` staying equal over time is the tell
-that it's stale, not actively broken. Before treating a non-Ready HelmRelease found during an
-unrelated sweep as urgent: check its `lastTransitionTime` and cross-check the actual
-Deployment/pod status directly. If the Deployment's been `Available`/`Running` for longer than the
-HelmRelease claims to have failed, it's stale — `flux reconcile helmrelease <name> -n <ns> --reset`
-clears it (asks helm-controller to actually retry; a bare `flux reconcile` without `--reset` does
-not).
+A `HelmRelease` can report `Stalled: MissingRollbackTarget` for hours after its Deployment
+recovered: helm-controller stops retrying when no revision ever succeeded. If the Deployment has
+been `Available` longer than the release claims to have failed, it's stale;
+`flux reconcile helmrelease <name> -n <ns> --reset` makes it retry (without `--reset` it does not).
 
 ## The arr suite: `TrustedNetworks` gates the reverse-proxy auth exemption
 
-`sonarr`, `radarr`, `lidarr` and `prowlarr` all run `*__AUTH__REQUIRED:
-DisabledForLocalAddresses`, which only works if the app can identify the real client behind
-`envoy-internal`. Servarr's CVE-2026-30975 hardening added a `TrustedNetworks` config key that
-gates exactly that, and it is **fail-closed**: if a request carries `X-Forwarded-For` and the
-sender is not listed, the app refuses the local-address exemption _without evaluating the
-forwarded address at all_. It defaults to empty, i.e. trust nothing.
+`sonarr`, `radarr`, `lidarr` and `prowlarr` run `*__AUTH__REQUIRED: DisabledForLocalAddresses`,
+which needs the app to trust `envoy-internal`. Servarr's `TrustedNetworks` key is **fail-closed**:
+a request carrying `X-Forwarded-For` from an unlisted sender loses the local-address exemption
+without the forwarded address being evaluated. All four set
+`<APP>__SERVER__TRUSTEDNETWORKS: 172.16.0.0/24` (the pod CIDR).
 
-Sonarr picked this up on an unattended `4.0.19.3006 → .3007` patch bump on 2026-08-26 and started
-challenging every request through the gateway. All four apps now set
-`<APP>__SERVER__TRUSTEDNETWORKS: 172.16.0.0/24` (the pod CIDR, where `envoy-internal` lives).
-radarr/lidarr/prowlarr were still on cores without the key and were set pre-emptively — an older
-core starts clean with the env var present, verified.
+**The env var is runtime-only:** `config.xml` shows `<TrustedNetworks></TrustedNetworks>` even when
+it works, and nothing but the HelmRelease comment explains it. Commit `de2bbd5` once removed it as
+"redundant TrueCharts env vars"; don't repeat that.
 
-**The env var is runtime-only — it never appears in `config.xml` or the Sonarr UI**
-(`_serverOptions.TrustedNetworks ?? GetValue(...)`), so the live config shows
-`<TrustedNetworks></TrustedNetworks>` even when it is working. Nothing in the cluster records why
-it is there except the comment in each HelmRelease. Commit `de2bbd5` once stripped this exact env
-block as "redundant TrueCharts env vars"; doing that again silently reintroduces the failure.
-
-Diagnosing this class of problem: vary only the forwarded address and compare siblings. A local
-address failing while a _pod_ address in the app's own `/24` also fails is the tell that header
-_presence_ is the trigger, not address evaluation.
+Diagnose by varying only the forwarded address and comparing siblings:
 
 ```
 kubectl -n media exec deploy/sonarr -c app -- \
@@ -319,130 +247,64 @@ kubectl -n media exec deploy/sonarr -c app -- \
   http://radarr.media.svc.cluster.local:7878/
 ```
 
-Note the apps do not answer uniformly even when healthy: `Basic` (sonarr) returns `401` and a
-browser popup, `Forms` (radarr/lidarr) returns `302` to a login page. A `200` from radarr is
-therefore not evidence that sonarr should also be returning `200`.
-
-Also note `*__AUTH__METHOD: ""` on all four is a **no-op** — an empty value falls through to
-`config.xml`'s `AuthenticationMethod`. It reads as if it disables authentication; it does not.
-`prowlarr` is currently `External` with `AuthenticationRequired=0`, meaning it performs no
-authentication of its own and its `__AUTH__REQUIRED` env var is ignored outright.
+Healthy apps answer differently: `Basic` auth (sonarr) returns `401`, `Forms` (radarr/lidarr)
+`302`. `*__AUTH__METHOD: ""` is a no-op, not "auth disabled": it falls through to `config.xml`.
 
 ## Renovate
 
-`.renovaterc.json5` extends `home-operations/renovate-presets`. **Auto-merge is the default**:
-OCI digests, plus minor/patch for apps, GitHub Actions, Renovate presets and mise tooling. Majors
-never auto-merge and additionally wait out a 3-day `minimumReleaseAge`.
+`.renovaterc.json5` extends `home-operations/renovate-presets`. **Auto-merge is the default** for OCI
+digests and for minor/patch of apps, Actions, presets and mise tooling. Majors never auto-merge and
+wait out a 3-day `minimumReleaseAge`.
 
-**The denylist that blocks auto-merge is scoped by recoverability, not by category.** Because every
-change here is a git commit Flux applies, the question for any unattended merge is "can a bad one
-be walked back with a revert?" — for almost everything it can, within a minute. The packages that
-stay manual are the ones where it can't: `cilium`/`coredns` (Flux can't pull, nothing resolves),
-`flux-operator`/`flux-instance` (breaks the mechanism that would apply the revert), `miroir`
-(CSI/DRBD on 0.11.x — a revert doesn't unbreak an unmountable volume), `cloudnative-pg`,
-`talos`/`kubelet`, `kopiur` (a break is silent until a restore is needed) and `app-template` (one
-chart behind ~26 apps). Note these projects don't use semver the way applications do — a cilium or
-coredns "minor" is a feature release, which is how an unrestricted auto-merge once took cilium
-1.18.6 → 1.20.0 unattended on the prior cluster. Things like `cert-manager`, `envoy`,
-`external-dns`, `metrics-server` were on this list and were deliberately removed on 2026-08-27:
-breaking them costs ingress or telemetry, not the cluster or its data.
+**The no-automerge denylist is scoped by recoverability:** can a bad update be undone with a git
+revert? Stays manual: `cilium`/`coredns` (nothing resolves, Flux can't pull), `flux-operator`/
+`flux-instance` (breaks the revert mechanism), `multus`/`cni-plugins` (wrap the CNI of every new
+pod), `miroir` (a revert doesn't unbreak an unmountable volume), `cloudnative-pg`, `talos`/`kubelet`
+(single node), `kopiur` (breaks silently until a restore) and `app-template` (one chart behind most
+apps). Projects like cilium and coredns ship features in "minor" releases. Breaking ingress or
+telemetry (`cert-manager`, `envoy`, `external-dns`, `metrics-server`) is revertable, so those
+auto-merge.
 
-**What CI actually gates.** The automerge rules set `ignoreTests: false` for anything touching
-`kubernetes/**`, but the only check is `flate` — it proves the manifests render and the dependency
-graph resolves, it never starts a container. Auto-merge here means "the YAML is valid", not "the
-app works"; the real safety net is the revert path above.
+**CI only proves the manifests render** (`flate`); auto-merge means "the YAML is valid", not "the app
+works". The revert path is the real safety net.
 
-**A rule only applies if some `matchUpdateTypes` actually covers the update.** `digest` is not
-`patch` — a rule listing `["minor", "patch"]` silently skips digest bumps, which is why third-party
-digest PRs (calibre, kavita) sat unmerged for days with `Automerge: Disabled by config` and no
-error anywhere. When an unexpected PR won't auto-merge, trace it rule by rule against its datasource
-_and_ its update type before assuming the denylist caught it.
+**A rule only applies if its `matchUpdateTypes` covers the update.** `digest` is not `patch`, so a
+`["minor", "patch"]` rule silently skips digest bumps (`Automerge: Disabled by config`, no error).
+Trace an unexpectedly unmerged PR rule by rule against its datasource _and_ update type.
 
-Grafana dashboards are `GrafanaDashboard` CRs referencing a URL (grafana.com or an upstream repo),
-not vendored JSON, specifically so Renovate can bump the pinned revision automatically — the
-upstream `grafanaDashboards` preset handles grafana.com IDs; a hand-written `customManagers` entry
-in `.renovaterc.json5` handles the two that ship in their own repo (`blocky`, `cloudnative-pg`),
-pinned to a release tag via a `# renovate: datasource=... depName=...` marker comment.
-
-**If you ever add another such hand-written regex `customManager`: always set
-`autoReplaceStringTemplate` explicitly, and dry-run the regex+template against a real matching
-line before trusting it.** Renovate's regex managers replace the _entire_ matched string with that
-template, defaulting to just the bare new version if it's omitted. A first attempt at the
-blocky/cloudnative-pg manager omitted it and produced a PR that would have replaced
-`url: https://raw.githubusercontent.com/0xERR0R/blocky/v0.34.0/docs/blocky-grafana.json` with
-`url: v0.34.0` outright — caught in review before merge, not by `renovate-config-validator` (which
-only checks the config parses, not what a match produces).
-
-## Validating a change before merge
-
-- `kustomize build kubernetes/apps/<group>/<app>/app` — does it render at all. Note this won't
-  resolve any `${KOPIUR_*}`-style component placeholders (that's Flux's `postBuild.substitute`,
-  not Kustomize), so a build using `components/kopiur/backup` will still show literal `${...}` in
-  the output — expected, not a failure.
-- `kustomize build kubernetes/apps/<group>/<app>/app | kubeconform -strict -ignore-missing-schemas`
-  — schema-valid against the actually-rendered output, not the raw per-file YAML.
-- CI's `flate` workflow (`.github/workflows/flate.yaml`) runs `flate test all` against
-  `kubernetes/flux/cluster` on every PR touching `kubernetes/**` — this is the closest thing to a
-  real dry-run against Flux's own dependency graph; a clean `kustomize build` doesn't guarantee
-  this passes.
-- For anything touching Kopiur/CNPG backup identity, don't trust a `Succeeded`/`Completed` status
-  alone — restore into a throwaway object and check real content, per the landmines above.
+Grafana dashboards are `GrafanaDashboard` CRs referencing a URL so Renovate can bump them: the
+preset handles grafana.com IDs, a hand-written `customManagers` regex handles `blocky` and
+`cloudnative-pg`. **Any new regex manager must set `autoReplaceStringTemplate` explicitly**, and be
+dry-run against a real line first: without it Renovate replaces the whole match with the bare
+version (a first attempt turned a dashboard URL into `url: v0.34.0`), and
+`renovate-config-validator` does not catch that.
 
 ## Talos
 
-Machine config is topf-rendered (`talos/topf.yaml` + fragments), same tooling as the prior
-cluster. The rebuild that created this cluster was forced by the old cluster's 1 GB `BOOT`
-partition (fixed at install time, too small for two boot-entry generations once the nvidia
-extension was added) — this cluster's BOOT partition is 2.2 GB, confirmed large enough that
-`v1.13.7 → v1.13.9` and the matching kubelet bump already went through cleanly post-rebuild. Full
-rebuild narrative, the bootstrap CRD-ordering traps hit along the way, and the per-app restore
-procedure are in `docs/MIGRATION.md`.
+Machine config is topf-rendered (`talos/topf.yaml` + fragments). The node sits on `bond0`
+(`10.0.0.48`, API VIP `10.0.0.120`). The BOOT partition is 2.2 GB, large enough for two boot
+generations with the nvidia extension; the old cluster's 1 GB partition was what forced the rebuild
+(narrative in `docs/MIGRATION.md`).
 
-### The Talos release caps the Kubernetes version, and Renovate does not know that
-
-**Talos 1.13.x cannot run Kubernetes 1.37.** `machinery/constants` in v1.13.9 sets
-`DefaultKubernetesVersion = "1.36.3"` and supports 6 releases backwards, so 1.36.x is the ceiling
-for the entire 1.13 line; 1.37 needs Talos 1.14 (still `v1.14.0-rc.2` as of 2026-08-30).
-`talosctl upgrade-k8s` enforces this itself and refuses before touching anything:
-
-```
-automatically detected the lowest Kubernetes version 1.36.4
-unsupported upgrade path 1.36->1.37 (from "1.36.4" to "1.37.0")
-```
-
-Renovate tracks `ghcr.io/siderolabs/kubelet` as a plain container image and has no knowledge of
-this matrix, so it will keep proposing versions Talos cannot run. `.renovaterc.json5` therefore
-caps it with `allowedVersions: "<1.37"`. **When lifting that cap, the order is Talos 1.13 → 1.14
-first, then Kubernetes 1.36 → 1.37** — never the other way round. The kubelet version lives in two
-files that share one `# renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet` marker, so
-a bump moves both together: `talos/topf.yaml`'s `kubernetesVersion:` and the tuppr
-`KubernetesUpgrade` CR at `kubernetes/apps/system-upgrade/tuppr/upgrades/kubernetesupgrade.yaml`.
-
-This happened on 2026-08-30 (PR #48). Two things are worth knowing about the aftermath, because
-neither is obvious:
-
-- **The failure is clean but leaves a landmine.** talosctl refuses before doing any work, so the
-  control plane, the kubelet machine config and the node all stay on the old version — nothing to
-  repair. But `topf.yaml` is left pointing at a `kubernetesVersion` this Talos cannot run, so the
-  next `just talos apply` would push a broken kubelet image. Fixing the CR alone is not enough;
-  revert both files.
-- **tuppr latches into a terminal state and blocks its own Kustomization.** The `KubernetesUpgrade`
-  goes `phase: Failed` and the controller then logs `Kubernetes upgrade in terminal state,
-skipping` every 5 minutes forever — it will not retry on its own. Meanwhile the `tuppr-upgrades`
-  Flux Kustomization sits `Unknown / Reconciliation in progress`, because its health check waits on
-  a CR that can never become healthy (`timeout waiting for: [KubernetesUpgrade/kubernetes status:
-'InProgress']`). Both clear only when `spec` changes and the generation bumps — the controller
-  logs `Spec generation changed, resetting Kubernetes upgrade process`. Editing the live CR with
-  `kubectl` does not count as a durable fix: Flux restores it from git on the next reconcile.
-
-To check a proposed Kubernetes version before merging anything, dry-run it — this is
-non-destructive and gives the exact error the tuppr job would hit:
+**The Talos release caps the Kubernetes version, and Renovate doesn't know it.** Each Talos minor
+supports Kubernetes up to its own default version (Talos 1.13 stopped at 1.36; 1.37 needed 1.14).
+Renovate tracks `ghcr.io/siderolabs/kubelet` as a plain image and will propose versions the running
+Talos cannot run. **Always upgrade Talos first, then Kubernetes**, and dry-run a proposed version
+before merging:
 
 ```
 talosctl -n <node-ip> upgrade-k8s --to=<version> --dry-run
 ```
 
-The tuppr job's own pods are cleaned up quickly, so by the time a failure is noticed the logs are
-usually gone; the surviving evidence is `status.history[]` on the CR plus the controller's own log
-around the `startedAt` timestamp. Note those CR timestamps are **UTC** while the controller logs
-are `+02:00` — do not grep the log for the CR's own timestamp.
+The kubelet version lives in two files sharing one `# renovate:` marker: `talos/topf.yaml`
+(`kubernetesVersion:`) and the tuppr `KubernetesUpgrade` CR in
+`kubernetes/apps/system-upgrade/tuppr/upgrades/kubernetesupgrade.yaml`. If a bump fails:
+
+- talosctl refuses before changing anything, but `topf.yaml` is left pointing at a version this
+  Talos can't run, and the next `just talos apply` would push it. Revert both files.
+- **tuppr latches `phase: Failed`** and logs `Kubernetes upgrade in terminal state, skipping` forever,
+  while the `tuppr-upgrades` Kustomization sits `Reconciliation in progress` on a health check that
+  can't pass. Both clear only when the CR's `spec` changes in git; a live `kubectl` edit is
+  reverted.
+- The job's pods are cleaned up quickly. The surviving evidence is `status.history[]` on the CR
+  (timestamps in **UTC**) and the controller log (`+02:00`).
