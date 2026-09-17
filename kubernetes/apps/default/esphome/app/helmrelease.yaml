@@ -11,6 +11,16 @@ spec:
   interval: 1h
   values:
     defaultPodOptions:
+      annotations:
+        # Second interface on the LAN so mDNS discovery reaches the pod; see
+        # kube-system/multus/networks/lan.yaml. The Service address is unchanged.
+        k8s.v1.cni.cncf.io/networks: |-
+          [{
+            "name": "lan",
+            "namespace": "kube-system",
+            "ips": ["10.0.0.251/24"],
+            "mac": "02:00:0a:00:00:fb"
+          }]
       securityContext:
         # esphome needs root to write build artifacts and manage pip.
         runAsUser: 0

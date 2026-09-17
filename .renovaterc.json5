@@ -150,6 +150,8 @@
       //   kopiur                   a break is silent -- you find out at restore time
       //   app-template             one chart behind ~26 apps; its 5.x naming rules
       //                            have already silently renamed PVCs here
+      //   multus, cni-plugins      wraps the CNI for every new pod; a bad release
+      //                            leaves restarted Flux controllers without a network
       //
       // Cilium 1.18.6 -> 1.20.0 once auto-merged itself on the old cluster.
       // Note that these projects do not use semver the way applications do: a
@@ -173,6 +175,8 @@
         "/kubelet/",
         "siderolabs/talos",
         "/app-template/",
+        "/multus/",
+        "home-operations/cni-plugins",
       ],
       automerge: false,
     },

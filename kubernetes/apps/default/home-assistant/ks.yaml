@@ -11,6 +11,9 @@ spec:
       kind: HelmRelease
       name: home-assistant
       namespace: hass
+  dependsOn:
+    - name: multus-networks
+      namespace: kube-system
   interval: 1h
   path: ./kubernetes/apps/default/home-assistant/app
   prune: true

@@ -11,6 +11,9 @@ spec:
       kind: HelmRelease
       name: esphome
       namespace: esphome
+  dependsOn:
+    - name: multus-networks
+      namespace: kube-system
   interval: 1h
   path: ./kubernetes/apps/default/esphome/app
   prune: true
