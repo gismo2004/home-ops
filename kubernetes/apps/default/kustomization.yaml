@@ -31,9 +31,6 @@ resources:
   - ./radarr/ks.yaml
   - ./sabnzbd/ks.yaml
   - ./sonarr/ks.yaml
-  - ./tasmoadmin/ks.yaml
-  - ./tasmobackup/ks.yaml
-  - ./tasmocompiler/ks.yaml
   - ./truenas/ks.yaml
   - ./unmonitarr/ks.yaml
   - ./vdf/ks.yaml
