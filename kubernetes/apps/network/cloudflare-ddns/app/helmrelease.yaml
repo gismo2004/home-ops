@@ -30,7 +30,7 @@ spec:
               # ghcr, so there is no versioned image there to pin. The mirror
               # is already used for coredns and avoids Docker Hub rate limits.
               repository: mirror.gcr.io/favonia/cloudflare-ddns
-              tag: "1.17.0"
+              tag: "1.17.1"
             env:
               CLOUDFLARE_API_TOKEN:
                 valueFrom:
