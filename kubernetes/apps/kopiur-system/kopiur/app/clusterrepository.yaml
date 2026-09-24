@@ -34,3 +34,10 @@ spec:
     jitter: 6h
   concurrency:
     maxConcurrentJobs: 3
+  parameters:
+    epoch:
+      # Kopia merges index blobs once per epoch, and an epoch cannot close
+      # before minDuration. At kopia's 24h default, ~100 backups a day left
+      # ~900 blobs right after maintenance and tripped the 1000-blob
+      # IndexBlobHealth warning. 6h compacts four times a day.
+      minDuration: 6h
