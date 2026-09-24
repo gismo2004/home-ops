@@ -15,4 +15,5 @@ resources:
   - ./multus/ks.yaml
   - ./reloader/ks.yaml
   - ./nvidia-device-plugin/ks.yaml
+  - ./generic-device-plugin/ks.yaml
   - ./snapshot-controller/ks.yaml
