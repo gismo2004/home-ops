@@ -31,9 +31,8 @@ spec:
   credentialProjection:
     enabled: true
   retention:
-    keepLatest: 3
-    keepHourly: 24
-    keepDaily: 2
+    keepLatest: 4
+    keepDaily: 7
     keepWeekly: 4
   sources:
     # Renamed now that the restore against the old name succeeded and was
@@ -66,9 +65,8 @@ spec:
   credentialProjection:
     enabled: true
   retention:
-    keepLatest: 3
-    keepHourly: 24
-    keepDaily: 2
+    keepLatest: 4
+    keepDaily: 7
     keepWeekly: 4
   sources:
     # Renamed now that the restore against the old name succeeded and was

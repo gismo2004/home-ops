@@ -27,10 +27,12 @@ spec:
     name: default
   credentialProjection:
     enabled: true
+  # Every run of the last day, one per day for a week, one per week for a
+  # month. Hand-written policies (kavita, unmonitarr, vdf, mosquitto,
+  # esphome, home-assistant, jdownloader2) repeat this; keep them in step.
   retention:
-    keepLatest: 3
-    keepHourly: 24
-    keepDaily: 2
+    keepLatest: 4
+    keepDaily: 7
     keepWeekly: 4
   sources:
     # Exactly one source per policy. A combined multi-source policy files every

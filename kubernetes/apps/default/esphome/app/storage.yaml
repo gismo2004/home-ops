@@ -34,7 +34,7 @@ spec:
       - /.esphome/idedata/
       - /.esphome/font/
       - /.cache/
-  retention: { keepLatest: 3, keepHourly: 24, keepDaily: 2, keepWeekly: 4 }
+  retention: { keepLatest: 4, keepDaily: 7, keepWeekly: 4 }
   sources:
     - pvc: { name: esphome-config }
   volumeSnapshotClassName: miroir-snap

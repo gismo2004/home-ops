@@ -31,9 +31,8 @@ spec:
   credentialProjection:
     enabled: true
   retention:
-    keepLatest: 3
-    keepHourly: 24
-    keepDaily: 2
+    keepLatest: 4
+    keepDaily: 7
     keepWeekly: 4
   sources:
     - pvc:
@@ -61,9 +60,8 @@ spec:
   credentialProjection:
     enabled: true
   retention:
-    keepLatest: 3
-    keepHourly: 24
-    keepDaily: 2
+    keepLatest: 4
+    keepDaily: 7
     keepWeekly: 4
   sources:
     - pvc:
