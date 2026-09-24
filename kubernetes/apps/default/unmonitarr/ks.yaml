@@ -20,3 +20,42 @@ spec:
     namespace: flux-system
   targetNamespace: unmonitarr
   wait: false
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Identity unmonitarr-config@unmonitarr:/pvc/unmonitarr-config, unchanged.
+      KOPIUR_NAME: unmonitarr-config
+      KOPIUR_CLAIM: unmonitarr-config
+      KOPIUR_CAPACITY: 1Gi
+      KOPIUR_ONMISSING: Continue
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# unmonitarr's second volume. The component covers one PVC per Flux
+# Kustomization, and a policy must never list two sources (every Restore would
+# resolve to sources[0]), so the data volume gets its own, backup-only
+# Kustomization.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: unmonitarr-data
+  namespace: default
+spec:
+  interval: 1h
+  path: ./kubernetes/apps/default/unmonitarr/data
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: unmonitarr
+  wait: false
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Identity unmonitarr-data@unmonitarr:/pvc/unmonitarr-data, unchanged.
+      KOPIUR_NAME: unmonitarr-data
+      KOPIUR_CLAIM: unmonitarr-data
+      KOPIUR_CAPACITY: 10Gi
+      KOPIUR_ONMISSING: Continue
