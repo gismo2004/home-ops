@@ -10,6 +10,9 @@ apiVersion: kopiur.home-operations.com/v1alpha1
 kind: Restore
 metadata:
   name: kavita-config
+  annotations:
+    # Temporary, while this moves to components/kopiur/backup.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   credentialProjection:
     enabled: true
