@@ -45,8 +45,13 @@ patches:
             - /.antigravity-ide-server
             - /.npm
             - /.dotnet
-            # CMake output (gitignored), except the two hand-kept files in it.
+            # CMake output (gitignored), named one by one: build_v16.sh and
+            # diff.patch live in the same directory and must stay. A `*` plus
+            # `!` re-includes does not work -- kopia stores the rules sorted,
+            # so the negations land before the wildcard and lose.
             # edgetx/.git stays: it carries unpushed local commits.
-            - /edgetx/build/*
-            - "!/edgetx/build/build_v16.sh"
-            - "!/edgetx/build/diff.patch"
+            - /edgetx/build/CMake*
+            - /edgetx/build/Makefile
+            - /edgetx/build/cmake_install.cmake
+            - /edgetx/build/arm-none-eabi*
+            - /edgetx/build/native*
