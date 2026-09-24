@@ -3,6 +3,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: home-assistant-config
+  annotations:
+    # Temporary, while this moves to components/kopiur/backup.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes: [ReadWriteOnce]
   # Claims the Restore populator. Keep the pair permanently: if this PVC is
