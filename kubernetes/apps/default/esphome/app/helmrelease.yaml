@@ -46,6 +46,12 @@ spec:
               # device state where the old image kept it, on the backed-up
               # config volume.
               ESPHOME_DATA_DIR: /config/.esphome
+              # /config (with the dashboard's version-history .git) is still
+              # owned by root from the old image, and git refuses a repo owned
+              # by another uid. Env config counts as protected config, like -c.
+              GIT_CONFIG_COUNT: "1"
+              GIT_CONFIG_KEY_0: safe.directory
+              GIT_CONFIG_VALUE_0: /config
             probes:
               liveness:
                 enabled: true
