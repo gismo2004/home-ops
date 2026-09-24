@@ -6,3 +6,33 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
   - ./storage.yaml
+patches:
+  # Back up the sources only: device YAML (and its manual .bak copies),
+  # secrets, the device-builder files with the peer-link key, the
+  # version-history .git and .esphome/storage. Everything excluded is compile
+  # output or toolchain the next build regenerates. An explicit list replaces
+  # Kopiur's defaults, hence the OS-artifact entries. Target by kind only: the
+  # component object is still named ${KOPIUR_NAME} at build time.
+  - target:
+      group: kopiur.home-operations.com
+      kind: SnapshotPolicy
+    patch: |-
+      apiVersion: kopiur.home-operations.com/v1alpha1
+      kind: SnapshotPolicy
+      metadata:
+        name: placeholder
+      spec:
+        files:
+          ignoreRules:
+            - /lost+found
+            - $$RECYCLE.BIN
+            - .snapshot
+            - "@eaDir"
+            - System Volume Information
+            - /.esphome/build/
+            - /.esphome/.espressif/
+            - /.esphome/external_components/
+            - /.esphome/pio_components/
+            - /.esphome/idedata/
+            - /.esphome/font/
+            - /.cache/

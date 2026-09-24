@@ -23,3 +23,11 @@ spec:
     namespace: flux-system
   targetNamespace: esphome
   wait: false
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Identity esphome@esphome:/pvc/esphome-config, unchanged.
+      KOPIUR_NAME: esphome
+      KOPIUR_CLAIM: esphome-config
+      KOPIUR_CAPACITY: 10Gi
