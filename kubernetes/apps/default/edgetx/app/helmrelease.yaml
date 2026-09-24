@@ -31,6 +31,9 @@ spec:
                 apt-get install -y -qq --no-install-recommends openssh-server >/dev/null
                 mkdir -p /run/sshd
                 id dev >/dev/null 2>&1 || useradd -M -d /workspace -s /bin/bash -u 1000 -U dev
+                # No password, but not locked: without PAM, sshd refuses a locked
+                # account ("!" in shadow) even for key logins.
+                usermod -p '*' dev
                 # Take the volume over once, not with a chown -R over ~17 GB on every boot.
                 [ "$$(stat -c %u /workspace)" = 1000 ] || chown -R dev:dev /workspace
                 chown -R dev:dev /opt/venv
