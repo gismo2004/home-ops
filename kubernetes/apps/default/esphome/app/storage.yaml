@@ -1,8 +1,6 @@
 # Only esphome-config is backed up and restored -- it holds the device YAML,
-# secrets and the peer-link key. cache and build are regenerated compilation
-# artifacts; the old cluster deliberately had no policy for them, and they were
-# never declared in git at all (leftovers from the earlier VolSync migration).
-# They are plain PVCs here so the tree is now self-contained.
+# secrets and the peer-link key. esphome-cache holds regenerated build output
+# and toolchains (/cache/build, /cache/pio, /cache/idf) and has no policy.
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
@@ -35,6 +33,7 @@ spec:
       - /.esphome/pio_components/
       - /.esphome/idedata/
       - /.esphome/font/
+      - /.cache/
   retention: { keepLatest: 3, keepHourly: 24, keepDaily: 2, keepWeekly: 4 }
   sources:
     - pvc: { name: esphome-config }
@@ -80,15 +79,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: esphome-cache
-spec:
-  accessModes: [ReadWriteOnce]
-  resources: { requests: { storage: 20Gi } }
-  storageClassName: miroir-local
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: esphome-build
 spec:
   accessModes: [ReadWriteOnce]
   resources: { requests: { storage: 20Gi } }

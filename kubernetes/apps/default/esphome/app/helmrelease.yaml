@@ -46,6 +46,11 @@ spec:
               # device state where the old image kept it, on the backed-up
               # config volume.
               ESPHOME_DATA_DIR: /config/.esphome
+              # Toolchains belong on the cache volume, not the backed-up config
+              # volume. HOME is /config, so ESPHome's default for the ESP-IDF
+              # install (and every other ~/.cache user) would land there.
+              ESPHOME_ESP_IDF_PREFIX: /cache/idf
+              XDG_CACHE_HOME: /cache/xdg
               # /config (with the dashboard's version-history .git) is still
               # owned by root from the old image, and git refuses a repo owned
               # by another uid. Env config counts as protected config, like -c.
@@ -111,7 +116,5 @@ spec:
         existingClaim: esphome-config
       cache:
         existingClaim: esphome-cache
-      build:
-        existingClaim: esphome-build
       tmp:
         type: emptyDir
