@@ -43,3 +43,10 @@ patches:
             - /.cache
             - /.vscode-server
             - /.antigravity-ide-server
+            - /.npm
+            - /.dotnet
+            # CMake output (gitignored), except the two hand-kept files in it.
+            # edgetx/.git stays: it carries unpushed local commits.
+            - /edgetx/build/*
+            - "!/edgetx/build/build_v16.sh"
+            - "!/edgetx/build/diff.patch"
