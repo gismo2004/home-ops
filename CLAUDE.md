@@ -114,6 +114,16 @@ gives selected pods a second, macvlan interface on `bond0` via the `lan`
 - Pods resolve through CoreDNS, which forwards to the node's nameservers (`1.1.1.1`, `8.8.8.8`),
   so `*.fritz.box` names do not resolve in the cluster.
 
+## USB devices: generic-device-plugin, never privileged apps
+
+A host device reaches a pod as a node resource from `kube-system/generic-device-plugin`
+(`squat.ai/<name>`, one `--device` entry each), requested under the container's
+`resources.limits`. A hostPath mount of a device node only works in a privileged container, which
+is what this replaces. Give the device a stable udev symlink in `talos/all/64-udev.yaml` and point
+the plugin at it; `mountPath` sets the name the app sees (OSCam's reader: `/dev/ttyUSB-oscam` on
+the node, `/dev/ttyUSB0` in the pod). The plugin is the only privileged workload left outside
+the system namespaces.
+
 ## Storage: miroir
 
 DRBD-based CSI, StorageClass `miroir-local`, `VolumeBindingMode: WaitForFirstConsumer`.
