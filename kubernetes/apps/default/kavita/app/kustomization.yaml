@@ -5,7 +5,27 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
-  - ./snapshotpolicy.yaml
-  - ./snapshotschedule.yaml
-  - ./restore.yaml
-  - ./pvc.yaml
+patches:
+  # Kavita's .NET process writes /config as uid 0, group-readable, so the 568
+  # mover reads it via group 568 -- except one ASP.NET DataProtection key
+  # (mode 600). It is regenerated on start (losing it only forces a re-login),
+  # so it is excluded instead of running a privileged mover. An explicit list
+  # replaces Kopiur's defaults, hence the OS-artifact entries. Target by kind
+  # only: the component object is still named ${KOPIUR_NAME} at build time.
+  - target:
+      group: kopiur.home-operations.com
+      kind: SnapshotPolicy
+    patch: |-
+      apiVersion: kopiur.home-operations.com/v1alpha1
+      kind: SnapshotPolicy
+      metadata:
+        name: placeholder
+      spec:
+        files:
+          ignoreRules:
+            - /lost+found
+            - System Volume Information
+            - $$RECYCLE.BIN
+            - "@eaDir"
+            - .snapshot
+            - /.aspnet/DataProtection-Keys
