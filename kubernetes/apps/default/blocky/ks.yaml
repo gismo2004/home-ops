@@ -28,4 +28,3 @@ spec:
       KOPIUR_NAME: blocky
       KOPIUR_CLAIM: blocky-data
       KOPIUR_CAPACITY: 1Gi
-      KOPIUR_CACHEMODE: Persistent # pilot

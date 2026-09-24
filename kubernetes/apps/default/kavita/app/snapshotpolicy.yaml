@@ -30,7 +30,8 @@ spec:
       runAsGroup: 568
     cache:
       capacity: 2Gi
-      mode: Ephemeral
+      # Persistent, see components/kopiur/backup/snapshotpolicy.yaml.
+      mode: Persistent
       storageClassName: miroir-local
   files:
     ignoreRules:
@@ -69,7 +70,8 @@ spec:
       runAsGroup: 568
     cache:
       capacity: 2Gi
-      mode: Ephemeral
+      # Persistent, see components/kopiur/backup/snapshotpolicy.yaml.
+      mode: Persistent
       storageClassName: miroir-local
   repository:
     kind: ClusterRepository

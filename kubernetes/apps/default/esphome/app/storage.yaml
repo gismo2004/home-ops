@@ -20,7 +20,7 @@ spec:
       runAsUser: 0
       runAsGroup: 0
       runAsNonRoot: false
-    cache: { capacity: 2Gi, mode: Ephemeral, storageClassName: miroir-local }
+    cache: { capacity: 2Gi, mode: Persistent, storageClassName: miroir-local }
   repository: { kind: ClusterRepository, name: default }
   credentialProjection: { enabled: true }
   retention: { keepLatest: 3, keepHourly: 24, keepDaily: 2, keepWeekly: 4 }

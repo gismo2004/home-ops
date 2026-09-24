@@ -14,10 +14,13 @@ spec:
       runAsGroup: ${KOPIUR_PGID:=568}
     cache:
       capacity: ${KOPIUR_CACHE:=2Gi}
-      # Ephemeral by default while Persistent is piloted per app. A persistent
-      # cache keeps the ownership of the mover identity that wrote it, so after
-      # changing an app's KOPIUR_PUID delete its cache PVC once.
-      mode: ${KOPIUR_CACHEMODE:=Ephemeral}
+      # Persistent: one kopiur-cache-<policy> PVC per policy, kept between
+      # runs. It exists before the mover pod does, so there is no
+      # FailedScheduling event while an ephemeral claim is created, and kopia
+      # reuses its cache instead of rereading from B2. It keeps the ownership
+      # of the identity that wrote it: after changing an app's KOPIUR_PUID,
+      # delete that app's cache PVC once.
+      mode: ${KOPIUR_CACHEMODE:=Persistent}
       storageClassName: ${KOPIUR_STORAGECLASS:=miroir-local}
   repository:
     kind: ClusterRepository

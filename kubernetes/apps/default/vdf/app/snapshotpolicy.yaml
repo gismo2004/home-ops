@@ -22,11 +22,8 @@ spec:
     securityContext: { runAsUser: 568, runAsGroup: 568 }
     cache:
       capacity: 2Gi
-      # Ephemeral, not Persistent: a persistent cache PVC keeps the on-disk
-      # ownership of whichever mover identity last wrote it, so any later
-      # change of mover identity fails with cache permission errors that
-      # look unrelated to the real cause.
-      mode: Ephemeral
+      # Persistent, see components/kopiur/backup/snapshotpolicy.yaml.
+      mode: Persistent
       storageClassName: miroir-local
   repository:
     kind: ClusterRepository
@@ -55,7 +52,8 @@ spec:
     securityContext: { runAsUser: 568, runAsGroup: 568 }
     cache:
       capacity: 2Gi
-      mode: Ephemeral
+      # Persistent, see components/kopiur/backup/snapshotpolicy.yaml.
+      mode: Persistent
       storageClassName: miroir-local
   repository:
     kind: ClusterRepository

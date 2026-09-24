@@ -18,9 +18,8 @@ spec:
       runAsGroup: 568
     cache:
       capacity: 2Gi
-      # Ephemeral: a persistent cache keeps the ownership of whichever mover
-      # identity last wrote it, breaking the next run under a different one.
-      mode: Ephemeral
+      # Persistent, see components/kopiur/backup/snapshotpolicy.yaml.
+      mode: Persistent
       storageClassName: miroir-local
   repository:
     kind: ClusterRepository

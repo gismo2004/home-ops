@@ -13,7 +13,7 @@ spec:
   compression: { compressor: zstd }
   mover:
     securityContext: { runAsUser: 568, runAsGroup: 568 }
-    cache: { capacity: 2Gi, mode: Ephemeral, storageClassName: miroir-local }
+    cache: { capacity: 2Gi, mode: Persistent, storageClassName: miroir-local }
   repository: { kind: ClusterRepository, name: default }
   credentialProjection: { enabled: true }
   retention: { keepLatest: 3, keepHourly: 24, keepDaily: 2, keepWeekly: 4 }
@@ -30,7 +30,7 @@ spec:
   compression: { compressor: zstd }
   mover:
     securityContext: { runAsUser: 568, runAsGroup: 568 }
-    cache: { capacity: 2Gi, mode: Ephemeral, storageClassName: miroir-local }
+    cache: { capacity: 2Gi, mode: Persistent, storageClassName: miroir-local }
   repository: { kind: ClusterRepository, name: default }
   credentialProjection: { enabled: true }
   retention: { keepLatest: 3, keepHourly: 24, keepDaily: 2, keepWeekly: 4 }
