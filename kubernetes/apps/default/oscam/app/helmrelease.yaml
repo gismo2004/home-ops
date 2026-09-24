@@ -97,7 +97,6 @@ spec:
               DEFAULT_WORKSPACE: /
               PORT: "12321"
             securityContext:
-              privileged: true
               allowPrivilegeEscalation: true
               runAsUser: 0
               runAsGroup: 0
