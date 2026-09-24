@@ -12,14 +12,9 @@ metadata:
 spec:
   compression: { compressor: zstd }
   mover:
-    securityContext:
-      # Root: esphome writes e.g. the device-builder peer-link key 0600
-      # root-owned, and an unelevated mover cannot read it. runAsNonRoot:false
-      # is REQUIRED alongside runAsUser:0 -- runAsUser alone is a silent no-op
-      # and yields an identical unprivileged Job with no error anywhere.
-      runAsUser: 0
-      runAsGroup: 0
-      runAsNonRoot: false
+    # 568, the uid the app runs as. Restored files are owned by the mover's
+    # uid, so a root mover would hand the app files it cannot write.
+    securityContext: { runAsUser: 568, runAsGroup: 568 }
     cache: { capacity: 2Gi, mode: Persistent, storageClassName: miroir-local }
   repository: { kind: ClusterRepository, name: default }
   credentialProjection: { enabled: true }
@@ -45,7 +40,7 @@ metadata:
 spec:
   credentialProjection: { enabled: true }
   mover:
-    securityContext: { runAsUser: 0, runAsGroup: 0, runAsNonRoot: false }
+    securityContext: { runAsUser: 568, runAsGroup: 568 }
   policy: { onMissingSnapshot: Fail }
   source:
     fromPolicy: { name: esphome, offset: 0 }

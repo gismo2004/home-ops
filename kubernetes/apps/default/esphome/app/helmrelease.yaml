@@ -22,10 +22,15 @@ spec:
             "mac": "02:00:0a:00:00:fb"
           }]
       securityContext:
-        # esphome needs root to write build artifacts and manage pip.
-        runAsUser: 0
-        runAsGroup: 0
-        fsGroup: 0
+        # Rootless home-operations image. The volumes were written by the old
+        # root image; fsGroup gives group 568 read/write on everything on the
+        # first mount (the root-dir gid mismatch triggers the recursive pass),
+        # so no root step is needed to take them over.
+        runAsNonRoot: true
+        runAsUser: 568
+        runAsGroup: 568
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
     controllers:
       esphome:
         annotations:
@@ -33,10 +38,14 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/esphome/esphome
-              tag: latest
+              repository: ghcr.io/home-operations/esphome
+              tag: 2026.9.0@sha256:591508393e9862d30fb455775b72a97bb96906bdc787f5c499ef5c636d3069e5
             env:
               ESPHOME_DASHBOARD_USE_PING: "true"
+              # The image defaults this to /cache/data. Keep the dashboard's
+              # device state where the old image kept it, on the backed-up
+              # config volume.
+              ESPHOME_DATA_DIR: /config/.esphome
             probes:
               liveness:
                 enabled: true
@@ -67,6 +76,12 @@ spec:
                     port: 6052
                   failureThreshold: 30
                   periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
             resources:
               requests:
                 cpu: 100m
@@ -92,3 +107,5 @@ spec:
         existingClaim: esphome-cache
       build:
         existingClaim: esphome-build
+      tmp:
+        type: emptyDir
