@@ -24,38 +24,69 @@ spec:
               - /bin/bash
               - -c
               - |
-                apt-get update && \
-                apt-get install -y curl openssh-server && \
-                mkdir -p /run/sshd && \
-                chown root:root /workspace && \
-                chown root:root /workspace/.ssh && \
-                chown root:root /workspace/.ssh/authorized_keys && \
-                useradd -m -d /workspace -s /bin/bash dev && \
-                echo 'dev:devpass' | chpasswd && \
-                chown -R dev:dev /workspace && \
-                chown -R dev:dev /opt/venv && \
-                chmod 0600 /workspace/.ssh/authorized_keys && \
-                chmod 0600 /workspace/.ssh/ssh_host_rsa_key && \
-                chmod 0600 /workspace/.ssh/ssh_host_rsa_key && \
-                chmod 0600 /workspace/.ssh/ssh_host_ed25519_key && \
-                echo "HostKey /workspace/.ssh/ssh_host_ed25519_key" >> /etc/ssh/sshd_config && \
-                echo "HostKey /workspace/.ssh/ssh_host_rsa_key"  >> /etc/ssh/sshd_config && \
-                echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
-                echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config && \
-                echo "UsePAM no" >> /etc/ssh/sshd_config && \
-                echo 'AuthorizedKeysFile /workspace/.ssh/authorized_keys' >> /etc/ssh/sshd_config && \
-                service ssh start && \
-                curl -fsSL https://code-server.dev/install.sh | sh && \
-                export CODE_SERVER_CONFIG=/workspace/.config/code-server/config.yaml && \
-                code-server /workspace/edgetx && \
-                sleep infinity
+                set -eu
+                export DEBIAN_FRONTEND=noninteractive
+                # sshd is not part of the edgetx-dev image.
+                apt-get update -qq
+                apt-get install -y -qq --no-install-recommends openssh-server >/dev/null
+                mkdir -p /run/sshd
+                id dev >/dev/null 2>&1 || useradd -M -d /workspace -s /bin/bash -u 1000 -U dev
+                # Take the volume over once, not with a chown -R over ~17 GB on every boot.
+                [ "$$(stat -c %u /workspace)" = 1000 ] || chown -R dev:dev /workspace
+                chown -R dev:dev /opt/venv
+                # Host keys live on the volume so clients keep trusting the host.
+                install -d -m 0700 -o dev -g dev /workspace/.ssh
+                [ -f /workspace/.ssh/ssh_host_ed25519_key ] || ssh-keygen -q -t ed25519 -N '' -f /workspace/.ssh/ssh_host_ed25519_key
+                [ -f /workspace/.ssh/ssh_host_rsa_key ] || ssh-keygen -q -t rsa -b 4096 -N '' -f /workspace/.ssh/ssh_host_rsa_key
+                # sshd refuses keys under a group-writable home or .ssh (StrictModes),
+                # and ssh refuses a group-readable private key.
+                chmod 0755 /workspace
+                chmod 0700 /workspace/.ssh
+                find /workspace/.ssh -maxdepth 1 -type f ! -name '*.pub' -exec chmod 0600 {} +
+                # The image's toolchain, Qt and venv settings are container env, which SSH
+                # sessions do not inherit (and /etc/profile resets PATH on login). Hand them
+                # to every session: profile.d for login shells (VS Code's server starts
+                # from one), SetEnv for plain `ssh host cmd`.
+                skip='^(HOME|HOSTNAME|PWD|SHLVL|TERM|OLDPWD|_|DEBIAN_FRONTEND|KUBERNETES_[A-Z_]*|[A-Z0-9_]*_SERVICE_(HOST|PORT)[A-Z0-9_]*|[A-Z0-9_]*_PORT(_[A-Z0-9_]*)?)='
+                env | grep -Ev "$$skip" | sort > /etc/image-env
+                sed 's/^\([^=]*\)=\(.*\)$$/export \1="\2"/' /etc/image-env > /etc/profile.d/00-image-env.sh
+                { printf 'SetEnv'; sed 's/^\(.*\)$$/ "\1"/' /etc/image-env | tr -d '\n'; echo; } > /etc/ssh/sshd_config.d/10-image-env.conf
+                cat > /etc/ssh/sshd_config.d/00-edgetx.conf <<'EOF'
+                HostKey /workspace/.ssh/ssh_host_ed25519_key
+                HostKey /workspace/.ssh/ssh_host_rsa_key
+                AuthorizedKeysFile /workspace/.ssh/authorized_keys
+                AllowUsers dev
+                PermitRootLogin no
+                PasswordAuthentication no
+                KbdInteractiveAuthentication no
+                UsePAM no
+                X11Forwarding no
+                EOF
+                exec /usr/sbin/sshd -D -e
             probes:
               liveness:
-                enabled: false
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 22
+                  periodSeconds: 30
+                  failureThreshold: 5
               readiness:
-                enabled: false
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 22
+                  periodSeconds: 10
               startup:
-                enabled: false
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 22
+                  periodSeconds: 10
+                  failureThreshold: 60
             securityContext:
               allowPrivilegeEscalation: true
               runAsUser: 0
@@ -77,20 +108,9 @@ spec:
           lbipam.cilium.io/ips: "10.0.0.221"
           lbipam.cilium.io/sharing-key: edgetx
         ports:
-          main:
-            port: &port 8080
-            targetPort: *port
           ssh:
             port: 2222
             targetPort: 22
-    # Single Service, so app-template 5.x auto-detects the backendRef.
-    route:
-      app:
-        hostnames:
-          - "{{ .Release.Name }}.gismo2004.cc"
-        parentRefs:
-          - name: envoy-internal
-            namespace: network
     persistence:
       config:
         existingClaim: edgetx-config
