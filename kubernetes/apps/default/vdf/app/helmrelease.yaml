@@ -27,7 +27,6 @@ spec:
             env:
               VDF_WEB_AUTH: "false"
             securityContext:
-              privileged: true
               runAsUser: 0
               runAsGroup: 0
               runAsNonRoot: false
