@@ -70,15 +70,12 @@ spec:
                   failureThreshold: 30
                   periodSeconds: 10
             securityContext:
-              # Restored verbatim from the working TrueCharts-era release.
-              # Trimming this is what broke the app: dropping privileged (and
-              # separately allowPrivilegeEscalation) makes jlesage's supervisor
-              # fail to start dbus -- "terminated before being ready" -- which
-              # tears down every downstream service, so nothing listens on 5800
-              # and the Gateway returns 503 while the Service still shows a
-              # healthy endpoint. Any future trim here must be verified by
-              # curling the route, not by the pod reaching 1/1 Running.
-              privileged: true
+              # Not privileged, but with the runtime's default capabilities.
+              # An earlier trim that kept `drop: [ALL]` plus five added
+              # capabilities made jlesage's supervisor fail to start dbus
+              # ("terminated before being ready"): nothing listened on 5800
+              # and the Gateway returned 503 while the pod showed 1/1 Running.
+              # Verify any change here by curling the route.
               allowPrivilegeEscalation: true
               runAsUser: 0
               runAsGroup: 0
@@ -86,9 +83,6 @@ spec:
               readOnlyRootFilesystem: false
               seccompProfile:
                 type: RuntimeDefault
-              capabilities:
-                add: ["CHOWN", "SETUID", "SETGID", "FOWNER", "DAC_OVERRIDE"]
-                drop: ["ALL"]
             resources:
               requests:
                 cpu: 75m
