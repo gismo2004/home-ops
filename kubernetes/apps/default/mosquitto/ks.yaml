@@ -20,3 +20,12 @@ spec:
     namespace: flux-system
   targetNamespace: mosquitto
   wait: false
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Identity mosquitto-data@mosquitto:/pvc/mosquitto-data (mosquitto.db,
+      # the retained-message state), unchanged.
+      KOPIUR_NAME: mosquitto-data
+      KOPIUR_CLAIM: mosquitto-data
+      KOPIUR_CAPACITY: 10Gi
