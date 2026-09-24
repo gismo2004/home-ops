@@ -157,6 +157,12 @@ Backup wiring is either the shared `components/kopiur/backup` component or hand-
   app running as 568 cannot write. No namespace carries `privileged-movers` any more:
   `home-assistant` and `esphome` moved to 568 on 2026-09-24.
 
+**Kopia's own per-source policy can carry exclusions that git does not show.** Kopiur only adds
+ignore rules to it, never removes them, so rules set by hand or by an older manifest survive, also
+across the cluster migration. `esphome` silently excluded its `.device-builder.json` and peer-link
+key this way until 2026-09-24. A snapshot's `stats.excludedFileCount` gives it away; inspect with
+`kopia policy show <policy>@<namespace>:/pvc/<claim>` and remove with `--remove-ignore`.
+
 `ClusterRepository/default` sets `scheduleDefaults` (`Europe/Vienna`, `jitter: 6h`) and
 `concurrency.maxConcurrentJobs: 3`; schedules inherit both, so don't repeat the jitter per app.
 
