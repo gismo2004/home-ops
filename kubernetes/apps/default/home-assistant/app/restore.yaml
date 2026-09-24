@@ -8,12 +8,11 @@ spec:
   credentialProjection:
     enabled: true
   mover:
-    # Must match the SnapshotPolicy identity, or files come back owned by the
-    # mover's own uid rather than root.
+    # Files come back owned by the mover's uid, so this must be HA's own 568;
+    # see the SnapshotPolicy.
     securityContext:
-      runAsUser: 0
-      runAsGroup: 0
-      runAsNonRoot: false
+      runAsUser: 568
+      runAsGroup: 568
   policy:
     # Fail, never Continue. An empty /config is worse than a stalled
     # migration: Home Assistant will happily initialise a FRESH instance over

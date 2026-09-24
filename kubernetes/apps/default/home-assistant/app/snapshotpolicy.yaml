@@ -8,11 +8,14 @@ spec:
   compression:
     compressor: zstd
   mover:
+    # Home Assistant runs as 568 and owns every file under /config (the
+    # root-owned .storage/auth and .storage/http of the old cluster are gone).
+    # A root mover is not only unnecessary but harmful on restore: without
+    # privilegedMode it writes every file as 0:65532 mode 644, which HA cannot
+    # write. Verified with a scratch Restore on 2026-09-24.
     securityContext:
-      runAsUser: 0
-      runAsGroup: 0
-      runAsNonRoot: false
-      privileged: true
+      runAsUser: 568
+      runAsGroup: 568
     cache:
       capacity: 2Gi
       # Ephemeral: a persistent cache keeps the ownership of whichever mover

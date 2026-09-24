@@ -152,8 +152,10 @@ Backup wiring is either the shared `components/kopiur/backup` component or hand-
 - **Multi-PVC apps** (`kavita`, `mosquitto`, `unmonitarr`, `vdf`) get one policy per PVC. **Never
   combine PVCs in one policy's `sources: [...]`**: everything is filed under `sources[0]`'s path
   and the rest become unrestorable.
-- **Non-default mover identity:** `home-assistant` and `esphome` run root movers; `jdownloader2`
-  needs the `privileged-movers` namespace annotation.
+- **Non-default mover identity:** only `esphome` runs a root mover (its namespace carries the
+  `privileged-movers` annotation). `home-assistant` moved to 568 on 2026-09-24: a root mover
+  without `privilegedMode` restores every file as `0:65532` mode 644, which an app running as 568
+  cannot write. The mover UID must be the UID the app writes as.
 
 `ClusterRepository/default` sets `scheduleDefaults` (`Europe/Vienna`, `jitter: 6h`) and
 `concurrency.maxConcurrentJobs: 3`; schedules inherit both, so don't repeat the jitter per app.
