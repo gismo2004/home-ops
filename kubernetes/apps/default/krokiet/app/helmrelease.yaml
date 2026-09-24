@@ -121,7 +121,31 @@ spec:
         parentRefs:
           - name: envoy-internal
             namespace: network
+    configMaps:
+      dbus-sgid:
+        data:
+          # Copy of the image's /defaults/service/sgid. jlesage only gives the
+          # app and xvnc services the SUP_GROUP_IDS groups; dbus and the portals
+          # it launches ran with none, so the file chooser (xdg-desktop-portal)
+          # got "Permission denied" on 545/1001-owned folders krokiet itself
+          # could read.
+          sgid: |
+            #!/bin/sh
+            set -e
+            set -u
+            {
+                echo "$${GROUP_ID:-}"
+                get-sup-group-ids
+            } | grep -v '^$' | grep -v '^0$' | sort -nub
     persistence:
+      dbus-sgid:
+        type: configMap
+        identifier: dbus-sgid
+        defaultMode: 0755
+        globalMounts:
+          - path: /etc/services.d/dbus/sgid
+            subPath: sgid
+            readOnly: true
       config:
         existingClaim: krokiet-config
       photos:
