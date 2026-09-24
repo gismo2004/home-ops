@@ -20,3 +20,12 @@ spec:
     namespace: flux-system
   targetNamespace: jdownloader2
   wait: false
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Identity jdownloader2@jdownloader2:/pvc/jdownloader2-config, unchanged.
+      KOPIUR_NAME: jdownloader2
+      KOPIUR_CLAIM: jdownloader2-config
+      KOPIUR_CAPACITY: 10Gi
+      KOPIUR_ONMISSING: Continue

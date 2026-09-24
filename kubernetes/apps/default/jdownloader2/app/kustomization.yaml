@@ -5,7 +5,30 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
-  - ./snapshotpolicy.yaml
-  - ./snapshotschedule.yaml
-  - ./restore.yaml
-  - ./pvc.yaml
+patches:
+  # The container runs as root, and a few internal processes (nginx's reverse
+  # proxy, the JVM font cache, logrotate state) write root-owned scratch files
+  # the 568 mover cannot read. None of it is user data (all regenerated on
+  # start), so it is excluded instead of running a privileged mover. An
+  # explicit list replaces Kopiur's defaults, hence the OS-artifact entries.
+  # Target by kind only: the component object is still named ${KOPIUR_NAME}
+  # at build time.
+  - target:
+      group: kopiur.home-operations.com
+      kind: SnapshotPolicy
+    patch: |-
+      apiVersion: kopiur.home-operations.com/v1alpha1
+      kind: SnapshotPolicy
+      metadata:
+        name: placeholder
+      spec:
+        files:
+          ignoreRules:
+            - /lost+found
+            - System Volume Information
+            - $$RECYCLE.BIN
+            - "@eaDir"
+            - .snapshot
+            - /var/tmp/nginx
+            - /.java/fonts
+            - /xdg/state/logrotate/logrotate.status
