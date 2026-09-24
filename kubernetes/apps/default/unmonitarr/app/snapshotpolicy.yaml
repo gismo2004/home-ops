@@ -10,6 +10,9 @@ apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotPolicy
 metadata:
   name: unmonitarr-config
+  annotations:
+    # Temporary, while this moves to components/kopiur/backup.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   compression:
     compressor: zstd
@@ -47,6 +50,9 @@ apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotPolicy
 metadata:
   name: unmonitarr-data
+  annotations:
+    # Temporary, while this moves to components/kopiur/backup.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   compression:
     compressor: zstd

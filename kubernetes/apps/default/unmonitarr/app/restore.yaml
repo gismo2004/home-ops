@@ -23,6 +23,9 @@ apiVersion: kopiur.home-operations.com/v1alpha1
 kind: Restore
 metadata:
   name: unmonitarr-config
+  annotations:
+    # Temporary, while this moves to components/kopiur/backup.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   credentialProjection:
     enabled: true
@@ -44,6 +47,9 @@ apiVersion: kopiur.home-operations.com/v1alpha1
 kind: Restore
 metadata:
   name: unmonitarr-data
+  annotations:
+    # Temporary, while this moves to components/kopiur/backup.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   credentialProjection:
     enabled: true

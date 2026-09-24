@@ -12,6 +12,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: unmonitarr-config
+  annotations:
+    # Temporary, while this moves to components/kopiur/backup.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce
@@ -28,6 +31,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: unmonitarr-data
+  annotations:
+    # Temporary, while this moves to components/kopiur/backup.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce

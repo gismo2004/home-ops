@@ -4,6 +4,9 @@ apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotSchedule
 metadata:
   name: unmonitarr-config
+  annotations:
+    # Temporary, while this moves to components/kopiur/backup.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   policyRef:
     name: unmonitarr-config
@@ -15,6 +18,9 @@ apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotSchedule
 metadata:
   name: unmonitarr-data
+  annotations:
+    # Temporary, while this moves to components/kopiur/backup.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   policyRef:
     name: unmonitarr-data
