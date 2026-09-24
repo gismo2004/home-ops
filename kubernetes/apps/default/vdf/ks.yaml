@@ -20,3 +20,40 @@ spec:
     namespace: flux-system
   targetNamespace: vdf
   wait: false
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Identity vdf-config@vdf:/pvc/vdf-app-template-config, unchanged. The
+      # policy was renamed from `vdf` once; the claim kept its old name.
+      KOPIUR_NAME: vdf-config
+      KOPIUR_CLAIM: vdf-app-template-config
+      KOPIUR_CAPACITY: 5Gi
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# vdf's second volume. The component covers one PVC per Flux Kustomization, and
+# a policy must never list two sources (every Restore would resolve to
+# sources[0]), so the state volume gets its own, backup-only Kustomization.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: vdf-state
+  namespace: default
+spec:
+  interval: 1h
+  path: ./kubernetes/apps/default/vdf/state
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: vdf
+  wait: false
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Identity vdf-state@vdf:/pvc/vdf-app-template-state, unchanged.
+      KOPIUR_NAME: vdf-state
+      KOPIUR_CLAIM: vdf-app-template-state
+      KOPIUR_CAPACITY: 5Gi
