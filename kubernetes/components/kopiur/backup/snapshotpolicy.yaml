@@ -14,10 +14,10 @@ spec:
       runAsGroup: ${KOPIUR_PGID:=568}
     cache:
       capacity: ${KOPIUR_CACHE:=2Gi}
-      # Ephemeral, not Persistent: a persistent cache keeps the ownership of
-      # whichever mover identity last wrote it, and the next run under a
-      # different identity fails with permission errors that look unrelated.
-      mode: Ephemeral
+      # Ephemeral by default while Persistent is piloted per app. A persistent
+      # cache keeps the ownership of the mover identity that wrote it, so after
+      # changing an app's KOPIUR_PUID delete its cache PVC once.
+      mode: ${KOPIUR_CACHEMODE:=Ephemeral}
       storageClassName: ${KOPIUR_STORAGECLASS:=miroir-local}
   repository:
     kind: ClusterRepository

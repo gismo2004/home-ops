@@ -9,6 +9,7 @@
 #       KOPIUR_NAME: myapp          # SnapshotPolicy / Schedule name
 #       KOPIUR_CLAIM: myapp-config  # the PVC it backs up and restores into
 #       KOPIUR_CAPACITY: 10Gi
+#       KOPIUR_CACHEMODE: Persistent  # optional, default Ephemeral
 #
 # TWO names, not one. The mover derives its snapshot identity from
 # <policy>@<namespace>:/pvc/<claim>, so policy and claim are distinct inputs
