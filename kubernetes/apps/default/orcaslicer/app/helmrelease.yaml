@@ -32,22 +32,16 @@ spec:
               SELKIES_UI_TITLE: OrcaSlicer
               PUID: "568"
               PGID: "568"
+            # Not privileged: the GPU (and its /dev/dri nodes) comes from the
+            # nvidia runtime and device plugin. The s6 init and the Selkies
+            # desktop get the runtime's default capabilities; the image's
+            # optional docker-in-docker stays off without privileged.
             securityContext:
-              privileged: true
               allowPrivilegeEscalation: true
               runAsUser: 0
               runAsGroup: 0
               runAsNonRoot: false
               readOnlyRootFilesystem: false
-              capabilities:
-                add:
-                  - CHOWN
-                  - SETUID
-                  - SETGID
-                  - FOWNER
-                  - DAC_OVERRIDE
-                drop:
-                  - ALL
             resources:
               requests:
                 cpu: 75m
