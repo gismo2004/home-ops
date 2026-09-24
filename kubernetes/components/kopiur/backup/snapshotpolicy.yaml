@@ -28,8 +28,7 @@ spec:
   credentialProjection:
     enabled: true
   # Every run of the last day, one per day for a week, one per week for a
-  # month. Hand-written policies (kavita, unmonitarr, vdf, mosquitto,
-  # esphome, home-assistant, jdownloader2) repeat this; keep them in step.
+  # month. Every backup in the cluster comes from this component.
   retention:
     keepLatest: 4
     keepDaily: 7

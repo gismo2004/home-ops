@@ -156,12 +156,20 @@ not just what `b2 ls` or barman reports.
 
 ## Backups: Kopiur
 
-Backup wiring is either the shared `components/kopiur/backup` component or hand-rolled
-`snapshotpolicy.yaml`/`snapshotschedule.yaml` for what the component can't express:
+**Every backup comes from `components/kopiur/backup`**, one PVC per Flux Kustomization, driven
+by `postBuild.substitute` in the app's `ks.yaml` (`KOPIUR_NAME`, `KOPIUR_CLAIM`, `KOPIUR_CAPACITY`,
+optionally `KOPIUR_ONMISSING`/`KOPIUR_PUID`/...). No app keeps hand-written backup objects:
 
-- **Multi-PVC apps** (`unmonitarr`, `vdf`) get one policy per PVC. **Never
-  combine PVCs in one policy's `sources: [...]`**: everything is filed under `sources[0]`'s path
-  and the rest become unrestorable.
+- **Excludes** (`files.ignoreRules`) are a `patches:` entry in the app's `app/kustomization.yaml`
+  targeting `kind: SnapshotPolicy` (see `esphome`, `kavita`, `jdownloader2`, `edgetx`,
+  `orcaslicer`). Write `$$RECYCLE.BIN`: substitution is active in those apps.
+- **A second PVC** gets a second, backup-only Flux Kustomization in the same `ks.yaml`, whose path
+  holds an empty `kustomization.yaml` (`vdf/state`, `unmonitarr/data`). **Never combine PVCs in
+  one policy's `sources: [...]`**: everything is filed under `sources[0]`'s path and the rest
+  become unrestorable.
+- Adding the component turns on substitution for the whole app, so a literal `$` anywhere in its
+  manifests is at risk. Generated ConfigMaps holding code get
+  `kustomize.toolkit.fluxcd.io/substitute: disabled` (see `unmonitarr`).
 - **Mover identity must be the UID the app writes as.** Restored files are owned by the mover's
   UID; a root mover without `privilegedMode` restores every file as `0:65532` mode 644, which an
   app running as 568 cannot write. No namespace carries `privileged-movers` any more:
@@ -185,13 +193,16 @@ with the default `onMissingSnapshot: Continue` then **silently populates an empt
 rename: pin `Restore.spec.source.identity` to the old values, set `onMissingSnapshot: Fail`, verify
 real content, only then switch back to `fromPolicy` and rename in a follow-up commit.
 
-**Landmine: converting an app from standalone backup files to the shared component can make Flux
-delete and recreate the live objects in the same push.** The first apply pass rendered only the
-literal resources, so prune deleted the live `SnapshotPolicy`/`SnapshotSchedule`/`Restore`/PVC; the
-next reconcile recreated them and Kopiur re-adopted the snapshots, but **the live PVC sits
-`Terminating`**, held only by `pvc-protection` while its pod runs, and deletes for real on the next
-pod restart. After such a commit, check `kubectl get pvc -A | grep -i terminating`. If stuck: scale
-to 0 (the PVC deletes), reconcile (recreated, `Pending`), scale to 1 (restore runs), verify content.
+**Landmine: moving live backup objects between manifests can make Flux delete them.** The app's
+Kustomization can reconcile the new git content before its own spec (the added `components:`)
+is updated, prune the objects the content no longer lists, and recreate them a pass later; the
+live PVC then sits `Terminating` and deletes for real on the next pod restart. Safe procedure,
+used for every conversion on 2026-09-24: first commit `kustomize.toolkit.fluxcd.io/prune:
+disabled` on the live objects and wait until the cluster has it, then switch in a second commit
+and compare object UIDs before and after. Moving objects to another Flux Kustomization is safe
+once the new one has applied them: prune skips any object whose live `kustomize.toolkit.fluxcd.io/name`
+label points elsewhere. If a PVC is stuck `Terminating` anyway: scale to 0 (the PVC deletes),
+reconcile (recreated, `Pending`), scale to 1 (restore runs), verify content.
 
 ### Retiring an app without stranding its backup data
 
