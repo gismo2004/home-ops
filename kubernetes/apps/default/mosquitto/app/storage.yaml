@@ -1,7 +1,7 @@
-# TWO independent single-source policies, never one policy with two sources.
+# One single-source policy per PVC, never one policy with several sources.
 # Restore.spec.source.fromPolicy resolves its sourcePath from the POLICY's own
 # source, and there is no field to disambiguate among several -- a combined
-# policy makes both Restores resolve to sources[0], so one PVC gets the other's
+# policy makes every Restore resolve to sources[0], so one PVC gets another's
 # data. Proven the hard way on this exact app.
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
@@ -21,23 +21,6 @@ spec:
     - pvc: { name: mosquitto-data }
   volumeSnapshotClassName: miroir-snap
 ---
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
-apiVersion: kopiur.home-operations.com/v1alpha1
-kind: SnapshotPolicy
-metadata:
-  name: mosquitto-configinc
-spec:
-  compression: { compressor: zstd }
-  mover:
-    securityContext: { runAsUser: 568, runAsGroup: 568 }
-    cache: { capacity: 2Gi, mode: Persistent, storageClassName: miroir-local }
-  repository: { kind: ClusterRepository, name: default }
-  credentialProjection: { enabled: true }
-  retention: { keepLatest: 3, keepHourly: 24, keepDaily: 2, keepWeekly: 4 }
-  sources:
-    - pvc: { name: mosquitto-configinc }
-  volumeSnapshotClassName: miroir-snap
----
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: SnapshotSchedule
@@ -45,15 +28,6 @@ metadata:
   name: mosquitto-data
 spec:
   policyRef: { name: mosquitto-data }
-  schedule: { cron: "H 0,6,12,18 * * *" }
----
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
-apiVersion: kopiur.home-operations.com/v1alpha1
-kind: SnapshotSchedule
-metadata:
-  name: mosquitto-configinc
-spec:
-  policyRef: { name: mosquitto-configinc }
   schedule: { cron: "H 0,6,12,18 * * *" }
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/restore_v1alpha1.json
@@ -71,23 +45,6 @@ spec:
     fromPolicy: { name: mosquitto-data, offset: 0 }
   target: { populator: {} }
 ---
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/restore_v1alpha1.json
-apiVersion: kopiur.home-operations.com/v1alpha1
-kind: Restore
-metadata:
-  name: mosquitto-configinc
-spec:
-  credentialProjection: { enabled: true }
-  mover:
-    securityContext: { runAsUser: 568, runAsGroup: 568 }
-  # Continue, not Fail: this volume is legitimately EMPTY. Its snapshots are
-  # 0 B -- the real config is templated into mosquitto.conf and include_dir
-  # over an empty directory is valid. Fail here would block startup for no gain.
-  policy: { onMissingSnapshot: Continue }
-  source:
-    fromPolicy: { name: mosquitto-configinc, offset: 0 }
-  target: { populator: {} }
----
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -98,18 +55,5 @@ spec:
     apiGroup: kopiur.home-operations.com
     kind: Restore
     name: mosquitto-data
-  resources: { requests: { storage: 10Gi } }
-  storageClassName: miroir-local
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mosquitto-configinc
-spec:
-  accessModes: [ReadWriteOnce]
-  dataSourceRef:
-    apiGroup: kopiur.home-operations.com
-    kind: Restore
-    name: mosquitto-configinc
   resources: { requests: { storage: 10Gi } }
   storageClassName: miroir-local

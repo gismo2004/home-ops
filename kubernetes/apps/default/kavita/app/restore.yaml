@@ -1,17 +1,11 @@
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/restore_v1alpha1.json
 # Kept permanently alongside pvc.yaml (not one-time infrastructure like a
-# VolSync ReplicationDestination would be): each PVC's dataSourceRef
-# claims its own Restore as its populator, so if either PVC is ever
-# deleted again in some future accident, simply recreating it with the
-# same dataSourceRef automatically re-triggers a restore from the latest
-# matching SnapshotPolicy snapshot — no manual intervention needed.
-#
-# Each restore points at its own single-source policy (see
-# snapshotpolicy.yaml) — a shared multi-source policy with fromPolicy
-# does NOT disambiguate by target PVC name (confirmed on mosquitto), so
-# two independent policies/restores are required for correct independent
-# restores.
+# VolSync ReplicationDestination would be): the PVC's dataSourceRef claims
+# this Restore as its populator, so if the PVC is ever deleted again in
+# some future accident, simply recreating it with the same dataSourceRef
+# automatically re-triggers a restore from the latest snapshot — no manual
+# intervention needed.
 apiVersion: kopiur.home-operations.com/v1alpha1
 kind: Restore
 metadata:
@@ -31,27 +25,6 @@ spec:
   source:
     fromPolicy:
       name: kavita-config
-      offset: 0
-  target:
-    populator: {}
----
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/restore_v1alpha1.json
-apiVersion: kopiur.home-operations.com/v1alpha1
-kind: Restore
-metadata:
-  name: kavita-manga
-spec:
-  credentialProjection:
-    enabled: true
-  mover:
-    securityContext:
-      runAsUser: 568
-      runAsGroup: 568
-  policy:
-    onMissingSnapshot: Continue
-  source:
-    fromPolicy:
-      name: kavita-manga
       offset: 0
   target:
     populator: {}

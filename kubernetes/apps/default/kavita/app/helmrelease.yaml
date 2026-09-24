@@ -100,8 +100,6 @@ spec:
     persistence:
       config:
         existingClaim: kavita-config
-      manga:
-        existingClaim: kavita-manga
       books:
         type: nfs
         server: 10.0.0.2

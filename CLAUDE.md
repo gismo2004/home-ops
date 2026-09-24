@@ -149,7 +149,7 @@ not just what `b2 ls` or barman reports.
 Backup wiring is either the shared `components/kopiur/backup` component or hand-rolled
 `snapshotpolicy.yaml`/`snapshotschedule.yaml` for what the component can't express:
 
-- **Multi-PVC apps** (`kavita`, `mosquitto`, `unmonitarr`, `vdf`) get one policy per PVC. **Never
+- **Multi-PVC apps** (`unmonitarr`, `vdf`) get one policy per PVC. **Never
   combine PVCs in one policy's `sources: [...]`**: everything is filed under `sources[0]`'s path
   and the rest become unrestorable.
 - **Non-default mover identity:** only `esphome` runs a root mover (its namespace carries the

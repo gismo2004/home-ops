@@ -85,10 +85,6 @@ spec:
         existingClaim: mosquitto-data
         globalMounts:
           - path: /mosquitto/data
-      configinc:
-        existingClaim: mosquitto-configinc
-        globalMounts:
-          - path: /mosquitto/configinc
       config:
         type: configMap
         # identifier, not a literal name: app-template 5.x names generated
@@ -108,4 +104,3 @@ spec:
             persistence true
             persistence_location /mosquitto/data
             autosave_interval 1800
-            include_dir /mosquitto/configinc

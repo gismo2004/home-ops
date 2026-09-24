@@ -4,10 +4,9 @@
 # consider them part of its own release manifest and delete them on an
 # uninstall/chart swap.
 #
-# Each PVC's dataSourceRef claims its own Restore populator in
-# restore.yaml — Kopiur fills these from the matching kavita-config /
-# kavita-manga SnapshotPolicy's most recent snapshot before anything else
-# can mount them.
+# The PVC's dataSourceRef claims its Restore populator in restore.yaml —
+# Kopiur fills it from the kavita-config SnapshotPolicy's most recent
+# snapshot before anything else can mount it.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -22,20 +21,4 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: miroir-local
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: kavita-manga
-spec:
-  accessModes:
-    - ReadWriteOnce
-  dataSourceRef:
-    apiGroup: kopiur.home-operations.com
-    kind: Restore
-    name: kavita-manga
-  resources:
-    requests:
-      storage: 100Gi
   storageClassName: miroir-local
