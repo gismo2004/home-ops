@@ -61,11 +61,13 @@ spec:
                     port: 8888
                   failureThreshold: 30
                   periodSeconds: 10
+            # The card reader comes from generic-device-plugin (kube-system) as
+            # squat.ai/oscam-reader, mounted at /dev/ttyUSB0 with the node's
+            # 0666 udev mode -- no privileged mode, hostPath or dialout group.
             securityContext:
-              privileged: true
               allowPrivilegeEscalation: true
               runAsUser: 0
-              runAsGroup: 20
+              runAsGroup: 0
               runAsNonRoot: false
               readOnlyRootFilesystem: false
               seccompProfile:
@@ -86,6 +88,7 @@ spec:
               limits:
                 cpu: 1500m
                 memory: 2400Mi
+                squat.ai/oscam-reader: 1
           codeserver:
             image:
               repository: ghcr.io/linuxserver/code-server
@@ -218,10 +221,3 @@ spec:
           oscam:
             app:
               - path: /var/run
-      usb:
-        type: hostPath
-        hostPath: /dev/ttyUSB-oscam
-        advancedMounts:
-          oscam:
-            app:
-              - path: /dev/ttyUSB0
