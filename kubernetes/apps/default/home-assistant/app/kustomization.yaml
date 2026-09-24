@@ -7,7 +7,3 @@ resources:
   - ./ocirepository.yaml
   - ./secret.sops.yaml
   - ./postgres.yaml
-  - ./snapshotpolicy.yaml
-  - ./snapshotschedule.yaml
-  - ./restore.yaml
-  - ./pvc.yaml

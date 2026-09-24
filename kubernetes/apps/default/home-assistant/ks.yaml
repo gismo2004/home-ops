@@ -23,3 +23,15 @@ spec:
     namespace: flux-system
   targetNamespace: hass
   wait: false
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Identity home-assistant@hass:/pvc/home-assistant-config, unchanged.
+      # The config's database is CNPG (postgres.yaml), not part of this backup.
+      KOPIUR_NAME: home-assistant
+      KOPIUR_CLAIM: home-assistant-config
+      KOPIUR_CAPACITY: 100Gi
+      # Fail, never Continue: on an empty /config Home Assistant initialises a
+      # FRESH instance, losing every account and integration with no error.
+      KOPIUR_ONMISSING: Fail
