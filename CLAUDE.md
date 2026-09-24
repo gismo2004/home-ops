@@ -162,6 +162,8 @@ ignore rules to it, never removes them, so rules set by hand or by an older mani
 across the cluster migration. `esphome` silently excluded its `.device-builder.json` and peer-link
 key this way until 2026-09-24. A snapshot's `stats.excludedFileCount` gives it away; inspect with
 `kopia policy show <policy>@<namespace>:/pvc/<claim>` and remove with `--remove-ignore`.
+Kopia also stores ignore rules sorted, so `!` re-includes sort before the wildcard they were meant
+to override and lose; name the excluded paths instead (see `edgetx/app/kustomization.yaml`).
 
 `ClusterRepository/default` sets `scheduleDefaults` (`Europe/Vienna`, `jitter: 6h`) and
 `concurrency.maxConcurrentJobs: 3`; schedules inherit both, so don't repeat the jitter per app.
