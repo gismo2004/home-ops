@@ -24,6 +24,11 @@ spec:
             image:
               repository: ghcr.io/home-operations/radarr
               tag: 6.4.4.10685@sha256:be53998a2d39cfa3c3315b70c7509a6a1f2a10c3aee9337653efc9f4c970430e
+            envFrom:
+              # API key from the SOPS secret (RADARR__AUTH__APIKEY), so it is
+              # managed in git instead of only in config.xml.
+              - secretRef:
+                  name: radarr-secret
             env:
               # Pre-emptive: this core does not have the TrustedNetworks key yet,
               # but the Servarr release that adds it (CVE-2026-30975 hardening)

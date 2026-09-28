@@ -33,15 +33,16 @@ spec:
               - "8088"
               - --proxy-headers
               - --forwarded-allow-ips=*
+            envFrom:
+              # API keys and the admin password. They were plaintext here until
+              # 2026-09-28 (public repo) and were rotated when moved.
+              - secretRef:
+                  name: unmonitarr-secret
             env:
               JELLYFIN_URL: "http://jellyfin-app.media.svc.cluster.local:8096"
-              JELLYFIN_API_KEY: "17ba6e6e5c0e4ed1a4f3f55baad37834"
               SONARR_URL: "http://sonarr.media.svc.cluster.local:8989"
-              SONARR_API_KEY: "c1d00fd0de9c4b31a7de6a24745ed143"
               RADARR_URL: "http://radarr.media.svc.cluster.local:7878"
-              RADARR_API_KEY: "5d60fdf14a8a48738027c122769353cf"
               ADMIN_USERNAME: "admin"
-              ADMIN_PASSWORD: "Mondschein1122!!"
               AUTO_SYNC_ENABLED: "true"
               SYNC_DELAY_SECONDS: "0"
               MAX_REQUESTS_PER_MINUTE: "300"
