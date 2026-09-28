@@ -34,3 +34,9 @@ run = 'mise lock && { for f in {staged_files}; do l="$(dirname "$f")/mise.lock";
 [pre-commit.commands.zizmor]
 glob = [".github/workflows/*.yaml", ".github/actions/**/action.yaml"]
 run = "zizmor --offline {staged_files}"
+
+# Blocks commits that add a secret (default gitleaks rules plus
+# .gitleaks.toml's plaintext-credential rule). Real secrets go in
+# app/secret.sops.yaml. CI runs the same scan (.github/workflows/gitleaks.yaml).
+[pre-commit.commands.gitleaks]
+run = "gitleaks git --pre-commit --staged --redact --no-banner --verbose"

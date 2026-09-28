@@ -1,0 +1,9 @@
+# Historical findings from 5e4a05f (2026-08-20). All of these were rotated or
+# are dead on 2026-09-28 (see commit f9b31b5 and the jdownloader2 fix), so
+# they stay in history but must not fail every scan. Add nothing else here
+# without rotating the secret first.
+5e4a05f9bedddee95f7cdda982dde397f86eaecb:kubernetes/apps/jdownloader2/jdownloader2/app/helmrelease.yaml:plaintext-credential-in-manifest:30
+5e4a05f9bedddee95f7cdda982dde397f86eaecb:kubernetes/apps/unmonitarr/unmonitarr/app/helmrelease.yaml:plaintext-credential-in-manifest:38
+5e4a05f9bedddee95f7cdda982dde397f86eaecb:kubernetes/apps/unmonitarr/unmonitarr/app/helmrelease.yaml:plaintext-credential-in-manifest:40
+5e4a05f9bedddee95f7cdda982dde397f86eaecb:kubernetes/apps/unmonitarr/unmonitarr/app/helmrelease.yaml:plaintext-credential-in-manifest:42
+5e4a05f9bedddee95f7cdda982dde397f86eaecb:kubernetes/apps/unmonitarr/unmonitarr/app/helmrelease.yaml:plaintext-credential-in-manifest:44

@@ -68,6 +68,27 @@ per-app `app/secret.sops.yaml`.
 **Never `kubectl apply -f` a repo file containing unresolved `${...}` placeholders:** it writes the
 literal placeholder into the live object.
 
+## Secrets: this repo is public
+
+**Never put a credential in a manifest in plaintext** — API keys, passwords, tokens, VNC/admin
+passwords, even for LAN-only apps. It goes in `app/secret.sops.yaml` (encrypt with
+`sops -e -i`) and reaches the container via `envFrom`/`secretKeyRef`. Servarr apps take their
+own key the same way (`<APP>__AUTH__APIKEY`, see `radarr`/`sonarr`).
+
+This happened once: the 2026-08-20 migration commit `5e4a05f` copied unmonitarr's Jellyfin,
+Radarr and Sonarr keys and jdownloader2's VNC password verbatim from the private old repo.
+Jellyfin was internet-facing then, so the key gave admin API access. All were rotated on
+2026-09-28; history still has them (`.gitleaksignore`).
+
+- `gitleaks` runs as a pre-commit hook and in CI (`.github/workflows/gitleaks.yaml`) with
+  `.gitleaks.toml`: default rules plus a rule for credential-looking keys in YAML, because the
+  defaults miss plain passwords and 32-hex API keys. GitHub's own secret scanning only knows
+  provider token formats and missed all of these.
+- A finding means: **rotate first**, then move it to SOPS. Deleting it from the file does not
+  help, since the history is public. Add to `.gitleaksignore` only after rotating.
+- Local-only files (`age.key`, `kubeconfig`, `talos/talosconfig`, `talos/rendered/`,
+  `cluster.toml`, `deploy.key`) are gitignored and have never been committed; keep it that way.
+
 ## Workflow: git+Flux for configuration, kubectl for state changes
 
 Configuration (a resource's desired spec) belongs in git. State changes (scaling a Deployment,
