@@ -120,7 +120,7 @@ spec:
         type: image
         image:
           repository: docker.io/mwader/static-ffmpeg
-          tag: 8.1.2@sha256:33f770f812cbfc3de96c547157fc9faf8bd95a36481753439ffa761045167585
+          tag: 9.0.2@sha256:7d9bdaaf887f7e6ce6151f67325c344074b5ff1fb75316011c3376503e449a7b
         globalMounts:
           - path: /opt/ffmpeg
             readOnly: true
