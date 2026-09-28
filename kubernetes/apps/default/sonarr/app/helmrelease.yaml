@@ -120,3 +120,9 @@ spec:
         path: /mnt/Storage1/tv
         globalMounts:
           - path: /mnt/tv
+      # readOnlyRootFilesystem: true leaves no writable /tmp, and sonarr
+      # stages every backup in /tmp/sonarr_backup: without this, all backups
+      # (scheduled and manual) failed with "Read-only file system" from the
+      # last success on 2026-08-02 until this mount was added.
+      tmp:
+        type: emptyDir
