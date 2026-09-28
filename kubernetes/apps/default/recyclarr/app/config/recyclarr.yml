@@ -4,6 +4,10 @@
 # 1080p is the fallback. Blocks BR-DISK, AV1 and German LQ releases via the
 # "Unwanted Formats German" group. Remux qualities are not in the profile,
 # which also keeps VC-1 (practically only found in old Blu-ray remuxes) out.
+# German audio is required, unlike TRaSH's default (English as fallback):
+# "Not German" is our own CF from ./custom-formats (see settings.yml), -35000
+# in the profile, so a release without German audio or "German" in its title
+# can never reach the minimum score.
 # Templates: https://github.com/recyclarr/config-templates
 
 radarr:
@@ -16,6 +20,11 @@ radarr:
       - trash_id: 425da1ba30711b55d2eb371437ec98d7 # [German] UHD Bluray + WEB (Alternative)
         reset_unmatched_scores:
           enabled: true
+    custom_formats:
+      - trash_ids:
+          - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
+        assign_scores_to:
+          - trash_id: 425da1ba30711b55d2eb371437ec98d7
     custom_format_groups:
       add:
         - trash_id: ff204bbcecdd487d1cefcefdbf0c278d # [Optional] Golden Rule UHD
@@ -31,6 +40,11 @@ sonarr:
       - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852 # [German] UHD Bluray + WEB (Alternative)
         reset_unmatched_scores:
           enabled: true
+    custom_formats:
+      - trash_ids:
+          - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
+        assign_scores_to:
+          - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852
     custom_format_groups:
       add:
         - trash_id: e3f37512790f00d0e89e54fe5e790d1c # [Optional] Golden Rule UHD

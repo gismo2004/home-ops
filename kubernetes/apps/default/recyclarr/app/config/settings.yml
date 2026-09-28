@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/settings-schema.json
+# Own custom formats, next to the official TRaSH ones. Mounted from the
+# recyclarr-custom-formats-* ConfigMaps (app/kustomization.yaml).
+resource_providers:
+  - name: own-radarr
+    type: custom-formats
+    path: /custom-formats/radarr
+    service: radarr
+  - name: own-sonarr
+    type: custom-formats
+    path: /custom-formats/sonarr
+    service: sonarr

@@ -63,5 +63,20 @@ spec:
           - path: /config/recyclarr.yml
             subPath: recyclarr.yml
             readOnly: true
+          - path: /config/settings.yml
+            subPath: settings.yml
+            readOnly: true
+      custom-formats-radarr:
+        type: configMap
+        name: recyclarr-custom-formats-radarr
+        globalMounts:
+          - path: /custom-formats/radarr
+            readOnly: true
+      custom-formats-sonarr:
+        type: configMap
+        name: recyclarr-custom-formats-sonarr
+        globalMounts:
+          - path: /custom-formats/sonarr
+            readOnly: true
       tmp:
         type: emptyDir
