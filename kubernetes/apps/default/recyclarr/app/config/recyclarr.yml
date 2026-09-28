@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
+# TRaSH Guides "[German] UHD Bluray + WEB (Alternative)": 720p-2160p in one
+# merged group, ranked by custom-format score, so 4K wins when it exists and
+# 1080p is the fallback. Blocks BR-DISK, AV1 and German LQ releases via the
+# "Unwanted Formats German" group. Remux qualities are not in the profile,
+# which also keeps VC-1 (practically only found in old Blu-ray remuxes) out.
+# Templates: https://github.com/recyclarr/config-templates
+
+radarr:
+  radarr:
+    base_url: http://radarr.media.svc.cluster.local:7878
+    api_key: !env_var RADARR_API_KEY
+    quality_definition:
+      type: movie
+    quality_profiles:
+      - trash_id: 425da1ba30711b55d2eb371437ec98d7 # [German] UHD Bluray + WEB (Alternative)
+        reset_unmatched_scores:
+          enabled: true
+    custom_format_groups:
+      add:
+        - trash_id: ff204bbcecdd487d1cefcefdbf0c278d # [Optional] Golden Rule UHD
+        - trash_id: 0ca61b4b233178d07113082a7acff72d # [Unwanted] Unwanted Formats German
+
+sonarr:
+  sonarr:
+    base_url: http://sonarr.media.svc.cluster.local:8989
+    api_key: !env_var SONARR_API_KEY
+    quality_definition:
+      type: series
+    quality_profiles:
+      - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852 # [German] UHD Bluray + WEB (Alternative)
+        reset_unmatched_scores:
+          enabled: true
+    custom_format_groups:
+      add:
+        - trash_id: e3f37512790f00d0e89e54fe5e790d1c # [Optional] Golden Rule UHD
+        - trash_id: 6f0872eebfc95b1f93474b7ac866ced0 # [Unwanted] Unwanted Formats German
