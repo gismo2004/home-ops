@@ -93,8 +93,11 @@ spec:
       app:
         hostnames:
           - "{{ .Release.Name }}.gismo2004.cc"
+        # Internal only. It was on envoy-external (public via Cloudflare)
+        # for remote playback over the holidays; back on the LAN since
+        # 2026-09-28. Clients resolve it through k8s-gateway.
         parentRefs:
-          - name: envoy-external
+          - name: envoy-internal
             namespace: network
         rules:
           - backendRefs:
