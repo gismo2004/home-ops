@@ -40,6 +40,24 @@ sonarr:
       - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852 # [German] UHD Bluray + WEB (Alternative)
         reset_unmatched_scores:
           enabled: true
+        # TRaSH's group plus HDTV: German TV shows (cooking/kids/docs) are
+        # often only released as TV recordings. Scores still rank WEB and
+        # Bluray above HDTV when both exist.
+        qualities:
+          - name: Merged QPs
+            qualities:
+              - Bluray-2160p
+              - WEBDL-2160p
+              - WEBRip-2160p
+              - HDTV-2160p
+              - Bluray-1080p
+              - WEBDL-1080p
+              - WEBRip-1080p
+              - HDTV-1080p
+              - Bluray-720p
+              - WEBDL-720p
+              - WEBRip-720p
+              - HDTV-720p
     custom_formats:
       - trash_ids:
           - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
