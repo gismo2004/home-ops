@@ -103,3 +103,24 @@ spec:
           - path: /mnt/download
       tmp:
         type: emptyDir
+      # Post-processing scripts (script_dir = /scripts in sabnzbd.ini).
+      # media_check.py repairs or rejects files the CoreELEC box can't play
+      # before radarr/sonarr import them; see the script's docstring.
+      scripts:
+        type: configMap
+        name: sabnzbd-scripts
+        defaultMode: 0755
+        globalMounts:
+          - path: /scripts
+            readOnly: true
+      # Static ffmpeg/ffprobe for media_check.py, mounted straight from the
+      # image (Kubernetes image volume): the sabnzbd image has no ffmpeg.
+      # Needs >= 7.1 for the dovi_rpu bitstream filter.
+      ffmpeg:
+        type: image
+        image:
+          repository: docker.io/mwader/static-ffmpeg
+          tag: 8.1.2@sha256:33f770f812cbfc3de96c547157fc9faf8bd95a36481753439ffa761045167585
+        globalMounts:
+          - path: /opt/ffmpeg
+            readOnly: true
