@@ -25,10 +25,27 @@ radarr:
           - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
         assign_scores_to:
           - trash_id: 425da1ba30711b55d2eb371437ec98d7
+      # Tuned for a 5.1 system without height speakers (2026-09-30): lossy
+      # Atmos plays as plain 5.1 there, so it gets DD+'s score instead of 3000.
+      # Lossless Atmos (TrueHD Atmos, DTS:X) keeps its score.
+      - trash_ids:
+          - 417804f7f2c4308c1f4c5d380d4c4475 # ATMOS (undefined)
+          - 1af239278386be2919e1bcee0bde047e # DD+ ATMOS
+        assign_scores_to:
+          - trash_id: 425da1ba30711b55d2eb371437ec98d7
+            score: 1750
+      # Bluray encodes over WEB at the same resolution: +1500 outweighs the
+      # lossy-audio score gaps (DD+ vs DD/DTS), which otherwise let a WEB
+      # release win despite the visibly worse picture on a 77" TV.
+      - trash_ids:
+          - 949585e48d9255cb92a868640536e61c # Source: Bluray (own, ./custom-formats)
+        assign_scores_to:
+          - trash_id: 425da1ba30711b55d2eb371437ec98d7
     custom_format_groups:
       add:
         - trash_id: ff204bbcecdd487d1cefcefdbf0c278d # [Optional] Golden Rule UHD
         - trash_id: 0ca61b4b233178d07113082a7acff72d # [Unwanted] Unwanted Formats German
+        - trash_id: 1616617ab3a14397a2b2321bcbda44d1 # [HDR Formats] DV Boost (box and TV do DV)
 
 sonarr:
   sonarr:
@@ -67,3 +84,4 @@ sonarr:
       add:
         - trash_id: e3f37512790f00d0e89e54fe5e790d1c # [Optional] Golden Rule UHD
         - trash_id: 6f0872eebfc95b1f93474b7ac866ced0 # [Unwanted] Unwanted Formats German
+        - trash_id: e0b2774083df4265f25c9e5bc6c80940 # [HDR Formats] DV Boost (box and TV do DV)

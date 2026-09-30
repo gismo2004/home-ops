@@ -1,0 +1,28 @@
+{
+  "trash_id": "949585e48d9255cb92a868640536e61c",
+  "trash_scores": {
+    "default": 1500
+  },
+  "name": "Source: Bluray",
+  "includeCustomFormatWhenRenaming": false,
+  "specifications": [
+    {
+      "name": "Bluray",
+      "implementation": "SourceSpecification",
+      "negate": false,
+      "required": true,
+      "fields": {
+        "value": 9
+      }
+    },
+    {
+      "name": "Not Remux",
+      "implementation": "QualityModifierSpecification",
+      "negate": true,
+      "required": true,
+      "fields": {
+        "value": 5
+      }
+    }
+  ]
+}
