@@ -17,6 +17,11 @@ spec:
           - 568
     controllers:
       unmonitarr:
+        # Stopped 2026-09-30: replaced by Maintainerr, whose rules respect
+        # Jellyfin favourites (unmonitarr unmonitored hearted items too).
+        # Kept at 0 instead of removed so its PVC and backups stay until the
+        # user decides on retiring it (see CLAUDE.md, "Retiring an app").
+        replicas: 0
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
