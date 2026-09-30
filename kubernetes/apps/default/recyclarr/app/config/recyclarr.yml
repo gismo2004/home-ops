@@ -20,6 +20,10 @@ radarr:
       - trash_id: 425da1ba30711b55d2eb371437ec98d7 # [German] UHD Bluray + WEB (Alternative)
         reset_unmatched_scores:
           enabled: true
+        upgrade:
+          allowed: true
+          until_quality: Merged QPs
+          until_score: 45000 # TRaSH's 35000 + the resolution offset below
     custom_formats:
       - trash_ids:
           - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
@@ -41,6 +45,23 @@ radarr:
           - 949585e48d9255cb92a868640536e61c # Source: Bluray (own, ./custom-formats)
         assign_scores_to:
           - trash_id: 425da1ba30711b55d2eb371437ec98d7
+      # Resolution first (2026-09-30). TRaSH scores 720p/1080p/2160p at
+      # 5/50/100, so German+English audio (+1000 over German-only), a better
+      # release group or lossless audio let a 720p release replace a 1080p
+      # file (Ninjago S08 kept retrying 720p "DL" over 1080p German).
+      # +10000 on 1080p and 2160p is more than everything a 720p release can
+      # gain elsewhere; 2160p keeps its lead over 1080p. The cutoff score
+      # moves up by the same 10000.
+      - trash_ids:
+          - 820b09bb9acbfde9c35c71e0e565dad8 # 1080p
+        assign_scores_to:
+          - trash_id: 425da1ba30711b55d2eb371437ec98d7
+            score: 10050
+      - trash_ids:
+          - fb392fb0d61a010ae38e49ceaa24a1ef # 2160p
+        assign_scores_to:
+          - trash_id: 425da1ba30711b55d2eb371437ec98d7
+            score: 10100
     custom_format_groups:
       add:
         - trash_id: ff204bbcecdd487d1cefcefdbf0c278d # [Optional] Golden Rule UHD
@@ -57,6 +78,10 @@ sonarr:
       - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852 # [German] UHD Bluray + WEB (Alternative)
         reset_unmatched_scores:
           enabled: true
+        upgrade:
+          allowed: true
+          until_quality: Merged QPs
+          until_score: 45000 # TRaSH's 35000 + the resolution offset below
         # TRaSH's group plus HDTV: German TV shows (cooking/kids/docs) are
         # often only released as TV recordings. Scores still rank WEB and
         # Bluray above HDTV when both exist.
@@ -114,6 +139,23 @@ sonarr:
           - 949585e48d9255cb92a868640536e61c # Source: Bluray (own, ./custom-formats)
         assign_scores_to:
           - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852
+      # Resolution first (2026-09-30). TRaSH scores 720p/1080p/2160p at
+      # 5/50/100, so German+English audio (+1000 over German-only), a better
+      # release group or lossless audio let a 720p release replace a 1080p
+      # file (Ninjago S08 kept retrying 720p "DL" over 1080p German).
+      # +10000 on 1080p and 2160p is more than everything a 720p release can
+      # gain elsewhere; 2160p keeps its lead over 1080p. The cutoff score
+      # moves up by the same 10000.
+      - trash_ids:
+          - 290078c8b266272a5cc8e251b5e2eb0b # 1080p
+        assign_scores_to:
+          - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852
+            score: 10050
+      - trash_ids:
+          - 1bef6c151fa35093015b0bfef18279e5 # 2160p
+        assign_scores_to:
+          - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852
+            score: 10100
     custom_format_groups:
       add:
         - trash_id: e3f37512790f00d0e89e54fe5e790d1c # [Optional] Golden Rule UHD
