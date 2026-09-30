@@ -112,8 +112,15 @@ spec:
       # recreated.
       cache:
         type: emptyDir
+      # In RAM, not on the node disk: that disk is the Talos OS disk, which
+      # etcd shares. On 2026-09-30 an unthrottled 4K->1080p GPU transcode
+      # wrote ~100 MB/s here, etcd's fsync stalled 8 s and the apiserver
+      # went down. Throttling + segment deletion (encoding settings) keep a
+      # stream to ~3 GB, so 8Gi fits two at once; counts against the 24Gi limit.
       transcode:
         type: emptyDir
+        medium: Memory
+        sizeLimit: 8Gi
         globalMounts:
           - path: /cache/transcodes
       logs:
