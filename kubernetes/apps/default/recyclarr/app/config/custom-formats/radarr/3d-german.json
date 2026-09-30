@@ -1,0 +1,28 @@
+{
+  "trash_id": "25e28d0bd60a9ec2f48861b17a73d0d8",
+  "trash_scores": {
+    "default": -35000
+  },
+  "name": "3D (German naming)",
+  "includeCustomFormatWhenRenaming": false,
+  "specifications": [
+    {
+      "name": "3D-only groups",
+      "implementation": "ReleaseGroupSpecification",
+      "negate": false,
+      "required": false,
+      "fields": {
+        "value": "^(STEREOSCOPiC)$"
+      }
+    },
+    {
+      "name": "SBS/OU markers",
+      "implementation": "ReleaseTitleSpecification",
+      "negate": false,
+      "required": false,
+      "fields": {
+        "value": "\\b(H-?SBS|F-?SBS|H-?OU|F-?OU|HSBS|HOU|Half-?SBS|Half-?OU|3D-?SBS|3D-?OU|MVC)\\b"
+      }
+    }
+  ]
+}

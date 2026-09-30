@@ -62,6 +62,14 @@ radarr:
         assign_scores_to:
           - trash_id: 425da1ba30711b55d2eb371437ec98d7
             score: 10100
+      # TRaSH's "3D" CF only matches "3D" after the year; German 3D releases
+      # put it before ("Der.weisse.Loewe.3D.2010...") and slipped through as
+      # side-by-side 3D (2026-09-30). Matches 3D-only groups and SBS/OU tags,
+      # not every "3D", since titles like "Step Up 3D" have 2D releases.
+      - trash_ids:
+          - 25e28d0bd60a9ec2f48861b17a73d0d8 # 3D (German naming) (own, ./custom-formats)
+        assign_scores_to:
+          - trash_id: 425da1ba30711b55d2eb371437ec98d7
     custom_format_groups:
       add:
         - trash_id: ff204bbcecdd487d1cefcefdbf0c278d # [Optional] Golden Rule UHD
