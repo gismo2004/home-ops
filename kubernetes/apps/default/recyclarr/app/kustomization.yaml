@@ -18,5 +18,6 @@ configMapGenerator:
   - name: recyclarr-custom-formats-sonarr
     files:
       - ./config/custom-formats/sonarr/not-german.json
+      - ./config/custom-formats/sonarr/source-bluray.json
 generatorOptions:
   disableNameSuffixHash: true

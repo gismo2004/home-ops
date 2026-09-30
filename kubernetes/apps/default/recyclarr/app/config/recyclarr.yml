@@ -80,6 +80,40 @@ sonarr:
           - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
         assign_scores_to:
           - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852
+      # TRaSH's German series profile scores no audio. Added (2026-09-30) so a
+      # Bluray rip with lossless audio beats a streaming grab with DD+ on the
+      # user's 5.1 system. TRaSH default scores; the audio-formats group is
+      # not offered for this profile, hence the explicit list.
+      - trash_ids:
+          - 0d7824bb924701997f874e7ff7d4844a # TrueHD ATMOS
+          - 9d00418ba386a083fbf4d58235fc37ef # DTS X
+          - 1808e4b9cee74e064dfae3f1db99dbfe # TrueHD
+          - c429417a57ea8c41d57e6990a8b0033f # DTS-HD MA
+          - 851bd64e04c9374c51102be3dd9ae4cc # FLAC
+          - 30f70576671ca933adbdcfc736a69718 # PCM
+          - cfa5fbd8f02a86fc55d8d223d06a5e1f # DTS-HD HRA
+          - 63487786a8b01b7f20dd2bc90dd4a477 # DD+
+          - c1a25cd67b5d2e08287c957b1eb903ec # DTS-ES
+          - 5964f2a8b3be407d083498e4459d05d0 # DTS
+          - a50b8a0c62274a7c38b09a9619ba9d86 # AAC
+          - dbe00161b08a25ac6154c55f95e6318d # DD
+          - 3e8b714263b26f486972ee1e0fe7606c # MP3
+          - 28f6ef16d61e2d1adfce3156ed8257e3 # Opus
+        assign_scores_to:
+          - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852
+      # Lossy Atmos plays as plain 5.1 without height speakers: DD+'s score.
+      - trash_ids:
+          - b6fbafa7942952a13e17e2b1152b539a # ATMOS (undefined)
+          - 4232a509ce60c4e208d13825b7c06264 # DD+ ATMOS
+        assign_scores_to:
+          - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852
+            score: 1750
+      # With audio scored, a WEB DD+ grab would beat a Bluray rip with plain
+      # DD; +1500 keeps Bluray (non-remux) first at the same resolution.
+      - trash_ids:
+          - 949585e48d9255cb92a868640536e61c # Source: Bluray (own, ./custom-formats)
+        assign_scores_to:
+          - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852
     custom_format_groups:
       add:
         - trash_id: e3f37512790f00d0e89e54fe5e790d1c # [Optional] Golden Rule UHD
