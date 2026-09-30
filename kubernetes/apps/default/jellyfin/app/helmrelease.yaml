@@ -147,12 +147,14 @@ spec:
         globalMounts:
           - path: /mnt/movies
             subPath: media/movies
+      # Not used by any Jellyfin library yet; same in-pod path as before.
       music:
         type: nfs
         server: 10.0.0.2
-        path: /mnt/Storage1/music
+        path: /mnt/Storage1/data
         globalMounts:
           - path: /mnt/music
+            subPath: media/music
       # Same in-pod path as before (/mnt/tvshows); source moved into the
       # shared Storage1/data dataset like movies.
       tv:
