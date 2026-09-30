@@ -137,12 +137,16 @@ spec:
         sizeLimit: 24Gi
         globalMounts:
           - path: /tmp
+      # Same in-pod path as before (/mnt/movies) so Jellyfin's items, hearts
+      # and played state are untouched; only the source moved into the
+      # shared Storage1/data dataset (2026-09-30).
       movies:
         type: nfs
         server: 10.0.0.2
-        path: /mnt/Storage1/movies
+        path: /mnt/Storage1/data
         globalMounts:
           - path: /mnt/movies
+            subPath: media/movies
       music:
         type: nfs
         server: 10.0.0.2
