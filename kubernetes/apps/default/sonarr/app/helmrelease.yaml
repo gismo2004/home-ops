@@ -113,12 +113,6 @@ spec:
         path: /mnt/Storage1/container_share/backups
         globalMounts:
           - path: /config/Backups
-      downloads:
-        type: nfs
-        server: 10.0.0.2
-        path: /mnt/Storage1/download
-        globalMounts:
-          - path: /mnt/download
       # One filesystem for downloads and media (TRaSH layout), so imports
       # are an instant rename on the NAS instead of a full copy through the
       # node: /data/usenet (SABnzbd) and /data/media/movies (Radarr). The
@@ -129,12 +123,6 @@ spec:
         path: /mnt/Storage1/data
         globalMounts:
           - path: /data
-      series:
-        type: nfs
-        server: 10.0.0.2
-        path: /mnt/Storage1/tv
-        globalMounts:
-          - path: /mnt/tv
       # readOnlyRootFilesystem: true leaves no writable /tmp, and sonarr
       # stages every backup in /tmp/sonarr_backup: without this, all backups
       # (scheduled and manual) failed with "Read-only file system" from the
