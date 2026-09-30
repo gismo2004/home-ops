@@ -19,6 +19,7 @@ resources:
   - ./kavita/ks.yaml
   - ./krokiet/ks.yaml
   - ./lidarr/ks.yaml
+  - ./maintainerr/ks.yaml
   - ./mealie/ks.yaml
   - ./mosquitto/ks.yaml
   - ./octoprint/ks.yaml
