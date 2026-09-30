@@ -129,9 +129,3 @@ spec:
         path: /mnt/Storage1/data
         globalMounts:
           - path: /data
-      music:
-        type: nfs
-        server: 10.0.0.2
-        path: /mnt/Storage1/music
-        globalMounts:
-          - path: /mnt/music
