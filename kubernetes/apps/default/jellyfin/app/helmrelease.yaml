@@ -153,9 +153,12 @@ spec:
         path: /mnt/Storage1/music
         globalMounts:
           - path: /mnt/music
+      # Same in-pod path as before (/mnt/tvshows); source moved into the
+      # shared Storage1/data dataset like movies.
       tv:
         type: nfs
         server: 10.0.0.2
-        path: /mnt/Storage1/tv
+        path: /mnt/Storage1/data
         globalMounts:
           - path: /mnt/tvshows
+            subPath: media/tv
