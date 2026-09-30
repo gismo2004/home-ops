@@ -119,12 +119,6 @@ spec:
         path: /mnt/Storage1/container_share/backups
         globalMounts:
           - path: /config/Backups
-      downloads:
-        type: nfs
-        server: 10.0.0.2
-        path: /mnt/Storage1/download
-        globalMounts:
-          - path: /mnt/download
       # One filesystem for downloads and media (TRaSH layout), so imports
       # are an instant rename on the NAS instead of a full copy through the
       # node: /data/usenet (SABnzbd) and /data/media/movies (Radarr). The
