@@ -8,11 +8,11 @@
   "specifications": [
     {
       "name": "3D-only groups",
-      "implementation": "ReleaseGroupSpecification",
+      "implementation": "ReleaseTitleSpecification",
       "negate": false,
       "required": false,
       "fields": {
-        "value": "^(STEREOSCOPiC)$"
+        "value": "-(STEREOSCOPiC)\\b"
       }
     },
     {
