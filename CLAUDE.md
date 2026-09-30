@@ -145,25 +145,33 @@ the plugin at it; `mountPath` sets the name the app sees (OSCam's reader: `/dev/
 the node, `/dev/ttyUSB0` in the pod). The plugin is the only privileged workload left outside
 the system namespaces.
 
-## Media storage on the NAS: one dataset for downloads and movies
+## Media storage on the NAS: one dataset for all media and downloads
 
 Imports only become an instant rename when the download folder and the library live on the
-**same ZFS dataset and the same NFS mount**. Separate datasets (the old `Storage1/download` +
-`Storage1/movies`) turn every import into a full read+write through the node.
+**same ZFS dataset and the same NFS mount**. Separate datasets (the old `Storage1/download`,
+`Storage1/tv`, `Storage1/music`) turned every import into a full read+write through the node.
 
-- `Storage1/data` (was `Storage1/movies`, renamed 2026-09-30, no data moved) holds
-  `media/movies` and `usenet/{inprogress,complete}`. NFS exports `/mnt/Storage1/data`; the SMB
-  share `movies` points at `data/media/movies`.
-- radarr, sonarr, lidarr and sabnzbd mount it at `/data`; Radarr's root folder is
-  `/data/media/movies`, SABnzbd's `complete_dir` is `/data/usenet/complete`.
-- **jellyfin keeps `/mnt/movies`** via `subPath: media/movies`. A changed in-pod path makes
-  Jellyfin create new items, and **hearts (favourites) do not follow** (played state does):
-  measured on ALF. Radarr's Jellyfin connect maps `/data/media/movies` -> `/mnt/movies`.
-- Still separate datasets: `tv`, `music` (imports there still copy) and `download` (SABnzbd's
-  `download_dir`, until its queue drained). Moving them in is a real copy, not a rename.
+- `Storage1/data` (was `Storage1/movies`, renamed 2026-09-30) holds `media/{movies,tv,music}`
+  and `usenet/{inprogress,complete/<category>}`. NFS exports `/mnt/Storage1/data`; the SMB
+  shares `movies`, `tv` and `music` point at `data/media/<name>`.
+- radarr, sonarr, lidarr and sabnzbd mount only `/data` (plus their backups). Root folders:
+  `/data/media/movies`, `/data/media/tv`, `/data/media/music`; recycle bins sit next to them in
+  `.recycle`. SABnzbd: `download_dir` `/data/usenet/inprogress`, `complete_dir`
+  `/data/usenet/complete`.
+- **jellyfin keeps its old in-pod paths** (`/mnt/movies`, `/mnt/tvshows`, `/mnt/music`) via
+  `subPath: media/<name>`. A changed in-pod path makes Jellyfin create new items, and **hearts
+  (favourites) do not follow** (played state does): measured on ALF. The Jellyfin connections
+  in Radarr/Sonarr map `/data/media/movies` -> `/mnt/movies` and `/data/media/tv` ->
+  `/mnt/tvshows`.
+- Moving a dataset's content in is a real copy: rsync pass 1 live, then stop the apps, pass 2
+  with `--delete`, verify bytes and file counts, switch mounts/shares, then move the arr root
+  folder with `moveFiles=false` and rescan. Import lists and Radarr collections carry their own
+  root folder and must be moved too (health check shows them).
 - `pool.dataset.rename` needs `force: true` when shares are attached, and the shares must be
   disabled first, or knfsd keeps the dataset busy. The middleware job can finish while
   `midclt call -j` never returns; check with `zfs list`.
+- `pgrep -f pattern` inside `ssh host '...'` matches the ssh shell's own command line; use
+  `pgrep -x rsync -a | grep ...` when waiting for a NAS job.
 
 ## Storage: miroir
 
