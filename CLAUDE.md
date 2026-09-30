@@ -145,6 +145,26 @@ the plugin at it; `mountPath` sets the name the app sees (OSCam's reader: `/dev/
 the node, `/dev/ttyUSB0` in the pod). The plugin is the only privileged workload left outside
 the system namespaces.
 
+## Media storage on the NAS: one dataset for downloads and movies
+
+Imports only become an instant rename when the download folder and the library live on the
+**same ZFS dataset and the same NFS mount**. Separate datasets (the old `Storage1/download` +
+`Storage1/movies`) turn every import into a full read+write through the node.
+
+- `Storage1/data` (was `Storage1/movies`, renamed 2026-09-30, no data moved) holds
+  `media/movies` and `usenet/{inprogress,complete}`. NFS exports `/mnt/Storage1/data`; the SMB
+  share `movies` points at `data/media/movies`.
+- radarr, sonarr, lidarr and sabnzbd mount it at `/data`; Radarr's root folder is
+  `/data/media/movies`, SABnzbd's `complete_dir` is `/data/usenet/complete`.
+- **jellyfin keeps `/mnt/movies`** via `subPath: media/movies`. A changed in-pod path makes
+  Jellyfin create new items, and **hearts (favourites) do not follow** (played state does):
+  measured on ALF. Radarr's Jellyfin connect maps `/data/media/movies` -> `/mnt/movies`.
+- Still separate datasets: `tv`, `music` (imports there still copy) and `download` (SABnzbd's
+  `download_dir`, until its queue drained). Moving them in is a real copy, not a rename.
+- `pool.dataset.rename` needs `force: true` when shares are attached, and the shares must be
+  disabled first, or knfsd keeps the dataset busy. The middleware job can finish while
+  `midclt call -j` never returns; check with `zfs list`.
+
 ## Storage: miroir
 
 DRBD-based CSI, StorageClass `miroir-local`, `VolumeBindingMode: WaitForFirstConsumer`.
