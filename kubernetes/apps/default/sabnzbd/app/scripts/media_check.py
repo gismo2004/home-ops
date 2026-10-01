@@ -13,6 +13,9 @@ copied in unconverted. The Amlogic DV core rejects it on every frame
 - broken DV without a usable base layer: exit 1, so the job fails and
   radarr/sonarr blocklist the release and grab another one
   (needs SABnzbd's special setting script_can_fail=1).
+- no video at all (fake release) or executables inside (malware dressed
+  up as a movie): exit 1, same blocklist-and-retry path. Scoped to the
+  movies/tv categories, so software downloads keep their .exe/.iso files.
 - anything else: untouched.
 
 Arguments follow SABnzbd's script interface: argv[1] is the job's final
@@ -29,7 +32,13 @@ FFMPEG_DIR = os.environ.get("MEDIA_CHECK_FFMPEG_DIR", "/opt/ffmpeg")
 FFMPEG = os.path.join(FFMPEG_DIR, "ffmpeg")
 FFPROBE = os.path.join(FFMPEG_DIR, "ffprobe")
 CATEGORIES = {"movies", "tv"}
-VIDEO_EXT = {".mkv", ".mp4", ".m4v", ".ts", ".m2ts"}
+VIDEO_EXT = {".mkv", ".mp4", ".m4v", ".ts", ".m2ts", ".avi"}
+# Never part of a real movie/episode release.
+EXEC_EXT = {".exe", ".bat", ".cmd", ".com", ".scr", ".msi", ".lnk", ".ps1",
+            ".vbs", ".js", ".jar"}
+# "Is there a video at all" threshold; well below MIN_SIZE because short
+# kids' episodes in x265 are only ~100 MB.
+HAS_VIDEO_SIZE = 20 * 1024 * 1024
 # Ignore samples and extras; SABnzbd already drops most samples.
 MIN_SIZE = int(os.environ.get("MEDIA_CHECK_MIN_SIZE", 100 * 1024 * 1024))
 # dv_bl_signal_compatibility_id values whose base layer plays without DV:
@@ -97,11 +106,19 @@ def main():
         print(f"skipped (category={category}, status={status})")
         return 0
 
+    files = [os.path.join(d, f) for d, _, fs in os.walk(job_dir) for f in fs]
+    execs = [f for f in files if os.path.splitext(f)[1].lower() in EXEC_EXT]
+    if execs:
+        print(f"REJECT executable file(s) in a media release: {os.path.basename(execs[0])}")
+        return 1
+    if not any(os.path.splitext(f)[1].lower() in VIDEO_EXT
+               and os.path.getsize(f) >= HAS_VIDEO_SIZE for f in files):
+        print("REJECT no video file in the release")
+        return 1
     videos = [
-        os.path.join(d, f)
-        for d, _, files in os.walk(job_dir) for f in files
+        f for f in files
         if os.path.splitext(f)[1].lower() in VIDEO_EXT
-        and os.path.getsize(os.path.join(d, f)) >= MIN_SIZE
+        and os.path.getsize(f) >= MIN_SIZE
     ]
     for path in videos:
         name = os.path.basename(path)
