@@ -98,7 +98,7 @@ def insert(name, tokens):
 
 
 def run(arr):
-    changed = reverted = manual = 0
+    changed = reverted = manual = ignored = 0
     for f in arr.files():
         scene = f.get("sceneName")
         if not scene:
@@ -116,6 +116,9 @@ def run(arr):
             continue
         arr.call("PUT", f"/api/v3/{arr.ep}/{f['id']}", dict(f, sceneName=new))
         after = arr.call("GET", f"/api/v3/{arr.ep}/{f['id']}")
+        if after.get("sceneName") != new:  # the arr silently kept the old name
+            ignored += 1
+            continue
         gained = {c["name"] for c in after.get("customFormats", [])} - \
                  {c["name"] for c in f.get("customFormats", [])}
         # Keep the change only if the arr now recognises the added format
@@ -129,7 +132,8 @@ def run(arr):
         print(f"{arr.name} {f['id']}: {scene} +{'.'.join(tokens)} "
               f"(score {f.get('customFormatScore')} -> {after.get('customFormatScore')})")
         changed += 1
-    print(f"{arr.name}: tagged {changed}, reverted {reverted}, to check by hand {manual}")
+    print(f"{arr.name}: tagged {changed}, reverted {reverted}, to check by hand {manual}, "
+          f"name change not accepted by {arr.name} {ignored}")
 
 
 def main():
