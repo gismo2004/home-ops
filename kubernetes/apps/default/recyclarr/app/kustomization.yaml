@@ -20,5 +20,8 @@ configMapGenerator:
     files:
       - ./config/custom-formats/sonarr/not-german.json
       - ./config/custom-formats/sonarr/source-bluray.json
+  - name: recyclarr-scripts
+    files:
+      - ./scripts/tag_content.py
 generatorOptions:
   disableNameSuffixHash: true

@@ -51,6 +51,44 @@ spec:
                 memory: 128Mi
               limits:
                 memory: 512Mi
+      # Nightly, after the 04:30 sync: appends each file's real audio format
+      # and HDR type (from the arr's own media analysis) to its stored
+      # release name when the name lacks them, so existing files are scored
+      # by their content (see scripts/tag_content.py).
+      content-tagger:
+        type: cronjob
+        cronjob:
+          schedule: "0 5 * * *"
+          concurrencyPolicy: Forbid
+          backoffLimit: 0
+          successfulJobsHistory: 1
+          failedJobsHistory: 1
+        containers:
+          app:
+            image:
+              repository: docker.io/library/python
+              tag: 3.13-alpine@sha256:79e7a9b9ff1cbceff819f856fb374477792a5967759d94df266de7b7b4120e6f
+            command: ["python3", "-B", "/scripts/tag_content.py"]
+            env:
+              RADARR_URL: http://radarr.media.svc.cluster.local:7878
+              SONARR_URL: http://sonarr.media.svc.cluster.local:8989
+            envFrom:
+              - secretRef:
+                  name: recyclarr-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
     persistence:
       config:
         type: emptyDir
@@ -80,3 +118,11 @@ spec:
             readOnly: true
       tmp:
         type: emptyDir
+      scripts:
+        type: configMap
+        name: recyclarr-scripts
+        advancedMounts:
+          content-tagger:
+            app:
+              - path: /scripts
+                readOnly: true
