@@ -20,7 +20,7 @@ radarr:
       - trash_id: 425da1ba30711b55d2eb371437ec98d7 # [German] UHD Bluray + WEB (Alternative)
         reset_unmatched_scores:
           enabled: true
-        min_upgrade_format_score: 500 # tiny differences are no upgrade
+        min_upgrade_format_score: 2000 # name-only audio gains (DTS, DD+) are no upgrade
         upgrade:
           allowed: true
           until_quality: Merged QPs
@@ -75,6 +75,9 @@ radarr:
       # DL counts like plain German (English audio is no gain), release
       # group tiers, streaming services, repacks and the 1080p booster score
       # 0. Resolution, Blu-ray source, HDR/DV and audio keep their scores.
+      # Upgrades need +2000: existing files are scored by their release name,
+      # and many groups leave the audio out of it, so a release that merely
+      # names DTS/DD+ looked like an upgrade (Pikachu TrueHD -> DTS, 2026-10-01).
       - trash_ids:
           - 6aad77771dabe9d3e9d7be86f310b867 # German DL (undefined)
           - f845be10da4f442654c13e1f2c3d6cd5 # German DL
@@ -146,7 +149,7 @@ sonarr:
       - name: "[German] SD + HD (Klassiker)"
         reset_unmatched_scores:
           enabled: true
-        min_upgrade_format_score: 500
+        min_upgrade_format_score: 2000
         upgrade:
           allowed: true
           until_quality: Merged QPs
@@ -172,7 +175,7 @@ sonarr:
       - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852 # [German] UHD Bluray + WEB (Alternative)
         reset_unmatched_scores:
           enabled: true
-        min_upgrade_format_score: 500 # tiny differences are no upgrade
+        min_upgrade_format_score: 2000 # name-only audio gains (DTS, DD+) are no upgrade
         upgrade:
           allowed: true
           until_quality: Merged QPs
@@ -286,6 +289,9 @@ sonarr:
       # DL counts like plain German (English audio is no gain), release
       # group tiers, streaming services, repacks and the 1080p booster score
       # 0. Resolution, Blu-ray source, HDR/DV and audio keep their scores.
+      # Upgrades need +2000: existing files are scored by their release name,
+      # and many groups leave the audio out of it, so a release that merely
+      # names DTS/DD+ looked like an upgrade (Pikachu TrueHD -> DTS, 2026-10-01).
       - trash_ids:
           - c5dd0fd675f85487ad5bdf97159180bd # German DL (undefined)
           - ed51973a811f51985f14e2f6f290e47a # German DL
