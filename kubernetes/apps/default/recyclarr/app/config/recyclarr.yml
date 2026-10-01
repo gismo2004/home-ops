@@ -83,6 +83,36 @@ sonarr:
     quality_definition:
       type: series
     quality_profiles:
+      # Old kids' classics (Tom and Jerry, Pokémon, Yakari, Pink Panther,
+      # Turtles) mostly exist only as DVD/TV recordings, which the TRaSH
+      # profile does not allow (it would chase HD forever). Same rules
+      # otherwise: German required, resolution decides, junk blocked;
+      # German and German DL score alike so they never replace each other.
+      - name: "[German] SD + HD (Klassiker)"
+        reset_unmatched_scores:
+          enabled: true
+        upgrade:
+          allowed: true
+          until_quality: Merged QPs
+          until_score: 20000 # German 1080p
+        min_format_score: 0
+        qualities:
+          - name: Merged QPs
+            qualities:
+              - Bluray-1080p
+              - WEBDL-1080p
+              - WEBRip-1080p
+              - HDTV-1080p
+              - Bluray-720p
+              - WEBDL-720p
+              - WEBRip-720p
+              - HDTV-720p
+              - Bluray-576p
+              - Bluray-480p
+              - WEBDL-480p
+              - WEBRip-480p
+              - DVD
+              - SDTV
       - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852 # [German] UHD Bluray + WEB (Alternative)
         reset_unmatched_scores:
           enabled: true
@@ -164,6 +194,37 @@ sonarr:
         assign_scores_to:
           - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852
             score: 10100
+      # "[German] SD + HD (Klassiker)" (see quality_profiles above)
+      - trash_ids:
+          - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
+          - a6a6c33d057406aaad978a6902823c35 # German LQ
+          - d80c9f7cd2aad50271f1bd4e53125778 # German LQ (release title)
+          - 237eda4ef550a97da2c9d87b437e500b # German Microsized
+          - 85c61753df5da1fb2aab6f2a47426b09 # BR-DISK
+          - 9c11cd3f07101cdba90a2d81cf0e56b4 # LQ
+          - e2315f990da2e2cbfc9fa5b7a6fcfe48 # LQ (Release Title)
+          - fbcb31d8dabd2a319072b84fc0b7249c # Extras
+          - 23297a736ca77c0fc8e70f8edd7ee56c # Upscaled
+        assign_scores_to:
+          - name: "[German] SD + HD (Klassiker)"
+            score: -35000
+      - trash_ids:
+          - 8a9fcdbb445f2add0505926df3bb7b8a # German
+          - ed51973a811f51985f14e2f6f290e47a # German DL
+          - c5dd0fd675f85487ad5bdf97159180bd # German DL (undefined)
+        assign_scores_to:
+          - name: "[German] SD + HD (Klassiker)"
+            score: 10000
+      - trash_ids:
+          - c99279ee27a154c2f20d1d505cc99e25 # 720p
+        assign_scores_to:
+          - name: "[German] SD + HD (Klassiker)"
+            score: 5000
+      - trash_ids:
+          - 290078c8b266272a5cc8e251b5e2eb0b # 1080p
+        assign_scores_to:
+          - name: "[German] SD + HD (Klassiker)"
+            score: 10000
     custom_format_groups:
       add:
         - trash_id: e3f37512790f00d0e89e54fe5e790d1c # [Optional] Golden Rule UHD
