@@ -77,11 +77,24 @@ def tokens_for(f):
     return tokens
 
 
+# Every name segment this script may add; used to undo an earlier append.
+OWN_SEGMENTS = {seg for tok in list(AUDIO_TOKEN.values()) + list(HDR_TOKEN.values())
+                for seg in tok.split(".")}
+
+
 def insert(name, tokens):
-    m = re.search(r"-[A-Za-z0-9]+$", name)  # keep the -GROUP suffix last
+    """Put the tokens before the -GROUP suffix, or, without one, before the
+    last name segment: the arr's format patterns need a separator after
+    e.g. "DD", so tokens at the very end are not recognised."""
+    m = re.search(r"-[A-Za-z0-9]+$", name)
     if m:
         return name[:m.start()] + "." + ".".join(tokens) + name[m.start():]
-    return name + "." + ".".join(tokens)
+    segs = name.split(".")
+    while len(segs) > 1 and segs[-1] in OWN_SEGMENTS:  # earlier appends
+        segs.pop()
+    if len(segs) == 1:
+        return ".".join(tokens + segs)
+    return ".".join(segs[:-1] + tokens + segs[-1:])
 
 
 def run(arr):
@@ -98,12 +111,19 @@ def run(arr):
             print(f"{arr.name} {f['id']}: first audio track is '{first}', check by hand: {scene}")
             manual += 1
             continue
-        f2 = dict(f, sceneName=insert(scene, tokens))
-        arr.call("PUT", f"/api/v3/{arr.ep}/{f['id']}", f2)
+        new = insert(scene, tokens)
+        if new == scene:
+            continue
+        arr.call("PUT", f"/api/v3/{arr.ep}/{f['id']}", dict(f, sceneName=new))
         after = arr.call("GET", f"/api/v3/{arr.ep}/{f['id']}")
-        if after.get("customFormatScore", 0) < f.get("customFormatScore", 0):
+        gained = {c["name"] for c in after.get("customFormats", [])} - \
+                 {c["name"] for c in f.get("customFormats", [])}
+        # Keep the change only if the arr now recognises the added format
+        # and the score did not drop; otherwise names would grow nightly.
+        if not gained & (AUDIO_CF | HDR_CF) or \
+                after.get("customFormatScore", 0) < f.get("customFormatScore", 0):
             arr.call("PUT", f"/api/v3/{arr.ep}/{f['id']}", f)
-            print(f"{arr.name} {f['id']}: reverted, score would drop: {scene}")
+            print(f"{arr.name} {f['id']}: reverted ({new} not recognised or score drop)")
             reverted += 1
             continue
         print(f"{arr.name} {f['id']}: {scene} +{'.'.join(tokens)} "
