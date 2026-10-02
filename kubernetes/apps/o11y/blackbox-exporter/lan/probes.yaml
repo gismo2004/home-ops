@@ -1,8 +1,8 @@
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/probe_v1.json
 # Ziele als IPs statt Hostnamen: fuer diese Geraete gibt es keine internen
-# DNS-Namen. 10.0.0.40 (octoprint) antwortet aktuell nicht -- das ist Absicht
-# so drin, genau dafuer ist die Probe da.
+# DNS-Namen. 10.0.0.40 (octoprint) ist nur waehrend eines Druckauftrags an;
+# die Probe zeigt das weiter an, LanProbeFailed nimmt die Adresse aber aus.
 apiVersion: monitoring.coreos.com/v1
 kind: Probe
 metadata:

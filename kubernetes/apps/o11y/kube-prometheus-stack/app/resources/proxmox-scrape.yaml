@@ -78,21 +78,6 @@ spec:
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: ScrapeConfig
 metadata:
-  name: proxmox-smartctl
-  namespace: o11y
-spec:
-  staticConfigs:
-    - targets:
-        - 10.0.0.3:9633
-      labels:
-        instance: proxmox
-        node: proxmox
-        job: smartctl-exporter
----
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/scrapeconfig_v1alpha1.json
-apiVersion: monitoring.coreos.com/v1alpha1
-kind: ScrapeConfig
-metadata:
   name: proxmox-pve
   namespace: o11y
 spec:

@@ -117,3 +117,39 @@ spec:
                 expr: (kube_pod_container_status_restarts_total - kube_pod_container_status_restarts_total offset 10m >= 1) and ignoring (reason) min_over_time(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[10m]) == 1
                 labels:
                   severity: critical
+      # SMART of the Proxmox host's own disks (nvme0, sdi, sdj). The values come
+      # from node-exporter's textfile collector on the host (smartmon.prom and
+      # nvme.prom, refreshed every 15 minutes); the disks passed through to
+      # TrueNAS are watched by TrueNAS itself.
+      proxmox-disk-rules:
+        groups:
+          - name: proxmox-disks
+            rules:
+              - alert: ProxmoxDiskSmartUnhealthy
+                annotations:
+                  summary: SMART reports {{ $labels.disk }} on the Proxmox host as failing.
+                expr: smartmon_device_smart_healthy{instance="proxmox"} == 0
+                for: 15m
+                labels:
+                  severity: critical
+              - alert: ProxmoxDiskSectorErrors
+                annotations:
+                  summary: "{{ $labels.disk }} on the Proxmox host has {{ $value }} reallocated or pending sectors."
+                expr: smartmon_reallocated_sector_ct_raw_value{instance="proxmox"} + on (disk) smartmon_current_pending_sector_raw_value{instance="proxmox"} > 0
+                for: 15m
+                labels:
+                  severity: warning
+              - alert: ProxmoxNvmeUnhealthy
+                annotations:
+                  summary: "{{ $labels.device }} on the Proxmox host reports a critical warning, media errors or low spare."
+                expr: nvme_critical_warning{instance="proxmox"} > 0 or nvme_media_errors_total{instance="proxmox"} > 0 or nvme_available_spare_ratio{instance="proxmox"} <= on (device) nvme_available_spare_threshold_ratio{instance="proxmox"}
+                for: 15m
+                labels:
+                  severity: critical
+              - alert: ProxmoxSmartDataStale
+                annotations:
+                  summary: "{{ $labels.file }} on the Proxmox host has not been refreshed for over an hour; the SMART alerts above are blind."
+                expr: time() - node_textfile_mtime_seconds{instance="proxmox", file=~".*/(smartmon|nvme)\\.prom"} > 3600
+                for: 15m
+                labels:
+                  severity: warning

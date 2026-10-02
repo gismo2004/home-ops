@@ -44,7 +44,7 @@ spec:
       rules:
         - alert: LanProbeFailed
           expr: |-
-            probe_success{service="blackbox-exporter-lan"} == 0
+            probe_success{service="blackbox-exporter-lan", instance!="10.0.0.40"} == 0
           for: 15m
           labels:
             severity: critical
