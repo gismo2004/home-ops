@@ -20,6 +20,16 @@ spec:
     namespace: flux-system
   targetNamespace: photoview
   wait: false
-  # No kopiur/backup component: photoview has no config PVC. Its state lives
-  # entirely in Postgres, the photos are read-only NFS, and the cache PVC is a
-  # regenerable thumbnail store the old cluster also never backed up.
+  # Backs up the SQLite database (users, albums, named face groups). The
+  # photos are read-only NFS and the cache PVC is a regenerable thumbnail
+  # store, so neither is backed up.
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      KOPIUR_NAME: photoview
+      KOPIUR_CLAIM: photoview-data
+      KOPIUR_CAPACITY: 5Gi
+      # Continue only for the very first creation (no snapshot exists yet);
+      # switch to Fail once the first snapshot is there.
+      KOPIUR_ONMISSING: Continue
