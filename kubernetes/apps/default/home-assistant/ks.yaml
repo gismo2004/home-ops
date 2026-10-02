@@ -28,7 +28,7 @@ spec:
   postBuild:
     substitute:
       # Identity home-assistant@hass:/pvc/home-assistant-config, unchanged.
-      # The config's database is CNPG (postgres.yaml), not part of this backup.
+      # Includes the recorder database (SQLite, home-assistant_v2.db) since 2026-10-02.
       KOPIUR_NAME: home-assistant
       KOPIUR_CLAIM: home-assistant-config
       KOPIUR_CAPACITY: 100Gi
