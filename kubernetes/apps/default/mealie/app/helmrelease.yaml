@@ -19,19 +19,6 @@ spec:
       mealie:
         annotations:
           reloader.stakater.com/auto: "true"
-        initContainers:
-          wait-for-db:
-            # Same pg_isready wait the old release used, but on the CNPG image
-            # this cluster already pulls instead of the TrueCharts one. NOT
-            # postgres-init: that expects INIT_POSTGRES_* vars and would fail
-            # against mealie-env.
-            image:
-              repository: ghcr.io/cloudnative-pg/postgresql
-              tag: "16.15"
-            command:
-              - /bin/sh
-              - -c
-              - until pg_isready -U mealie -d mealie -h mealie-postgres-rw; do sleep 5; done
         containers:
           app:
             image:
