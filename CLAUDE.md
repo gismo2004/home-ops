@@ -366,6 +366,14 @@ Machine config is topf-rendered (`talos/topf.yaml` + fragments). The node sits o
 generations with the nvidia extension; the old cluster's 1 GB partition was what forced the rebuild
 (narrative in `docs/MIGRATION.md`).
 
+**The OS disk (Proxmox `scsi0`, rpool) is 300 GB since 2026-10-02; it was 100 GB.** At 100 GB the
+kubelet hit `disk-pressure` right after a Talos upgrade: image cleanup only starts at 85% usage,
+the same line as the imagefs eviction threshold, so the pre-pulled installer image plus all pods
+restarting crossed it and blocked scheduling for ~5 minutes. Like onedr0p (480 GB system disks,
+default kubelet thresholds) the fix is headroom, not tuning. `EPHEMERAL` is the last partition with
+`grow: true`: enlarge the disk with `qm resize 103 scsi0 <size>`, then reboot the node once and
+Talos grows `/var` on boot.
+
 **The Talos release caps the Kubernetes version, and Renovate doesn't know it.** Each Talos minor
 supports Kubernetes up to its own default version (Talos 1.13 stopped at 1.36; 1.37 needed 1.14).
 Renovate tracks `ghcr.io/siderolabs/kubelet` as a plain image and will propose versions the running
