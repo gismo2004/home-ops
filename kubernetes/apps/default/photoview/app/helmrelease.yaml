@@ -24,9 +24,6 @@ spec:
             image:
               repository: docker.io/viktorstrate/photoview
               tag: 2.4.0@sha256:f914c44b202fc8175e09bd56f35bb1a4a7c04dc451652306f240aabc3eea133e
-            envFrom:
-              - secretRef:
-                  name: photoview-secrets
             env:
               MAPBOX_TOKEN: ""
               PHOTOVIEW_DATABASE_DRIVER: sqlite
