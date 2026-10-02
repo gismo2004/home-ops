@@ -96,6 +96,11 @@ spec:
       enabled: false
       forceDeployDashboards: false
       defaultDashboardsEnabled: false
+    defaultRules:
+      disabled:
+        # Replaced by node-memory-rules below: the Proxmox host runs at ~95 %
+        # by design (VMs + 16 GB ZFS ARC), so the 90 % rule fired permanently.
+        NodeMemoryHighUtilization: true
     additionalPrometheusRulesMap:
       dockerhub-rules:
         groups:
@@ -121,6 +126,26 @@ spec:
       # from node-exporter's textfile collector on the host (smartmon.prom and
       # nvme.prom, refreshed every 15 minutes); the disks passed through to
       # TrueNAS are watched by TrueNAS itself.
+      node-memory-rules:
+        groups:
+          - name: node-memory
+            rules:
+              - alert: NodeMemoryHighUtilization
+                annotations:
+                  summary: Memory on {{ $labels.instance }} is {{ $value | humanize }}% used.
+                expr: 100 - (node_memory_MemAvailable_bytes{job="node-exporter", instance!="proxmox"} / node_memory_MemTotal_bytes{job="node-exporter", instance!="proxmox"} * 100) > 90
+                for: 15m
+                labels:
+                  severity: warning
+              # Absolute floor instead of a percentage: the host itself needs
+              # 2-4 GB; 30-day minimum was 7.3 GB available when this was set.
+              - alert: ProxmoxMemoryLow
+                annotations:
+                  summary: Only {{ $value | humanize1024 }}B memory available on the Proxmox host; VMs risk being OOM-killed.
+                expr: node_memory_MemAvailable_bytes{instance="proxmox"} < 4 * 1024^3
+                for: 15m
+                labels:
+                  severity: critical
       proxmox-disk-rules:
         groups:
           - name: proxmox-disks
