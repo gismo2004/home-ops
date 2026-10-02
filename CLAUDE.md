@@ -190,18 +190,16 @@ delete and recreate the PVC; that restarts the whole restore for nothing.
 
 ## Backups: Backblaze B2
 
-Two buckets in `eu-central-003`: `kopiur` (Kopia repository) and `cnpg-gismo2004`. The latter held
-the CNPG barman archives and is empty since CNPG was removed on 2026-10-02.
+One bucket in `eu-central-003`: `kopiur` (Kopia repository). The former `cnpg-gismo2004` (CNPG
+barman archives) was deleted with its application key on 2026-10-02, after CNPG was removed.
 
 **Every bucket needs a lifecycle rule that actually deletes hidden files.** B2 buckets default to
 "keep all versions": a delete only hides the file and it stays billed. Kopia expects deletes to free
-space. `cnpg-gismo2004` had no rule until 2026-09-17 and had accumulated
-52.6 GB of deleted-but-kept versions against 15.6 GB live, growing by the full ~2.5 GB daily
-upload; earlier manual purges there (e.g. the immich prefix on 2026-09-01) freed nothing billed.
-Both buckets now carry `daysFromHidingToDeleting: 1`. The rule lives in B2, not in this repo, so set
-it on any new or recreated bucket (B2 console: Lifecycle Settings -> "Keep only the last version",
-or `b2_update_bucket`). When judging bucket size, count hidden versions (`b2_list_file_versions`),
-not just what `b2 ls` reports.
+space. The old CNPG bucket ran without a rule until 2026-09-17 and had accumulated 52.6 GB of
+deleted-but-kept versions against 15.6 GB live. `kopiur` carries `daysFromHidingToDeleting: 1`.
+The rule lives in B2, not in this repo, so set it on any new or recreated bucket (B2 console:
+Lifecycle Settings -> "Keep only the last version", or `b2_update_bucket`). When judging bucket
+size, count hidden versions (`b2_list_file_versions`), not just what `b2 ls` reports.
 
 ## Backups: Kopiur
 
