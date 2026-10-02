@@ -25,6 +25,7 @@ resources:
   - ./octoprint/ks.yaml
   - ./orcaslicer/ks.yaml
   - ./oscam/ks.yaml
+  - ./photoprism/ks.yaml
   - ./photoview/ks.yaml
   - ./photoview-incoming/ks.yaml
   - ./prowlarr/ks.yaml

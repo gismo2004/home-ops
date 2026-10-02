@@ -1,0 +1,219 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: photoprism
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: photoprism
+  values:
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 568
+        runAsGroup: 568
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+    controllers:
+      photoprism:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: docker.io/photoprism/photoprism
+              tag: 260919@sha256:cea1af8ce28bd4c4da1ed40d57c86cbe9e58199bea1a6467eaaea10b1b32a925
+            env:
+              PHOTOPRISM_HTTP_PORT: &port 2342
+              PHOTOPRISM_SITE_URL: "https://{{ .Release.Name }}.gismo2004.cc/"
+              PHOTOPRISM_DISABLE_TLS: "true"
+              PHOTOPRISM_ADMIN_USER: admin
+              PHOTOPRISM_AUTH_MODE: password
+              # The originals are the read-only "Incomming" backup dump on
+              # the NAS: index, rate, find duplicates and tag faces, but
+              # never touch the files (sidecars go to storage instead).
+              PHOTOPRISM_READONLY: "true"
+              PHOTOPRISM_ORIGINALS_PATH: /photoprism/originals
+              PHOTOPRISM_STORAGE_PATH: /photoprism/storage
+              PHOTOPRISM_DATABASE_DRIVER: mysql
+              PHOTOPRISM_DATABASE_SERVER: "photoprism-mariadb:3306"
+              PHOTOPRISM_DATABASE_NAME: photoprism
+              PHOTOPRISM_DATABASE_USER: photoprism
+              # Daily SQL dump into storage/backup, which the volume backup
+              # picks up (the MariaDB volume itself is not backed up).
+              PHOTOPRISM_BACKUP_DATABASE: "true"
+              PHOTOPRISM_BACKUP_SCHEDULE: daily
+              PHOTOPRISM_BACKUP_RETAIN: "3"
+              # Pick up new files in the dump once a day.
+              PHOTOPRISM_INDEX_SCHEDULE: "@daily"
+              # 18 cores on the node; leave room for everything else.
+              PHOTOPRISM_WORKERS: "6"
+              PHOTOPRISM_DETECT_NSFW: "false"
+              PHOTOPRISM_UPLOAD_NSFW: "true"
+              TZ: Europe/Vienna
+            envFrom:
+              - secretRef:
+                  name: photoprism-secret
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/v1/status
+                    port: *port
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/v1/status
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 10
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/v1/status
+                    port: *port
+                  failureThreshold: 60
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 200m
+                memory: 1Gi
+              limits:
+                memory: 8Gi
+      mariadb:
+        type: statefulset
+        containers:
+          app:
+            image:
+              repository: docker.io/library/mariadb
+              tag: 11.8.9@sha256:6422478cb8e159f080fb1d8ccf65101e26fe51385787fde7d16c3b165a331f15
+            # PhotoPrism's recommended server options, with a larger buffer
+            # pool for an index of ~1.35M files.
+            args:
+              - --innodb-buffer-pool-size=2G
+              - --transaction-isolation=READ-COMMITTED
+              - --character-set-server=utf8mb4
+              - --collation-server=utf8mb4_unicode_ci
+              - --max-connections=512
+              - --innodb-rollback-on-timeout=OFF
+              - --innodb-lock-wait-timeout=120
+            env:
+              MARIADB_AUTO_UPGRADE: "1"
+              MARIADB_INITDB_SKIP_TZINFO: "1"
+              MARIADB_DATABASE: photoprism
+              MARIADB_USER: photoprism
+            envFrom:
+              - secretRef:
+                  name: photoprism-secret
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
+                  periodSeconds: 10
+                  timeoutSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 4Gi
+    service:
+      app:
+        controller: photoprism
+        ports:
+          main:
+            port: *port
+            targetPort: *port
+      mariadb:
+        controller: mariadb
+        ports:
+          mysql:
+            port: 3306
+            targetPort: 3306
+    # Two Services, so the backend is named explicitly.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.gismo2004.cc"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: main
+    persistence:
+      storage:
+        existingClaim: photoprism-storage
+        advancedMounts:
+          photoprism:
+            app:
+              - path: /photoprism/storage
+      originals:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Backup/private/WD_15_backup/Seagate/Incomming/
+        advancedMounts:
+          photoprism:
+            app:
+              - path: /photoprism/originals
+                readOnly: true
+      mariadb-data:
+        type: persistentVolumeClaim
+        forceRename: photoprism-mariadb-data
+        storageClass: miroir-local
+        accessMode: ReadWriteOnce
+        size: 30Gi
+        advancedMounts:
+          mariadb:
+            app:
+              - path: /var/lib/mysql
+      mariadb-run:
+        type: emptyDir
+        advancedMounts:
+          mariadb:
+            app:
+              - path: /run/mysqld
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

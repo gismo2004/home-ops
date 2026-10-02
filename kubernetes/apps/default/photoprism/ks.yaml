@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# PhotoPrism: folder-based photo library over the read-only "Incomming"
+# backup dump on the NAS (2026-10-02, replacing Immich, which hides paths).
+# The backup covers the storage volume (index sidecars, settings and the
+# nightly MariaDB dumps in storage/backup); thumbnails are excluded and the
+# MariaDB volume itself is not backed up -- restore from the dump instead.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: photoprism
+  namespace: default
+spec:
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: photoprism
+      namespace: photoprism
+  interval: 1h
+  path: ./kubernetes/apps/default/photoprism/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: photoprism
+  wait: false
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # New app: no snapshot yet, so start empty.
+      KOPIUR_NAME: photoprism-storage
+      KOPIUR_CLAIM: photoprism-storage
+      # Thumbnails for ~1.35M files (Immich needed 88G); miroir is thin
+      # provisioned, so this only reserves logical room.
+      KOPIUR_CAPACITY: 400Gi
+      KOPIUR_ONMISSING: Continue

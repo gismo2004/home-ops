@@ -121,6 +121,13 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: photoprism
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: photoview
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
