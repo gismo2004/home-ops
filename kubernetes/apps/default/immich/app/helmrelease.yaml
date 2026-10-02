@@ -28,7 +28,11 @@ spec:
         supplementalGroups:
           - 568
     controllers:
+      # Stopped 2026-10-02: replaced by PhotoPrism (folder-based, shows
+      # paths). Kept at 0 until the user confirms PhotoPrism works; then
+      # retire properly (snapshots first, see CLAUDE.md).
       server:
+        replicas: 0
         annotations:
           reloader.stakater.com/auto: "true"
         initContainers:
@@ -121,6 +125,7 @@ spec:
               limits:
                 memory: 10Gi
       machine-learning:
+        replicas: 0
         pod:
           runtimeClassName: nvidia
           securityContext:
@@ -192,6 +197,7 @@ spec:
                 memory: 8Gi
                 nvidia.com/gpu: 1
       redis:
+        replicas: 0
         containers:
           app:
             image:

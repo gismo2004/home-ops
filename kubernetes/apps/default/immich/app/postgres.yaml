@@ -18,6 +18,9 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: immich-postgres
+  annotations:
+    # Stopped with the app (2026-10-02), see helmrelease.yaml.
+    cnpg.io/hibernation: "on"
 spec:
   instances: 1
   monitoring:
