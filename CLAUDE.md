@@ -287,7 +287,28 @@ or re-bootstrap rescans and rediscovers every retired identity still in the repo
 `home-assistant`, `mealie` and `photoview` run CloudNativePG clusters that
 back up via barman to `s3://cnpg-gismo2004/<app>/`, **not** covered by Kopiur. A Kopiur-only
 restore of one of these apps brings back its config with an empty database. Read the comment in
-each `Cluster` manifest before touching `spec.backup`/`externalClusters`.
+each `Cluster` manifest before touching `spec.plugins`/`externalClusters`.
+
+**Mealie and Photoview run on SQLite since 2026-10-02** (Kopiur-backed: `mealie-config`,
+`photoview-data`); their CNPG clusters are kept only until the switch is confirmed. Mealie was
+moved with its own backup/restore (`BackupV2`), Photoview by a 1:1 table copy, because a fresh
+Photoview setup loses the named face groups.
+
+**Backups run through the Barman Cloud plugin** (`cnpg-system/plugin-barman-cloud`) since
+2026-10-02; CNPG 1.31 removes the in-tree `spec.backup.barmanObjectStore`. Per app: an
+`ObjectStore` (`<app>-backup`, bucket path, credentials, compression, `retentionPolicy`), the
+Cluster's `spec.plugins` entry (`isWALArchiver: true`, `barmanObjectName`, **`serverName`**), a
+plugin-form `externalClusters` source and a `ScheduledBackup` with `method: plugin`.
+
+- **`serverName` belongs in the plugin parameters, never in the `ObjectStore`** (the plugin
+  requires it empty there). The migration kept each existing value (`mealie-postgres-v4`,
+  `photoview-postgres-v4`, `home-assistant-postgres-v5`), so the archives continued; a new or
+  changed serverName starts an empty archive.
+- Switching a cluster is one atomic commit (remove `spec.backup`, add `spec.plugins`); CNPG
+  restarts the instance to inject the plugin sidecar. A few `failed_count` entries in
+  `pg_stat_archiver` during that restart are expected; Postgres retries until archived. Prove it
+  with an on-demand `Backup` (`method: plugin`) and the new base backup under
+  `<path>/<serverName>/base/` in B2.
 
 - **A cluster recovering via `bootstrap.recovery` must use a different
   `spec.backup.barmanObjectStore.serverName` than its `externalClusters` source**, or the restore

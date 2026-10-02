@@ -30,6 +30,6 @@ spec:
       KOPIUR_NAME: photoview
       KOPIUR_CLAIM: photoview-data
       KOPIUR_CAPACITY: 5Gi
-      # Continue only for the very first creation (no snapshot exists yet);
-      # switch to Fail once the first snapshot is there.
-      KOPIUR_ONMISSING: Continue
+      # Fail, not Continue: a missing snapshot must not come up as an empty
+      # database. (Continue was used once, for the very first creation.)
+      KOPIUR_ONMISSING: Fail
