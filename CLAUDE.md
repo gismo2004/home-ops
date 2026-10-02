@@ -191,7 +191,7 @@ delete and recreate the PVC; that restarts the whole restore for nothing.
 ## Backups: Backblaze B2
 
 One bucket in `eu-central-003`: `kopiur` (Kopia repository). The former `cnpg-gismo2004` (CNPG
-barman archives) was deleted with its application key on 2026-10-02, after CNPG was removed.
+barman archives) was deleted on 2026-10-02, after CNPG was removed.
 
 **Every bucket needs a lifecycle rule that actually deletes hidden files.** B2 buckets default to
 "keep all versions": a delete only hides the file and it stays billed. Kopia expects deletes to free
