@@ -284,7 +284,7 @@ or re-bootstrap rescans and rediscovers every retired identity still in the repo
 
 ## Backups: CNPG / barman, a separate system
 
-`home-assistant`, `mealie`, `photoview` and `photoview-incoming` run CloudNativePG clusters that
+`home-assistant`, `mealie` and `photoview` run CloudNativePG clusters that
 back up via barman to `s3://cnpg-gismo2004/<app>/`, **not** covered by Kopiur. A Kopiur-only
 restore of one of these apps brings back its config with an empty database. Read the comment in
 each `Cluster` manifest before touching `spec.backup`/`externalClusters`.
