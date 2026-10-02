@@ -26,6 +26,10 @@ spec:
             image:
               repository: docker.io/photoprism/photoprism
               tag: 260919@sha256:cea1af8ce28bd4c4da1ed40d57c86cbe9e58199bea1a6467eaaea10b1b32a925
+            # Start the binary directly: the image's s6-overlay init needs to
+            # begin as root (it refuses an /run it doesn't own), and this app
+            # runs as 568 from the start like every other one.
+            command: ["/opt/photoprism/bin/photoprism", "start"]
             env:
               PHOTOPRISM_HTTP_PORT: &port 2342
               PHOTOPRISM_SITE_URL: "https://{{ .Release.Name }}.gismo2004.cc/"
