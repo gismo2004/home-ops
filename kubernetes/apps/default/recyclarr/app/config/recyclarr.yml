@@ -16,6 +16,14 @@ radarr:
     api_key: !env_var RADARR_API_KEY
     quality_definition:
       type: movie
+    # TRaSH naming for new imports and upgrades only (no mass rename: a new
+    # path makes Jellyfin create new items). Files carry quality, custom
+    # formats, audio, HDR, codec and group, so a re-import or a lost
+    # database can rebuild everything. Folders are left as they are.
+    media_naming:
+      movie:
+        rename: true
+        standard: jellyfin-tmdb
     quality_profiles:
       - trash_id: 425da1ba30711b55d2eb371437ec98d7 # [German] UHD Bluray + WEB (Alternative)
         reset_unmatched_scores:
@@ -140,6 +148,14 @@ sonarr:
     api_key: !env_var SONARR_API_KEY
     quality_definition:
       type: series
+    # Same as radarr: TRaSH file names for new imports/upgrades only; the
+    # series and season folder formats are left unchanged.
+    media_naming:
+      episodes:
+        rename: true
+        standard: default
+        daily: default
+        anime: default
     quality_profiles:
       # Old kids' classics (Tom and Jerry, Pokémon, Yakari, Pink Panther,
       # Turtles) mostly exist only as DVD/TV recordings, which the TRaSH
