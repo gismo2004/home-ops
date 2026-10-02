@@ -23,6 +23,7 @@ spec:
           # Daily sync of the TRaSH Guides profiles/custom formats into
           # radarr and sonarr (both in the media namespace).
           schedule: "30 4 * * *"
+          timeZone: Europe/Vienna
           concurrencyPolicy: Forbid
           backoffLimit: 0
           successfulJobsHistory: 1
@@ -59,6 +60,7 @@ spec:
         type: cronjob
         cronjob:
           schedule: "0 5 * * *"
+          timeZone: Europe/Vienna
           concurrencyPolicy: Forbid
           backoffLimit: 0
           successfulJobsHistory: 1
