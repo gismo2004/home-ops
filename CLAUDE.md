@@ -284,13 +284,13 @@ or re-bootstrap rescans and rediscovers every retired identity still in the repo
 
 ## Backups: CNPG / barman, a separate system
 
-`home-assistant`, `mealie` and `photoview` run CloudNativePG clusters that
-back up via barman to `s3://cnpg-gismo2004/<app>/`, **not** covered by Kopiur. A Kopiur-only
-restore of one of these apps brings back its config with an empty database. Read the comment in
-each `Cluster` manifest before touching `spec.plugins`/`externalClusters`.
+Only `home-assistant` runs a CloudNativePG cluster; it backs up via barman to
+`s3://cnpg-gismo2004/home-assistant/`, **not** covered by Kopiur. A Kopiur-only
+restore of it brings back its config with an empty database. Read the comment in
+the `Cluster` manifest before touching `spec.plugins`/`externalClusters`.
 
 **Mealie and Photoview run on SQLite since 2026-10-02** (Kopiur-backed: `mealie-config`,
-`photoview-data`); their CNPG clusters are kept only until the switch is confirmed. Mealie was
+`photoview-data`); their CNPG clusters and B2 archives were removed after the user confirmed. Mealie was
 moved with its own backup/restore (`BackupV2`), Photoview by a 1:1 table copy, because a fresh
 Photoview setup loses the named face groups.
 
@@ -301,8 +301,8 @@ Cluster's `spec.plugins` entry (`isWALArchiver: true`, `barmanObjectName`, **`se
 plugin-form `externalClusters` source and a `ScheduledBackup` with `method: plugin`.
 
 - **`serverName` belongs in the plugin parameters, never in the `ObjectStore`** (the plugin
-  requires it empty there). The migration kept each existing value (`mealie-postgres-v4`,
-  `photoview-postgres-v4`, `home-assistant-postgres-v5`), so the archives continued; a new or
+  requires it empty there). The migration kept the existing value
+  (`home-assistant-postgres-v5`), so the archive continued; a new or
   changed serverName starts an empty archive.
 - Switching a cluster is one atomic commit (remove `spec.backup`, add `spec.plugins`); CNPG
   restarts the instance to inject the plugin sidecar. A few `failed_count` entries in
