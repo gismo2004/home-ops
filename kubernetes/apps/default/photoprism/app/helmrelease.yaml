@@ -106,7 +106,7 @@ spec:
           app:
             image:
               repository: docker.io/library/mariadb
-              tag: 11.8.9@sha256:6422478cb8e159f080fb1d8ccf65101e26fe51385787fde7d16c3b165a331f15
+              tag: 12.3.2@sha256:a02fe89cb597d4375812b2eac90cf9d0775d4686daa7f7cc750ebbcad7525bbc
             # PhotoPrism's recommended server options, with a larger buffer
             # pool for an index of ~1.35M files.
             args:
