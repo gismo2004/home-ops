@@ -2,7 +2,6 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
     "github>home-operations/renovate-presets#8.1.0",
-    "github>home-operations/renovate-presets//apps/cnpg.json5#8.1.0",
     // Teaches Renovate about factory.talos.dev installer images AND the
     // `talosVersion:` key in talos/topf.yaml, which no generic manager
     // understands. Directly relevant here: this cluster runs a custom
@@ -39,7 +38,7 @@
   customManagers: [
     {
       // Dashboards that live in the app's own repo rather than on grafana.com
-      // (blocky, cloudnative-pg). The `# renovate:` comment above the URL names
+      // (blocky). The `# renovate:` comment above the URL names
       // the datasource and repo; the version in the URL path is what gets
       // bumped, so the dashboard moves in step with the app instead of drifting
       // on a branch.
@@ -145,7 +144,6 @@
       //   flux-operator/-instance  breaks the mechanism that would apply the revert
       //   miroir                   CSI/DRBD on 0.x; a bad release can leave PVCs
       //                            unmountable, and a revert does not unbreak a volume
-      //   cloudnative-pg           operator upgrades roll the PG clusters
       //   talos, kubelet           node-level, single node, no drain target
       //   kopiur                   a break is silent -- you find out at restore time
       //   app-template             one chart behind ~26 apps; its 5.x naming rules
@@ -167,7 +165,6 @@
       matchPackageNames: [
         "/cilium/",
         "/coredns/",
-        "/cloudnative-pg/",
         "/miroir/",
         "/kopiur/",
         "/flux-operator/",
@@ -187,16 +184,6 @@
       automerge: true,
       automergeType: "branch",
       ignoreTests: true,
-    },
-    {
-      // PostgreSQL major upgrades change on-disk PGDATA format and cannot be
-      // done in-place by swapping images. Keep clusters on their pinned major
-      // (PG 16) and only track minor/patch/digest updates.
-      description: "Never bump CNPG PostgreSQL across major versions",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/cloudnative-pg/postgresql", "/cloudnative-pg\\/postgresql/"],
-      matchUpdateTypes: ["major"],
-      enabled: false,
     },
     // ---- Grouping ---------------------------------------------------------
     {

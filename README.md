@@ -33,7 +33,6 @@ This repository contains the complete declarative infrastructure and application
 | **Secrets Management**  | [SOPS](https://github.com/getsops/sops) + Age                 | Git-encrypted secrets with automatic decryption by Flux                 |
 | **Storage Driver**      | [Miroir CSI](https://github.com/home-operations/miroir)       | DRBD-backed local node storage CSI with VolumeSnapshot support          |
 | **Backups & Snapshots** | [Kopiur](https://github.com/home-operations/kopiur) + Kopia   | Automated snapshot schedules, deduplication, and repository management  |
-| **Database Engine**     | [CloudNativePG](https://cloudnative-pg.io/)                   | PostgreSQL operator with automated WAL archiving to object storage      |
 | **Observability**       | Prometheus, Grafana, VictoriaLogs, [Gatus](https://gatus.io/) | Metrics, log aggregation, dashboards, and external status/uptime checks |
 
 ---
@@ -65,7 +64,6 @@ Workloads are deployed in isolated namespaces and structured logically:
 │   │   ├── o11y/            # Prometheus, Grafana, VictoriaLogs, blackbox-exporter, Gatus
 │   │   ├── kopiur-system/   # Backup repository + operator (per-app backup policies live
 │   │   │                    #   alongside each app instead, under apps/<group>/<app>/)
-│   │   ├── cnpg-system/     # CloudNativePG operator
 │   │   ├── cert-manager/    # TLS certificate issuance
 │   │   ├── miroir-system/   # Storage CSI
 │   │   └── kube-system/     # CNI, CoreDNS, metrics-server, snapshot-controller

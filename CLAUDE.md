@@ -110,7 +110,7 @@ build, so at patch time a component object is still literally named `${KOPIUR_NA
 - CI's `flate` workflow runs `flate test all` against `kubernetes/flux/cluster` on every PR touching
   `kubernetes/**`. It is the closest thing to a dry-run of Flux's dependency graph; a clean
   `kustomize build` does not guarantee it passes. It never starts a container.
-- For anything touching Kopiur/CNPG backup identity, don't trust a `Succeeded` status alone:
+- For anything touching Kopiur backup identity, don't trust a `Succeeded` status alone:
   restore into a throwaway object and check real content.
 
 ## Networking: Multus for LAN-facing pods
@@ -190,18 +190,18 @@ delete and recreate the PVC; that restarts the whole restore for nothing.
 
 ## Backups: Backblaze B2
 
-Two buckets in `eu-central-003`: `kopiur` (Kopia repository) and `cnpg-gismo2004` (barman archives
-of the CNPG databases).
+Two buckets in `eu-central-003`: `kopiur` (Kopia repository) and `cnpg-gismo2004`. The latter held
+the CNPG barman archives and is empty since CNPG was removed on 2026-10-02.
 
 **Every bucket needs a lifecycle rule that actually deletes hidden files.** B2 buckets default to
-"keep all versions": a delete only hides the file and it stays billed. Barman and Kopia both
-expect deletes to free space. `cnpg-gismo2004` had no rule until 2026-09-17 and had accumulated
+"keep all versions": a delete only hides the file and it stays billed. Kopia expects deletes to free
+space. `cnpg-gismo2004` had no rule until 2026-09-17 and had accumulated
 52.6 GB of deleted-but-kept versions against 15.6 GB live, growing by the full ~2.5 GB daily
 upload; earlier manual purges there (e.g. the immich prefix on 2026-09-01) freed nothing billed.
 Both buckets now carry `daysFromHidingToDeleting: 1`. The rule lives in B2, not in this repo, so set
 it on any new or recreated bucket (B2 console: Lifecycle Settings -> "Keep only the last version",
 or `b2_update_bucket`). When judging bucket size, count hidden versions (`b2_list_file_versions`),
-not just what `b2 ls` or barman reports.
+not just what `b2 ls` reports.
 
 ## Backups: Kopiur
 
@@ -282,43 +282,19 @@ keep an old name while the policy writing to it was renamed (`vdf` -> `vdf-confi
 PVC name alone proves nothing. The repository has no `spec.catalog.periodicRefresh`, but a rebuild
 or re-bootstrap rescans and rediscovers every retired identity still in the repository.
 
-## Backups: CNPG / barman, a separate system
+## Databases: SQLite, backed up by Kopiur
 
-Only `home-assistant` runs a CloudNativePG cluster; it backs up via barman to
-`s3://cnpg-gismo2004/home-assistant/`, **not** covered by Kopiur. A Kopiur-only
-restore of it brings back its config with an empty database. Read the comment in
-the `Cluster` manifest before touching `spec.plugins`/`externalClusters`.
+No CNPG/Postgres anywhere since 2026-10-02: Home Assistant, Mealie and Photoview keep SQLite files
+on their Kopiur-backed PVCs (`home-assistant-config`, `mealie-config`, `photoview-data`), so a
+Kopiur restore brings the database back with the config. Snapshots are point-in-time VolumeSnapshots,
+which SQLite (WAL mode) treats like a crash and recovers from cleanly.
 
-**Mealie and Photoview run on SQLite since 2026-10-02** (Kopiur-backed: `mealie-config`,
-`photoview-data`); their CNPG clusters and B2 archives were removed after the user confirmed. Mealie was
-moved with its own backup/restore (`BackupV2`), Photoview by a 1:1 table copy, because a fresh
-Photoview setup loses the named face groups.
-
-**Backups run through the Barman Cloud plugin** (`cnpg-system/plugin-barman-cloud`) since
-2026-10-02; CNPG 1.31 removes the in-tree `spec.backup.barmanObjectStore`. Per app: an
-`ObjectStore` (`<app>-backup`, bucket path, credentials, compression, `retentionPolicy`), the
-Cluster's `spec.plugins` entry (`isWALArchiver: true`, `barmanObjectName`, **`serverName`**), a
-plugin-form `externalClusters` source and a `ScheduledBackup` with `method: plugin`.
-
-- **`serverName` belongs in the plugin parameters, never in the `ObjectStore`** (the plugin
-  requires it empty there). The migration kept the existing value
-  (`home-assistant-postgres-v5`), so the archive continued; a new or
-  changed serverName starts an empty archive.
-- Switching a cluster is one atomic commit (remove `spec.backup`, add `spec.plugins`); CNPG
-  restarts the instance to inject the plugin sidecar. A few `failed_count` entries in
-  `pg_stat_archiver` during that restart are expected; Postgres retries until archived. Prove it
-  with an on-demand `Backup` (`method: plugin`) and the new base backup under
-  `<path>/<serverName>/base/` in B2.
-
-- **A cluster recovering via `bootstrap.recovery` must use a different
-  `spec.backup.barmanObjectStore.serverName` than its `externalClusters` source**, or the restore
-  pre-flight refuses with `Expected empty archive`. The same `destinationPath` is fine.
-- Compression is `gzip`, deliberately: bzip2 pegged a core compressing slower than the ~3.4 MB/s B2
-  uplink for a ratio only marginally better. CNPG offers no zstd.
-- `monitoring.enablePodMonitor` is unset by default; check it first when a CNPG dashboard is empty.
-- Archive volume follows database write volume. Home Assistant's recorder is by far the largest
-  source (about 6 GB of WAL a day before compression); a sensor updating every second shows up
-  directly in B2.
+How each was moved off Postgres (useful if one ever has to go back): Mealie with its own
+backup/restore (`BackupV2`), Photoview and Home Assistant by a 1:1 table copy in a pod running the
+app's image. For HA the copy used the recorder's own `db_schema` Table objects, so types convert
+correctly. **Pods here run with `TZ=Europe/Vienna` (k8tz)**: psycopg returns local-time datetimes,
+and SQLite stores them without the zone, so convert to UTC before writing. HA's `statistics_runs`
+otherwise lands 1-2 h in the future and statistics compilation stops.
 
 ## HelmRelease status can lie
 
@@ -359,7 +335,7 @@ wait out a 3-day `minimumReleaseAge`.
 **The no-automerge denylist is scoped by recoverability:** can a bad update be undone with a git
 revert? Stays manual: `cilium`/`coredns` (nothing resolves, Flux can't pull), `flux-operator`/
 `flux-instance` (breaks the revert mechanism), `multus`/`cni-plugins` (wrap the CNI of every new
-pod), `miroir` (a revert doesn't unbreak an unmountable volume), `cloudnative-pg`, `talos`/`kubelet`
+pod), `miroir` (a revert doesn't unbreak an unmountable volume), `talos`/`kubelet`
 (single node), `kopiur` (breaks silently until a restore) and `app-template` (one chart behind most
 apps). Projects like cilium and coredns ship features in "minor" releases. Breaking ingress or
 telemetry (`cert-manager`, `envoy`, `external-dns`, `metrics-server`) is revertable, so those
@@ -373,8 +349,7 @@ works". The revert path is the real safety net.
 Trace an unexpectedly unmerged PR rule by rule against its datasource _and_ update type.
 
 Grafana dashboards are `GrafanaDashboard` CRs referencing a URL so Renovate can bump them: the
-preset handles grafana.com IDs, a hand-written `customManagers` regex handles `blocky` and
-`cloudnative-pg`. **Any new regex manager must set `autoReplaceStringTemplate` explicitly**, and be
+preset handles grafana.com IDs, a hand-written `customManagers` regex handles `blocky`. **Any new regex manager must set `autoReplaceStringTemplate` explicitly**, and be
 dry-run against a real line first: without it Renovate replaces the whole match with the bare
 version (a first attempt turned a dashboard URL into `url: v0.34.0`), and
 `renovate-config-validator` does not catch that.

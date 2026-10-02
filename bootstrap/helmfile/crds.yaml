@@ -27,9 +27,6 @@ releases:
   - name: envoy-gateway
     namespace: network
 
-  - name: cloudnative-pg
-    namespace: cnpg-system
-
   - name: grafana-operator
     namespace: o11y
 
