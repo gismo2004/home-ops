@@ -213,12 +213,12 @@ optionally `KOPIUR_ONMISSING`/`KOPIUR_PUID`/...). No app keeps hand-written back
   targeting `kind: SnapshotPolicy` (see `esphome`, `kavita`, `jdownloader2`, `edgetx`,
   `orcaslicer`). Write `$$RECYCLE.BIN`: substitution is active in those apps.
 - **A second PVC** gets a second, backup-only Flux Kustomization in the same `ks.yaml`, whose path
-  holds an empty `kustomization.yaml` (`vdf/state`, `unmonitarr/data`). **Never combine PVCs in
+  holds an empty `kustomization.yaml` (`vdf/state`). **Never combine PVCs in
   one policy's `sources: [...]`**: everything is filed under `sources[0]`'s path and the rest
   become unrestorable.
 - Adding the component turns on substitution for the whole app, so a literal `$` anywhere in its
   manifests is at risk. Generated ConfigMaps holding code get
-  `kustomize.toolkit.fluxcd.io/substitute: disabled` (see `unmonitarr`).
+  `kustomize.toolkit.fluxcd.io/substitute: disabled` (see `sabnzbd`'s scripts ConfigMap).
 - **Mover identity must be the UID the app writes as.** Restored files are owned by the mover's
   UID; a root mover without `privilegedMode` restores every file as `0:65532` mode 644, which an
   app running as 568 cannot write. No namespace carries `privileged-movers` any more:

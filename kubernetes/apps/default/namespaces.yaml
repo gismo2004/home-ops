@@ -142,13 +142,6 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: unmonitarr
-  annotations:
-    kustomize.toolkit.fluxcd.io/prune: disabled
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: vdf
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
