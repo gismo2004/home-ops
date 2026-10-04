@@ -24,7 +24,7 @@ spec:
             image:
               # renovate: datasource=docker depName=ghcr.io/gismo2004/ice_agent
               repository: ghcr.io/gismo2004/ice_agent
-              tag: v1.9.3@sha256:e8ebb8cd1af4711b1d974227cb388b7cac208656b1d1b22c193e926846d5e7b6
+              tag: v2.0.0@sha256:b25a8eaf4bed5e210bec6743e62f6c6e24d24328b4e3b0255fcb6eac4bc79fe9
             probes:
               liveness:
                 enabled: true
