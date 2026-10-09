@@ -34,6 +34,24 @@ spec:
             image:
               repository: ghcr.io/home-operations/home-assistant
               tag: 2026.10.0@sha256:5d3bdf34773c59d33b868930ba021dd741f26a7c2bc9989eba3b25de16d7cd04
+            # Home Assistant restarts by exiting with 100 and leaves starting it again to its
+            # supervisor. The official image restarts it inside the container; this one does not,
+            # so every restart from the UI ended the container and counted as a crash, and a few
+            # in a row put the pod into CrashLoopBackOff. Start it again here instead. SIGTERM
+            # still reaches Home Assistant, and the loop ends with its exit code.
+            command:
+              - /usr/bin/catatonit
+              - --
+              - /bin/bash
+              - -c
+              - |
+                trap 'stopping=1; kill -TERM "$$pid" 2>/dev/null' TERM INT
+                while true; do
+                  /entrypoint.sh & pid=$$!
+                  while kill -0 "$$pid" 2>/dev/null; do wait "$$pid"; rc=$$?; done
+                  if [ -n "$$stopping" ] || [ "$$rc" -ne 100 ]; then exit "$$rc"; fi
+                  echo "Home Assistant asked for a restart, starting it again"
+                done
             env:
               TZ: Europe/Vienna
             probes:
