@@ -33,6 +33,36 @@ radarr:
           allowed: true
           until_quality: Merged QPs
           until_score: 45000 # TRaSH's 35000 + the resolution offset below
+      # Old films that were only ever released on DVD or TV (the Swedish
+      # Pettersson & Findus cartoons, 1999-2009), which the TRaSH profile
+      # would chase forever. Same rules as Sonarr's Klassiker profile:
+      # German required, resolution decides, junk and 3D blocked.
+      - name: "[German] SD + HD (Klassiker)"
+        reset_unmatched_scores:
+          enabled: true
+        min_upgrade_format_score: 2000
+        upgrade:
+          allowed: true
+          until_quality: Merged QPs
+          until_score: 20000 # German 1080p
+        min_format_score: 0
+        qualities:
+          - name: Merged QPs
+            qualities:
+              - Bluray-1080p
+              - WEBDL-1080p
+              - WEBRip-1080p
+              - HDTV-1080p
+              - Bluray-720p
+              - WEBDL-720p
+              - WEBRip-720p
+              - HDTV-720p
+              - Bluray-576p
+              - Bluray-480p
+              - WEBDL-480p
+              - WEBRip-480p
+              - DVD
+              - SDTV
     custom_formats:
       - trash_ids:
           - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
@@ -79,6 +109,39 @@ radarr:
           - 25e28d0bd60a9ec2f48861b17a73d0d8 # 3D (German naming) (own, ./custom-formats)
         assign_scores_to:
           - trash_id: 425da1ba30711b55d2eb371437ec98d7
+      # "[German] SD + HD (Klassiker)" (see quality_profiles above)
+      - trash_ids:
+          - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
+          - 263943bc5d99550c68aad0c4278ba1c7 # German LQ
+          - a826ee9e46607bc61795c85a6f2b1279 # German LQ (release title)
+          - 03c430f326f10a27a9739b8bc83c30e4 # German Microsized
+          - ed38b889b31be83fda192888e2286d83 # BR-DISK
+          - 90a6f9a284dff5103f6346090e6280c8 # LQ
+          - e204b80c87be9497a8a6eaff48f72905 # LQ (Release Title)
+          - 0a3f082873eb454bde444150b70253cc # Extras
+          - bfd8eb01832d646a0a89c4deb46f8564 # Upscaled
+          - b8cd450cbfa689c0259a01d9e29ba3d6 # 3D
+          - 25e28d0bd60a9ec2f48861b17a73d0d8 # 3D (German naming) (own, ./custom-formats)
+        assign_scores_to:
+          - name: "[German] SD + HD (Klassiker)"
+            score: -35000
+      - trash_ids:
+          - 86bc3115eb4e9873ac96904a4a68e19e # German
+          - f845be10da4f442654c13e1f2c3d6cd5 # German DL
+          - 6aad77771dabe9d3e9d7be86f310b867 # German DL (undefined)
+        assign_scores_to:
+          - name: "[German] SD + HD (Klassiker)"
+            score: 10000
+      - trash_ids:
+          - b2be17d608fc88818940cd1833b0b24c # 720p
+        assign_scores_to:
+          - name: "[German] SD + HD (Klassiker)"
+            score: 5000
+      - trash_ids:
+          - 820b09bb9acbfde9c35c71e0e565dad8 # 1080p
+        assign_scores_to:
+          - name: "[German] SD + HD (Klassiker)"
+            score: 10000
       # Upgrades only for better picture or sound (user, 2026-10-01): German
       # DL counts like plain German (English audio is no gain), release
       # group tiers, streaming services, repacks and the 1080p booster score
