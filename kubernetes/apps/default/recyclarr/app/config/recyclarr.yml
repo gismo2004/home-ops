@@ -37,6 +37,9 @@ radarr:
       # Pettersson & Findus cartoons, 1999-2009), which the TRaSH profile
       # would chase forever. Same rules as Sonarr's Klassiker profile:
       # German required, resolution decides, junk and 3D blocked.
+      # Its language is set to "Any" in Radarr itself (recyclarr has no
+      # setting for it): the default "Original" rejects German releases of
+      # foreign films. A sync leaves it alone.
       - name: "[German] SD + HD (Klassiker)"
         reset_unmatched_scores:
           enabled: true
