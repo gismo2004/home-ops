@@ -19,4 +19,12 @@ nodes:
       macAddr: "bc:24:11:9e:26:d8"
       mtu: 1500
       encryptDisk: false
-      kernelModules: [nvidia, nvidia_uvm, nvidia_drm, nvidia_modeset]
+      kernelModules:
+        - name: nvidia
+        - name: nvidia_uvm
+        # modeset=1: NVIDIA's GBM buffers (GLX over DRI3 in the Selkies
+        # desktops, e.g. orcaslicer) need nvidia-drm's KMS; without it the
+        # driver runs render-only and every GBM allocation fails.
+        - name: nvidia_drm
+          parameters: [modeset=1]
+        - name: nvidia_modeset
