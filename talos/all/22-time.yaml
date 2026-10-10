@@ -1,3 +1,5 @@
+# Stays v1alpha1: TimeSyncConfig turns NTS on by default, which needs
+# hostnames, and these servers are IP addresses.
 machine:
   time:
     disabled: false

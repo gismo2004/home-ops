@@ -6,6 +6,7 @@
 # it the symlink does not exist, kubelet CREATES A DIRECTORY at that hostPath
 # and bind-mounts the empty directory into the pod -- oscam then serves its web
 # UI perfectly while the reader is silently absent.
+# machine.udev is not deprecated in Talos 1.14 (no separate document).
 machine:
   udev:
     rules:

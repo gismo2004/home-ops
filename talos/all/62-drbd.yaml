@@ -9,11 +9,16 @@
 # cannot modprobe from its container ("could not insert 'dm_thin_pool':
 # Operation not permitted"), so lvcreate fails and every pool setup fails
 # with it. It has to be declared here instead.
-machine:
-  kernel:
-    modules:
-      - name: drbd
-        parameters:
-          - usermode_helper=disabled
-      - name: drbd_transport_tcp
-      - name: dm_thin_pool
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: drbd
+parameters:
+  - usermode_helper=disabled
+---
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: drbd_transport_tcp
+---
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: dm_thin_pool

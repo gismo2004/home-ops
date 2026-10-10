@@ -9,3 +9,14 @@ provisioning:
     match: "!system_disk"
   minSize: 100GB
   grow: true
+---
+# Talos 1.14 generates these for new clusters (EPHEMERAL mounted "secure",
+# weekly fstrim); not part of this cluster's behaviour, so left out.
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+$patch: delete
+---
+apiVersion: v1alpha1
+kind: FilesystemTrimConfig
+$patch: delete

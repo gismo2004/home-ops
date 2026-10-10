@@ -7,22 +7,17 @@
 # reference value and ample for one server on this LAN. rsize/wsize=1MiB are
 # additions the old cluster did not have.
 #
-# Written via machine.files rather than an EtcFileConfig document: topf passes
-# RawVolumeConfig through but silently drops EtcFileConfig, so that form
-# renders to nothing at all.
-#
 # NOTE: existing mounts keep their old options until the consuming pod
 # restarts.
-machine:
-  files:
-    - op: overwrite
-      path: /etc/nfsmount.conf
-      permissions: 0o644
-      content: |
-        [ NFSMount_Global_Options ]
-        nfsvers=4.2
-        hard=True
-        nconnect=8
-        noatime=True
-        rsize=1048576
-        wsize=1048576
+apiVersion: v1alpha1
+kind: EtcFileConfig
+name: nfsmount.conf
+mode: 0o644
+contents: |
+  [ NFSMount_Global_Options ]
+  nfsvers=4.2
+  hard=True
+  nconnect=8
+  noatime=True
+  rsize=1048576
+  wsize=1048576

@@ -1,14 +1,12 @@
-{{- if .Node.Data.kernelModules }}
-machine:
-  kernel:
-    modules:
-      {{- range .Node.Data.kernelModules }}
-      - name: {{ .name }}
-        {{- with index . "parameters" }}
-        parameters:
-          {{- range . }}
-          - {{ . }}
-          {{- end }}
-        {{- end }}
-      {{- end }}
+{{- range .Node.Data.kernelModules }}
+---
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: {{ .name }}
+{{- with index . "parameters" }}
+parameters:
+  {{- range . }}
+  - {{ . }}
+  {{- end }}
+{{- end }}
 {{- end }}

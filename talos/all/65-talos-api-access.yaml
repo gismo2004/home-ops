@@ -5,14 +5,9 @@
 # Without it the tuppr chart fails to install outright:
 #   no matches for kind "ServiceAccount" in version "talos.dev/v1alpha1"
 #   ensure CRDs are installed first
-#
-# The other machine.features the old cluster set (diskQuotaSupport, kubePrism,
-# hostDNS) are already provided by topf's base, so only this is added here.
-machine:
-  features:
-    kubernetesTalosAPIAccess:
-      enabled: true
-      allowedRoles:
-        - os:admin
-      allowedKubernetesNamespaces:
-        - system-upgrade
+apiVersion: v1alpha1
+kind: KubeTalosAPIAccessConfig
+allowedRoles:
+  - os:admin
+allowedKubernetesNamespaces:
+  - system-upgrade

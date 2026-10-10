@@ -1,0 +1,7 @@
+# Talos 1.14 generates KubeEtcdEncryptionConfig with secretbox only, and a merge
+# patch onto it is ignored (the generated document wins). Delete it here and
+# re-add it in 20-etcd-encryption.sops.yaml (SOPS: it holds the key), with the
+# identity fallback the cluster ran with under v1alpha1.
+apiVersion: v1alpha1
+kind: KubeEtcdEncryptionConfig
+$patch: delete
