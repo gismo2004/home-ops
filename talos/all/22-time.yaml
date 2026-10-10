@@ -1,8 +1,8 @@
-# Stays v1alpha1: TimeSyncConfig turns NTS on by default, which needs
-# hostnames, and these servers are IP addresses.
-machine:
-  time:
-    disabled: false
-    servers:
-      - 162.159.200.1
-      - 162.159.200.123
+# Cloudflare time over NTS (authenticated NTP), the Talos 1.14 default. NTS
+# needs a hostname, not an IP; the old servers were Cloudflare's IPs.
+apiVersion: v1alpha1
+kind: TimeSyncConfig
+ntp:
+  servers:
+    - time.cloudflare.com
+  useNTS: true

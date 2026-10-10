@@ -367,7 +367,7 @@ default kubelet thresholds) the fix is headroom, not tuning. `EPHEMERAL` is the 
 `grow: true`: enlarge the disk with `qm resize 103 scsi0 <size>`, then reboot the node once and
 Talos grows `/var` on boot.
 
-**Patches use the Talos 1.14 config documents** (`KubeletConfig`, `KubeAPIServerConfig`,
+**Patches use the Talos 1.14 config documents** (only `machine.udev` has none yet) (`KubeletConfig`, `KubeAPIServerConfig`,
 `SysctlConfig`, `KernelModuleConfig`, ...), not the deprecated `machine.*`/`cluster.*` fields:
 topf generates multi-document configs, and Talos rejects a field set in both forms. Landmines,
 all hit on 2026-10-10:
