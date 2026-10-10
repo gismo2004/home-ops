@@ -367,6 +367,20 @@ default kubelet thresholds) the fix is headroom, not tuning. `EPHEMERAL` is the 
 `grow: true`: enlarge the disk with `qm resize 103 scsi0 <size>`, then reboot the node once and
 Talos grows `/var` on boot.
 
+**Patches use the Talos 1.14 config documents** (`KubeletConfig`, `KubeAPIServerConfig`,
+`SysctlConfig`, `KernelModuleConfig`, ...), not the deprecated `machine.*`/`cluster.*` fields:
+topf generates multi-document configs, and Talos rejects a field set in both forms. Landmines,
+all hit on 2026-10-10:
+
+- Generated documents that can't be merge-patched (`KubeEtcdEncryptionConfig`) are deleted in one
+  file and re-added in a later one (`control-plane/19-*`, `20-*.sops.yaml`).
+- Don't delete the generated `KubeAuthenticationConfig`: Talos then hands kube-apiserver an empty
+  file and it crash-loops.
+- A change that restarts containerd (e.g. the CRI customization) or the control-plane static pods
+  can leave the kubelet stuck with the API server down until `talosctl service kubelet restart`.
+  Apply such changes `--mode staged` and reboot. Test control-plane changes first in a local
+  `talosctl cluster create docker` cluster (it merges into `kubeconfig`; switch the context back).
+
 **The Talos release caps the Kubernetes version, and Renovate doesn't know it.** Each Talos minor
 supports Kubernetes up to its own default version (Talos 1.13 stopped at 1.36; 1.37 needed 1.14).
 Renovate tracks `ghcr.io/siderolabs/kubelet` as a plain image and will propose versions the running
