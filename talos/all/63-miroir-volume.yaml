@@ -10,13 +10,19 @@ provisioning:
   minSize: 100GB
   grow: true
 ---
-# Talos 1.14 generates these for new clusters (EPHEMERAL mounted "secure",
-# weekly fstrim); not part of this cluster's behaviour, so left out.
+# Talos 1.14 generates a "secure" EPHEMERAL mount for new clusters; not part of
+# this cluster's behaviour, so left out.
 apiVersion: v1alpha1
 kind: VolumeConfig
 name: EPHEMERAL
 $patch: delete
 ---
+# Weekly fstrim: both Proxmox disks have discard=on, so freed blocks go back
+# to the host's ZFS pools. Weekly scrub checks filesystem metadata.
 apiVersion: v1alpha1
 kind: FilesystemTrimConfig
-$patch: delete
+interval: 168h0m0s
+---
+apiVersion: v1alpha1
+kind: FilesystemScrubConfig
+interval: 168h0m0s
