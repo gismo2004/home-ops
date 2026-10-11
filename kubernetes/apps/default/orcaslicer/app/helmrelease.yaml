@@ -30,6 +30,10 @@ spec:
             env:
               PIXELFLUX_WAYLAND: "false"
               SELKIES_UI_TITLE: OrcaSlicer
+              # Only offer H.264, so pixelflux encodes on the GPU (NVENC via the
+              # runtime's libnvidia-encode). With the full list the browser kept a
+              # remembered "jpeg" choice: per-tile CPU JPEG, laggy when rotating.
+              SELKIES_ENCODER: h264enc
               PUID: "568"
               PGID: "568"
             # Not privileged: the GPU (and its /dev/dri nodes) comes from the
