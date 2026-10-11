@@ -115,6 +115,10 @@ data:
     customDNS:
       customTTL: 1h
       filterUnmappedTypes: true
+      mapping:
+        # the NAS by short name, so SMB/WS-Discovery clients reach it directly
+        # (truenas.gismo2004.cc stays on the ingress for the web UI)
+        truenas: 10.0.0.2
     log:
       format: text
       level: info
