@@ -45,13 +45,18 @@ spec:
               PUID: "568"
               PGID: "568"
               TZ: Europe/Vienna
+            # exec, not tcpSocket: on lan-direct the pod answers the node (the kubelet's
+            # probe source) through the macvlan, which cannot reach its parent host.
             probes:
               liveness:
                 enabled: true
                 custom: true
                 spec:
-                  tcpSocket:
-                    port: 8465
+                  exec: &probe
+                    command:
+                      - python
+                      - -c
+                      - import socket; socket.create_connection(("127.0.0.1", 8465), 3)
                   periodSeconds: 30
                   timeoutSeconds: 5
                   failureThreshold: 5
@@ -59,8 +64,7 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  tcpSocket:
-                    port: 8465
+                  exec: *probe
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
@@ -68,8 +72,7 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  tcpSocket:
-                    port: 8465
+                  exec: *probe
                   failureThreshold: 60
                   periodSeconds: 5
             # The image's run.sh starts as root: it adds the PUID/PGID user, chowns
