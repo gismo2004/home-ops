@@ -102,7 +102,26 @@ def main():
         print("usage: media_check.py <dir> <nzb> <name> <x> <category> <group> <status>")
         return 1
     job_dir, category, status = sys.argv[1], sys.argv[5], sys.argv[7]
-    if status != "0" or category not in CATEGORIES:
+    if status != "0":
+        print(f"skipped (failed job, status={status})")
+        return 0
+
+    if category == "games":
+        # Un-obfuscate scene extensions (e.g. SUXXORS .nsp.hdf / .xci.hdf -> .nsp / .xci)
+        renamed = 0
+        for d, _, fs in os.walk(job_dir):
+            for f in fs:
+                for ext in (".nsp", ".nsz", ".xci", ".xcz"):
+                    if f.lower().endswith(ext + ".hdf"):
+                        old_p = os.path.join(d, f)
+                        new_p = os.path.join(d, f[:-4])
+                        os.replace(old_p, new_p)
+                        print(f"Renamed {f} -> {os.path.basename(new_p)}")
+                        renamed += 1
+        print(f"Games post-processing complete ({renamed} file(s) renamed)")
+        return 0
+
+    if category not in CATEGORIES:
         print(f"skipped (category={category}, status={status})")
         return 0
 
