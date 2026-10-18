@@ -114,6 +114,8 @@ spec:
           - path: /app/data
       # The library: dumps of the user's own cartridges, copied in via the SMB share
       # "games". Same NFS export as the media apps (Storage1/data, mapall apps:apps).
+      # Gamarr imports into the same directory (its root folder
+      # /data/media/games/switch), so keep the two paths in sync.
       games:
         type: nfs
         server: 10.0.0.2
