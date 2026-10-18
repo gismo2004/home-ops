@@ -11,6 +11,9 @@ spec:
       kind: HelmRelease
       name: ownfoil
       namespace: ownfoil
+  dependsOn:
+    - name: multus-networks
+      namespace: kube-system
   interval: 1h
   path: ./kubernetes/apps/default/ownfoil/app
   prune: true

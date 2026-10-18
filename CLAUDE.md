@@ -122,7 +122,7 @@ gives selected pods a second, macvlan interface on `bond0` via the `lan`
 
 - **Addresses are pinned per pod** and must stay outside the FRITZ!Box DHCP range (`.10`-`.60`) and
   the Cilium LoadBalancer pool (`.130`-`.240`). In use: `10.0.0.250` home-assistant,
-  `10.0.0.251` esphome. The Service LoadBalancer IPs are unaffected.
+  `10.0.0.251` esphome, `10.0.0.252` ownfoil (Switch client discovery). The Service LoadBalancer IPs are unaffected.
 - **`sbr` in the network definition is load-bearing.** A macvlan child cannot reach its own parent
   host, and that host answers every LoadBalancer IP (blocky, mosquitto, ...). Without `sbr` the pod
   would route all of `10.0.0.0/24` out of the macvlan and lose those services; with it only traffic
