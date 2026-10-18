@@ -29,5 +29,6 @@ spec:
       KOPIUR_NAME: ownfoil-config
       KOPIUR_CLAIM: ownfoil-config
       KOPIUR_CAPACITY: 2Gi
-      # New app: no snapshot exists yet. Switch to Fail once the first backup ran.
-      KOPIUR_ONMISSING: Continue
+      # Fail, never Continue: an empty /app/config starts a fresh Ownfoil without its
+      # library database and settings. First snapshot 2026-10-18.
+      KOPIUR_ONMISSING: Fail
