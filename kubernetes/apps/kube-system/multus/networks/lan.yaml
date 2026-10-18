@@ -4,7 +4,7 @@
 #
 # Addresses are pinned per pod in its annotation and must stay outside both the
 # FRITZ!Box DHCP range (10.0.0.10-60) and the Cilium LB pool (10.0.0.130-240).
-# In use: 10.0.0.250 home-assistant, 10.0.0.251 esphome.
+# In use: 10.0.0.250 home-assistant, 10.0.0.251 esphome (10.0.0.252 ownfoil is on lan-direct.yaml).
 #
 # `sbr` moves the interface's routes into a table used only for traffic sourced
 # from the macvlan address. Without it the pod would route all of 10.0.0.0/24 out

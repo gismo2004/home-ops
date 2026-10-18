@@ -1,0 +1,33 @@
+---
+# Like lan.yaml, but without `sbr`: the LAN route lands in the main table, so all
+# traffic to 10.0.0.0/24 leaves through the macvlan with the pod's LAN address.
+# For pods that must answer LAN broadcasts from a socket bound to 0.0.0.0 (Ownfoil's
+# Switch discovery on UDP 8465): with lan.yaml such a reply takes the pod network and
+# is SNATed to the node address, where the client then finds nothing.
+#
+# The cost is the one lan.yaml avoids: a macvlan child cannot reach its parent host,
+# so these pods lose the node (10.0.0.48) and every LoadBalancer IP. Only use it for
+# pods that need neither -- DNS, internet and the NFS mounts (done by the node) are
+# unaffected.
+# In use: 10.0.0.252 ownfoil.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/k8s.cni.cncf.io/networkattachmentdefinition_v1.json
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: lan-direct
+spec:
+  config: |-
+    {
+      "cniVersion": "0.3.1",
+      "name": "lan-direct",
+      "plugins": [
+        {
+          "type": "macvlan",
+          "master": "bond0",
+          "mode": "bridge",
+          "ipam": {
+            "type": "static"
+          }
+        }
+      ]
+    }

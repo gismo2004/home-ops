@@ -12,11 +12,12 @@ spec:
     defaultPodOptions:
       annotations:
         # Second interface on the LAN, so Ownfoil answers the Switch clients' discovery
-        # broadcast (UDP 8465); see kube-system/multus/networks/lan.yaml. The client then
-        # talks to http://10.0.0.252:8465 directly; the route stays for the web UI.
+        # broadcast (UDP 8465) from 10.0.0.252; see kube-system/multus/networks/
+        # lan-direct.yaml for why it is not lan.yaml. The client then talks to
+        # http://10.0.0.252:8465 directly; the route stays for the web UI.
         k8s.v1.cni.cncf.io/networks: |-
           [{
-            "name": "lan",
+            "name": "lan-direct",
             "namespace": "kube-system",
             "ips": ["10.0.0.252/24"],
             "mac": "02:00:0a:00:00:fc"
