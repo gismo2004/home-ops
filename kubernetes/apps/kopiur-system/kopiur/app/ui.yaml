@@ -1,0 +1,50 @@
+---
+# Kopiur web console (ui.enabled in helmrelease.yaml). The chart never renders a
+# route, and binds neither the file browser nor the doctor role; this file does.
+# LAN only (envoy-internal), no login proxy: every request runs as the fixed
+# anonymous identity "gismo" (ui.auth.anonymous), so anyone who reaches this
+# hostname operates the backups -- a deliberate choice for a one-admin home LAN.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/httproute_v1.json
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: kopiur-ui
+spec:
+  hostnames:
+    - "kopiur.gismo2004.cc"
+  parentRefs:
+    - name: envoy-internal
+      namespace: network
+  rules:
+    - backendRefs:
+        - name: kopiur-ui
+          port: 8090
+---
+# In-snapshot file browser. The chart warns: browsing execs kopia in a session pod
+# that holds the repository credentials, so this binding grants them too.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kopiur-ui-browse-gismo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kopiur-ui-browse
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: gismo
+---
+# Doctor page (install diagnostics), a namespaced Role in kopiur-system.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kopiur-ui-doctor-gismo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kopiur-ui-doctor
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: gismo
