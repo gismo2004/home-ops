@@ -1,0 +1,122 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ownfoil
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: ownfoil
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 568
+    controllers:
+      ownfoil:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: docker.io/a1ex4/ownfoil
+              tag: 2.5.0@sha256:123130aad6a260b1eeacf3968b6b56fbf510662034faab2f4cd2da08d967f3f7
+            envFrom:
+              # USER_ADMIN_NAME/PASSWORD (web UI) and USER_GUEST_NAME/PASSWORD (shop
+              # access for the Switch); Ownfoil creates or updates both at startup.
+              - secretRef:
+                  name: ownfoil-secret
+            env:
+              PUID: "568"
+              PGID: "568"
+              TZ: Europe/Vienna
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 8465
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 8465
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 8465
+                  failureThreshold: 60
+                  periodSeconds: 5
+            # The image's run.sh starts as root: it adds the PUID/PGID user, chowns
+            # /app and drops to that user with sudo. Same capability set as kavita.
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                add:
+                  - CHOWN
+                  - SETUID
+                  - SETGID
+                  - FOWNER
+                  - DAC_OVERRIDE
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 25m
+                memory: 200Mi
+              limits:
+                cpu: 1000m
+                memory: 1Gi
+    service:
+      app:
+        controller: ownfoil
+        ports:
+          http:
+            port: &port 8465
+            targetPort: *port
+    # Single Service, so app-template 5.x auto-detects the backendRef. LAN only:
+    # the Switch reaches the shop at https://ownfoil.gismo2004.cc.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.gismo2004.cc"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: ownfoil-config
+        globalMounts:
+          - path: /app/config
+      # Title database cache, re-downloaded when missing; kept out of the backup.
+      data:
+        type: emptyDir
+        globalMounts:
+          - path: /app/data
+      # The library: dumps of the user's own cartridges, copied in via the SMB share
+      # "games". Same NFS export as the media apps (Storage1/data, mapall apps:apps).
+      games:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/data/media/games/switch
+        globalMounts:
+          - path: /games
