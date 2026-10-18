@@ -23,7 +23,7 @@ spec:
           app:
             image:
               repository: ghcr.io/gamarr-app/gamarr
-              tag: 1.1.0.489@sha256:2895f8971b62460a6c4dfd965eaf153565fa494837c577621645c466cb9906bf
+              tag: 1.1.0.490@sha256:db3ddb938e48ea05f57752dfafbeaccd61d3c0eaa71c49a749e57858d4ff0c1a
             envFrom:
               # API key from the SOPS secret (GAMARR__AUTH__APIKEY), so it is
               # managed in git instead of only in config.xml.
