@@ -36,15 +36,21 @@ spec:
             image:
               repository: docker.io/a1ex4/ownfoil
               tag: 2.5.0@sha256:123130aad6a260b1eeacf3968b6b56fbf510662034faab2f4cd2da08d967f3f7
+            # run.sh needs root (adduser, chown /app, sudo). Ownfoil itself writes only
+            # to /app/config, /app/data and $HOME, so it is started directly as 568.
+            command:
+              - python
+              - /app/run.py
+            workingDir: /app
             envFrom:
               # USER_ADMIN_NAME/PASSWORD (web UI) and USER_GUEST_NAME/PASSWORD (shop
               # access for the Switch); Ownfoil creates or updates both at startup.
               - secretRef:
                   name: ownfoil-secret
             env:
-              PUID: "568"
-              PGID: "568"
               TZ: Europe/Vienna
+              # gunicorn's control socket goes to $HOME/.gunicorn (emptyDir below).
+              HOME: /home/ownfoil
             # exec, not tcpSocket: on lan-direct the pod answers the node (the kubelet's
             # probe source) through the macvlan, which cannot reach its parent host.
             probes:
@@ -75,23 +81,15 @@ spec:
                   exec: *probe
                   failureThreshold: 60
                   periodSeconds: 5
-            # The image's run.sh starts as root: it adds the PUID/PGID user, chowns
-            # /app and drops to that user with sudo. Same capability set as kavita.
             securityContext:
               allowPrivilegeEscalation: false
-              runAsUser: 0
-              runAsGroup: 0
-              runAsNonRoot: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
               readOnlyRootFilesystem: false
               seccompProfile:
                 type: RuntimeDefault
               capabilities:
-                add:
-                  - CHOWN
-                  - SETUID
-                  - SETGID
-                  - FOWNER
-                  - DAC_OVERRIDE
                 drop:
                   - ALL
             resources:
@@ -127,6 +125,10 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /app/data
+      home:
+        type: emptyDir
+        globalMounts:
+          - path: /home/ownfoil
       # The library: dumps of the user's own cartridges, copied in via the SMB share
       # "games". Same NFS export as the media apps (Storage1/data, mapall apps:apps).
       # Gamarr imports into the same directory (its root folder
