@@ -45,6 +45,9 @@ spec:
               # project, carrying the last 200 log lines (game titles, release names,
               # paths at debug level). Runtime option, the UI toggle cannot undo it.
               GAMARR__LOG__ANALYTICSENABLED: "False"
+              # Non-root s6: Kubernetes emptyDirs belong to root (0777), and s6 only
+              # boots on such a /run with this documented switch.
+              S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES: "1"
             probes:
               liveness:
                 enabled: true
