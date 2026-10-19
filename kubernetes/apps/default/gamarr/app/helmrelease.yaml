@@ -21,7 +21,7 @@ spec:
           reloader.stakater.com/auto: "true"
         containers:
           app:
-            image:
+            image: &image
               repository: ghcr.io/gamarr-app/gamarr
               tag: 1.1.0.490@sha256:db3ddb938e48ea05f57752dfafbeaccd61d3c0eaa71c49a749e57858d4ff0c1a
             envFrom:
@@ -100,6 +100,36 @@ spec:
               limits:
                 cpu: 1500m
                 memory: 2400Mi
+          # ClamAV signatures for Gamarr's import scan. The image's init-clamav-config
+          # and svc-freshclam need root (sed in /etc/clamav, chown, s6-setuidgid), so
+          # in non-root mode they fail and leave the shared emptyDir empty -- and
+          # Gamarr refuses every import without signatures. This sidecar runs the
+          # freshclam daemon as 568: download at start, then four checks a day.
+          freshclam:
+            image: *image
+            command:
+              - freshclam
+              - --daemon
+              - --foreground
+              - --checks=4
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 5m
+                memory: 64Mi
+              limits:
+                memory: 512Mi
+
     service:
       app:
         controller: gamarr
