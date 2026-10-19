@@ -151,6 +151,11 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /var/lib/clamav
+      # freshclam's PidFile (/run/clamav/freshclam.pid in the image's config).
+      clamav-run:
+        type: emptyDir
+        globalMounts:
+          - path: /run/clamav
       clamav-log:
         type: emptyDir
         globalMounts:
