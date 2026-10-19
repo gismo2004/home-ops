@@ -69,24 +69,19 @@ spec:
                 spec:
                   failureThreshold: 60
                   periodSeconds: 10
-            # linuxserver-style s6 image: init runs as root, chowns /config and
-            # /app/gamarr to PUID/PGID, sets up ClamAV and drops to that user.
-            # Same capability set as ownfoil/kavita.
+            # Non-root: linuxserver images run their s6 init as the container user
+            # when it is not root (LSIO_NON_ROOT_USER) and skip the user/chown setup.
+            # Needs writable /run (s6, /run/gamarr-temp) and ClamAV dirs, see the
+            # emptyDirs below; the image's freshclam.conf works unedited.
             securityContext:
               allowPrivilegeEscalation: false
-              runAsUser: 0
-              runAsGroup: 0
-              runAsNonRoot: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
               readOnlyRootFilesystem: false
               seccompProfile:
                 type: RuntimeDefault
               capabilities:
-                add:
-                  - CHOWN
-                  - SETUID
-                  - SETGID
-                  - FOWNER
-                  - DAC_OVERRIDE
                 drop:
                   - ALL
             resources:
@@ -114,6 +109,20 @@ spec:
           - name: envoy-internal
             namespace: network
     persistence:
+      # Non-root (see securityContext): the image ships these root- or
+      # clamav-owned. Signatures are re-fetched on every start, as before.
+      run:
+        type: emptyDir
+        globalMounts:
+          - path: /run
+      clamav-db:
+        type: emptyDir
+        globalMounts:
+          - path: /var/lib/clamav
+      clamav-log:
+        type: emptyDir
+        globalMounts:
+          - path: /var/log/clamav
       config:
         existingClaim: gamarr-config
         globalMounts:
