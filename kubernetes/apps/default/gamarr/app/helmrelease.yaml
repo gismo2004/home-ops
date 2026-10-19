@@ -24,14 +24,20 @@ spec:
             image: &image
               repository: ghcr.io/gamarr-app/gamarr
               tag: 1.1.0.490@sha256:db3ddb938e48ea05f57752dfafbeaccd61d3c0eaa71c49a749e57858d4ff0c1a
+            # Started directly as 568, bypassing the image's s6 init: all it adds for
+            # Gamarr is the TMPDIR (/run/gamarr-temp, an emptyDir below) and chowns
+            # that are already satisfied (/config is 568, /app/gamarr is read-only use).
+            command:
+              - /app/gamarr/bin/Gamarr
+              - -nobrowser
+              - -data=/config
+            workingDir: /app/gamarr/bin
             envFrom:
               # API key from the SOPS secret (GAMARR__AUTH__APIKEY), so it is
               # managed in git instead of only in config.xml.
               - secretRef:
                   name: gamarr-secret
             env:
-              PUID: "568"
-              PGID: "568"
               TZ: Europe/Vienna
               # Gamarr is a Radarr fork and reads the same Servarr options from
               # GAMARR__<SECTION>__<KEY>. TrustedNetworks is fail-closed: without
@@ -45,13 +51,6 @@ spec:
               # project, carrying the last 200 log lines (game titles, release names,
               # paths at debug level). Runtime option, the UI toggle cannot undo it.
               GAMARR__LOG__ANALYTICSENABLED: "False"
-              # Non-root s6: Kubernetes emptyDirs belong to root (0777), and s6 only
-              # boots on such a /run with this documented switch.
-              S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES: "1"
-              # linuxserver detects non-root mode by a non-root owner of /run, which
-              # the emptyDir never has; without this the start scripts still call
-              # s6-setuidgid abc and fail in a loop.
-              LSIO_NON_ROOT_USER: "1"
             probes:
               liveness:
                 enabled: true
@@ -69,17 +68,11 @@ spec:
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
-              # The s6 init downloads the ClamAV signatures (freshclam) before
-              # Gamarr starts, which takes a while on every pod start.
               startup:
                 enabled: true
                 spec:
                   failureThreshold: 60
                   periodSeconds: 10
-            # Non-root: linuxserver images run their s6 init as the container user
-            # when it is not root (LSIO_NON_ROOT_USER) and skip the user/chown setup.
-            # Needs writable /run (s6, /run/gamarr-temp) and ClamAV dirs, see the
-            # emptyDirs below; the image's freshclam.conf works unedited.
             securityContext:
               allowPrivilegeEscalation: false
               runAsUser: 568
@@ -148,12 +141,12 @@ spec:
           - name: envoy-internal
             namespace: network
     persistence:
-      # Non-root (see securityContext): the image ships these root- or
-      # clamav-owned. Signatures are re-fetched on every start, as before.
-      run:
+      # The image's TMPDIR; /run itself belongs to root.
+      tmp:
         type: emptyDir
         globalMounts:
-          - path: /run
+          - path: /run/gamarr-temp
+      # Shared with the freshclam sidecar; the image ships these clamav-owned.
       clamav-db:
         type: emptyDir
         globalMounts:
