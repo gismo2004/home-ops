@@ -146,6 +146,24 @@ the plugin at it; `mountPath` sets the name the app sees (OSCam's reader: `/dev/
 the node, `/dev/ttyUSB0` in the pod). The plugin is the only privileged workload left outside
 the system namespaces.
 
+## Non-root containers (linuxserver and similar images)
+
+Apps whose image starts as root only to add a PUID user, chown and drop privileges run as 568
+with no capabilities instead (gamarr, ownfoil, kavita since 2026-10-19). Test in a throwaway pod
+with the app's image as 568 first. Two patterns:
+
+- **Start the app binary directly** (`command`, `workingDir`) when the init does nothing the PVC
+  does not already satisfy: ownfoil (`python /app/run.py`, `HOME` on an emptyDir for gunicorn's
+  socket), kavita (`/app/kavita/Kavita`, `HOME=/config`, the jemalloc `LD_PRELOAD`). Kavita's
+  `svc-kavita` always calls `s6-setuidgid abc`, so linuxserver's own non-root mode cannot work.
+- **linuxserver non-root mode** when the init matters (gamarr): `runAsUser: 568` needs an emptyDir
+  `/run` plus `S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES=1` (s6 refuses the root-owned
+  0777 emptyDir otherwise) and `LSIO_NON_ROOT_USER=1` (linuxserver detects the mode by a non-root
+  owner of `/run`, which an emptyDir never has; without it the scripts loop on `s6-setuidgid`).
+  `/custom-services.d` does not work non-root (copied into root-owned `/etc`); root-only init
+  steps become a sidecar instead -- gamarr's ClamAV signatures come from a `freshclam --daemon`
+  sidecar on a shared emptyDir (1.5Gi limit: freshclam test-loads each new database).
+
 ## Media storage on the NAS: one dataset for all media and downloads
 
 Imports only become an instant rename when the download folder and the library live on the
