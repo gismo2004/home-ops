@@ -24,10 +24,21 @@ spec:
             image:
               repository: ghcr.io/linuxserver/kavita
               tag: 0.9.1@sha256:49be245da019056e5627f0c01d46871a89b25683aa0b68c7c7afac3918bca0f5
+            # Started directly as 568 instead of through the linuxserver s6 init, whose
+            # svc-kavita always calls s6-setuidgid abc (no non-root branch). That init
+            # only copied the default appsettings.json (present on the PVC) and chowned
+            # /config (already 568) and wwwroot/index.html (only rewritten for a
+            # non-default base URL). Tested in a throwaway pod first.
+            command:
+              - /app/kavita/Kavita
+            workingDir: /app/kavita
             env:
-              PUID: "568"
-              PGID: "568"
               TZ: Europe/Vienna
+              # Same as the s6 start: abc's home is /config, where ASP.NET keeps its
+              # DataProtection keys (excluded from the backup, see kustomization.yaml),
+              # and jemalloc is preloaded.
+              HOME: /config
+              LD_PRELOAD: /usr/lib/x86_64-linux-gnu/libjemalloc.so.2
             probes:
               liveness:
                 enabled: true
@@ -60,19 +71,13 @@ spec:
                   periodSeconds: 5
             securityContext:
               allowPrivilegeEscalation: false
-              runAsUser: 0
-              runAsGroup: 0
-              runAsNonRoot: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
               readOnlyRootFilesystem: false
               seccompProfile:
                 type: RuntimeDefault
               capabilities:
-                add:
-                  - CHOWN
-                  - SETUID
-                  - SETGID
-                  - FOWNER
-                  - DAC_OVERRIDE
                 drop:
                   - ALL
             resources:
