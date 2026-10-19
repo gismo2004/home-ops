@@ -41,6 +41,10 @@ spec:
               GAMARR__SERVER__TRUSTEDNETWORKS: 172.16.0.0/24
               GAMARR__AUTH__REQUIRED: DisabledForLocalAddresses
               GAMARR__SERVER__PORT: &port 6767
+              # Off: "analytics" are Sentry error reports to the Gamarr developer's own
+              # project, carrying the last 200 log lines (game titles, release names,
+              # paths at debug level). Runtime option, the UI toggle cannot undo it.
+              GAMARR__LOG__ANALYTICSENABLED: "False"
             probes:
               liveness:
                 enabled: true
