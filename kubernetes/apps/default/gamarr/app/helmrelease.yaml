@@ -127,8 +127,10 @@ spec:
               requests:
                 cpu: 5m
                 memory: 64Mi
+              # freshclam loads every new database once to test it (~1 GiB);
+              # 512Mi was OOMKilled on the first download.
               limits:
-                memory: 512Mi
+                memory: 1536Mi
 
     service:
       app:
