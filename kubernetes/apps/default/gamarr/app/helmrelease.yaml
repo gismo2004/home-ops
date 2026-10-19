@@ -105,7 +105,7 @@ spec:
           clamd:
             image:
               repository: docker.io/clamav/clamav
-              tag: 1.4_base@sha256:41f0d067c0f2e87a7083d4ca202373aeec18dd0a3f8619c1a8c8556d747705e2
+              tag: 1.5@sha256:e19130cdebaeacc71fa46eab3ed6f69941f2f22aa5e08d55e9197f8edf43ce5e
             command:
               - /init-unprivileged
             env:
