@@ -6,3 +6,13 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
   - ./secret.sops.yaml
+  - ./pvc.yaml
+configMapGenerator:
+  - name: gamarr-clamd-client
+    files:
+      - clamd.conf=./config/clamd-client.conf
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    # ks.yaml runs postBuild substitution for the backup component.
+    kustomize.toolkit.fluxcd.io/substitute: disabled

@@ -1,0 +1,14 @@
+---
+# ClamAV signature database for the clamd sidecar (helmrelease.yaml). Kept across
+# restarts as ClamAV asks; re-downloadable, so not part of the Kopiur backup.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gamarr-clamav-db
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: miroir-local
+  resources:
+    requests:
+      storage: 1Gi

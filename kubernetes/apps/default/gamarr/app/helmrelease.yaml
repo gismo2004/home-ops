@@ -21,7 +21,7 @@ spec:
           reloader.stakater.com/auto: "true"
         containers:
           app:
-            image: &image
+            image:
               repository: ghcr.io/gamarr-app/gamarr
               tag: 1.1.0.490@sha256:db3ddb938e48ea05f57752dfafbeaccd61d3c0eaa71c49a749e57858d4ff0c1a
             # Started directly as 568, bypassing the image's s6 init: all it adds for
@@ -93,18 +93,30 @@ spec:
               limits:
                 cpu: 1500m
                 memory: 2400Mi
-          # ClamAV signatures for Gamarr's import scan. The image's init-clamav-config
-          # and svc-freshclam need root (sed in /etc/clamav, chown, s6-setuidgid), so
-          # in non-root mode they fail and leave the shared emptyDir empty -- and
-          # Gamarr refuses every import without signatures. This sidecar runs the
-          # freshclam daemon as 568: download at start, then four checks a day.
-          freshclam:
-            image: *image
+          # ClamAV for Gamarr's import scan: the official image (Cisco Talos), clamd
+          # plus its freshclam daemon, unprivileged as 568. Gamarr scans with
+          # `clamdscan --stream` against it (client config gamarr-clamd-client); set in
+          # Gamarr: Settings -> Media Management -> virus scanner path
+          # /usr/bin/clamdscan, arguments
+          # `--stream --config-file=/etc/clamav-client/clamd.conf`. clamd keeps the
+          # signatures loaded once instead of clamscan reading ~1 GiB per scan.
+          # No probes: Gamarr stays reachable while clamd loads, and its scans fail
+          # closed (no import) until clamd answers.
+          clamd:
+            image:
+              repository: docker.io/clamav/clamav
+              tag: 1.4_base@sha256:41f0d067c0f2e87a7083d4ca202373aeec18dd0a3f8619c1a8c8556d747705e2
             command:
-              - freshclam
-              - --daemon
-              - --foreground
-              - --checks=4
+              - /init-unprivileged
+            env:
+              FRESHCLAM_CHECKS: "4"
+            probes:
+              liveness:
+                enabled: false
+              readiness:
+                enabled: false
+              startup:
+                enabled: false
             securityContext:
               allowPrivilegeEscalation: false
               runAsUser: 568
@@ -116,15 +128,14 @@ spec:
               capabilities:
                 drop:
                   - ALL
+            # clamd holds the databases (~1 GiB) and reloads them concurrently after
+            # an update, briefly holding both copies.
             resources:
               requests:
-                cpu: 5m
-                memory: 64Mi
-              # freshclam loads every new database once to test it (~1 GiB);
-              # 512Mi was OOMKilled on the first download.
+                cpu: 10m
+                memory: 1Gi
               limits:
-                memory: 1536Mi
-
+                memory: 3Gi
     service:
       app:
         controller: gamarr
@@ -144,32 +155,50 @@ spec:
       # The image's TMPDIR; /run itself belongs to root.
       tmp:
         type: emptyDir
-        globalMounts:
-          - path: /run/gamarr-temp
-      # Shared with the freshclam sidecar; the image ships these clamav-owned.
+        advancedMounts:
+          gamarr:
+            app:
+              - path: /run/gamarr-temp
+      # Signature database (pvc.yaml).
       clamav-db:
+        existingClaim: gamarr-clamav-db
+        advancedMounts:
+          gamarr:
+            clamd:
+              - path: /var/lib/clamav
+      clamav-scratch:
         type: emptyDir
-        globalMounts:
-          - path: /var/lib/clamav
-      # freshclam's PidFile (/run/clamav/freshclam.pid in the image's config).
-      clamav-run:
-        type: emptyDir
-        globalMounts:
-          - path: /run/clamav
-      clamav-log:
-        type: emptyDir
-        globalMounts:
-          - path: /var/log/clamav
+        advancedMounts:
+          gamarr:
+            clamd:
+              - path: /run/clamav
+                subPath: run
+              - path: /var/log/clamav
+                subPath: log
+              - path: /tmp
+                subPath: tmp
+      clamd-client:
+        type: configMap
+        name: gamarr-clamd-client
+        advancedMounts:
+          gamarr:
+            app:
+              - path: /etc/clamav-client
+                readOnly: true
       config:
         existingClaim: gamarr-config
-        globalMounts:
-          - path: /config
+        advancedMounts:
+          gamarr:
+            app:
+              - path: /config
       backup:
         type: nfs
         server: 10.0.0.2
         path: /mnt/Storage1/container_share/backups
-        globalMounts:
-          - path: /config/Backups
+        advancedMounts:
+          gamarr:
+            app:
+              - path: /config/Backups
       # One filesystem for downloads and the library (same NFS export as the
       # media apps), so imports from /data/usenet/complete/games are an instant
       # rename on the NAS. Root folder /data/media/games/switch is the
@@ -178,5 +207,7 @@ spec:
         type: nfs
         server: 10.0.0.2
         path: /mnt/Storage1/data
-        globalMounts:
-          - path: /data
+        advancedMounts:
+          gamarr:
+            app:
+              - path: /data
