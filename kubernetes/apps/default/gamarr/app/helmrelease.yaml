@@ -48,6 +48,10 @@ spec:
               # Non-root s6: Kubernetes emptyDirs belong to root (0777), and s6 only
               # boots on such a /run with this documented switch.
               S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES: "1"
+              # linuxserver detects non-root mode by a non-root owner of /run, which
+              # the emptyDir never has; without this the start scripts still call
+              # s6-setuidgid abc and fail in a loop.
+              LSIO_NON_ROOT_USER: "1"
             probes:
               liveness:
                 enabled: true
