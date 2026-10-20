@@ -17,7 +17,7 @@ spec:
           app:
             image:
               repository: ghcr.io/edgetx/edgetx-dev
-              tag: latest@sha256:cedc296f046fe377f69dead3b5a4b4906dcc7e32a0e9bbd4fe4262fac34f1186
+              tag: latest@sha256:1815ec7ae4ffac5af47e42eab53cfca17fc7243d90681b9f19f238fbf2b2bc73
             env:
               HOME: /workspace
             args:
