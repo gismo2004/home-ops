@@ -256,6 +256,13 @@ to override and lose; name the excluded paths instead (see `edgetx/app/kustomiza
 `ClusterRepository/default` sets `scheduleDefaults` (`Europe/Vienna`, `jitter: 6h`) and
 `concurrency.maxConcurrentJobs: 3`; schedules inherit both, so don't repeat the jitter per app.
 
+**Verification is on for every policy** (since 2026-10-21, in the component): `quick` weekly
+(`kopia snapshot verify`, 1% of files read), `deep` monthly (scratch-restore of the latest snapshot
+into a `KOPIUR_CAPACITY`-sized thin PVC). Verify Jobs bypass `maxConcurrentJobs`, and a policy that
+has never verified runs `deep` at once: enabling it started all 25 restores in parallel (~11 min,
+fine on this node). Scratch PVCs belong to the Job's pod and go with it after the Job's 1 h TTL.
+Each deep run downloads the whole snapshot from B2, so keep it monthly.
+
 **The snapshot identity is `<policy-name>@<namespace>:/pvc/<claim-name>`, all three parts.**
 `KOPIUR_NAME` and `KOPIUR_CLAIM` are separate variables because they often differ (policy
 `calibre`, claim `calibre-config`). Changing any part computes a different identity, and a `Restore`
