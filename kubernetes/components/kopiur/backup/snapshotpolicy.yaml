@@ -40,3 +40,19 @@ spec:
     - pvc:
         name: ${KOPIUR_CLAIM}
   volumeSnapshotClassName: ${KOPIUR_VSC:=miroir-snap}
+  # quick: weekly blob-level `kopia snapshot verify`, reading 1% of the files in
+  # full. deep: monthly scratch-restore of the latest snapshot into a throwaway
+  # thin volume of the app's size; downloads the whole snapshot from B2, so it
+  # stays monthly (all apps together ~40 GB, inside B2's free egress). A policy
+  # that has never verified runs deep at once, without waiting for the cron.
+  # Jitter (6h) and timezone come from ClusterRepository/default.
+  verification:
+    verifyFilesPercent: 1
+    quick:
+      schedule:
+        cron: "H 3 * * 0"
+    deep:
+      schedule:
+        cron: "H 4 1 * *"
+      capacity: ${KOPIUR_CAPACITY:=5Gi}
+      storageClassName: ${KOPIUR_STORAGECLASS:=miroir-local}
