@@ -174,6 +174,10 @@ Imports only become an instant rename when the download folder and the library l
 **same ZFS dataset and the same NFS mount**. Separate datasets (the old `Storage1/download`,
 `Storage1/tv`, `Storage1/music`) turned every import into a full read+write through the node.
 
+- **Every NFS share is restricted to the node (`hosts: 10.0.0.48`) and `allow_nonroot` is off**
+  (exports `secure`) since 2026-10-22; before, all seven were read-write for the whole LAN. A new
+  share or a node IP change needs the same entry, or its pods hang on mount. SMB is not an option
+  for these mounts: CIFS hardlinks are unreliable, so imports would become full copies again.
 - `Storage1/data` (was `Storage1/movies`, renamed 2026-09-30) holds `media/{movies,tv,music}`
   and `usenet/{inprogress,complete/<category>}`. NFS exports `/mnt/Storage1/data`; the SMB
   shares `movies`, `tv` and `music` point at `data/media/<name>`.
