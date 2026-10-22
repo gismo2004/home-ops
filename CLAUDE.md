@@ -185,6 +185,11 @@ Imports only become an instant rename when the download folder and the library l
   `/data/media/movies`, `/data/media/tv`, `/data/media/music`; recycle bins sit next to them in
   `.recycle`. SABnzbd: `download_dir` `/data/usenet/inprogress`, `complete_dir`
   `/data/usenet/complete`.
+- gamarr's bin is `/data/media/games/.recycle`, deliberately **outside** its root folder
+  `/data/media/games/switch`: ownfoil serves that folder and indexes files in dot-folders too
+  (it only skips dotfiles), so a `switch/.recycle` would put deleted games back in the shop.
+  An empty bin path does not disable recycling in gamarr; it falls back to `<root>/.recycle`.
+  Deleting a DLC/update folder through gamarr's API (1.1.0.501) only dropped the database row.
 - **jellyfin keeps its old in-pod paths** (`/mnt/movies`, `/mnt/tvshows`, `/mnt/music`) via
   `subPath: media/<name>`. A changed in-pod path makes Jellyfin create new items, and **hearts
   (favourites) do not follow** (played state does): measured on ALF. The Jellyfin connections
