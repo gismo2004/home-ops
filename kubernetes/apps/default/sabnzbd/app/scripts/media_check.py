@@ -97,47 +97,16 @@ def strip_dovi(path):
     os.replace(tmp, path)
 
 
-GAME_EXT = (".nsp", ".nsz", ".xci", ".xcz")
+# Category "games" is handled by an optional local script on the config
+# volume (backed up with it, not kept in git).
+LOCAL_GAMES_SCRIPT = "/config/scripts-local/games.py"
 
 
-def switch_container_ext(path):
-    """Return the extension a Switch container should have, read from its
-    header, or None if it is not one. NSP/NSZ are PFS0 at offset 0 (an NSZ
-    lists .ncz entries in its name table); XCI/XCZ carry "HEAD" at 0x100."""
-    with open(path, "rb") as fh:
-        head = fh.read(0x2000)
-    if head[:4] == b"PFS0":
-        return ".nsz" if b".ncz\0" in head else ".nsp"
-    if head[0x100:0x104] == b"HEAD":
-        return ".xci"
-    return None
-
-
-def unobfuscate_games(job_dir):
-    """Scene groups hide the container behind a fake suffix: SUXXORS
-    "x.nsp.hdf", HR "x.xci.json" or a bare "x.hdf". Ownfoil and gamarr only
-    see .nsp/.nsz/.xci/.xcz, so give every Switch container the extension
-    its header says, keeping an inner extension when it is already right."""
-    renamed = 0
-    for d, _, fs in os.walk(job_dir):
-        for f in fs:
-            old_p = os.path.join(d, f)
-            if f.lower().endswith(GAME_EXT) or os.path.getsize(old_p) < 1024 * 1024:
-                continue
-            ext = switch_container_ext(old_p)
-            if ext is None:
-                continue
-            stem = os.path.splitext(f)[0]
-            inner = os.path.splitext(stem)[1].lower()
-            new_name = stem if inner in GAME_EXT else stem + ext
-            new_p = os.path.join(d, new_name)
-            if os.path.exists(new_p):
-                print(f"NOT renaming {f}: {new_name} already exists")
-                continue
-            os.replace(old_p, new_p)
-            print(f"Renamed {f} -> {new_name}")
-            renamed += 1
-    return renamed
+def run_local_games(job_dir):
+    if not os.path.isfile(LOCAL_GAMES_SCRIPT):
+        print("games: no local script, nothing to do")
+        return 0
+    return subprocess.run([sys.executable, LOCAL_GAMES_SCRIPT, job_dir]).returncode
 
 
 def main():
@@ -150,9 +119,7 @@ def main():
         return 0
 
     if category == "games":
-        renamed = unobfuscate_games(job_dir)
-        print(f"Games post-processing complete ({renamed} file(s) renamed)")
-        return 0
+        return run_local_games(job_dir)
 
     if category not in CATEGORIES:
         print(f"skipped (category={category}, status={status})")
