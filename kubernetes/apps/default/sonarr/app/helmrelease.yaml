@@ -47,6 +47,10 @@ spec:
               SONARR__AUTH__METHOD: ""
               SONARR__AUTH__REQUIRED: DisabledForLocalAddresses
               SONARR__SERVER__PORT: &port 8989
+              # DNS-rebinding guard, see radarr/app/helmrelease.yaml. Clients: envoy
+              # (the public name), Prowlarr, Recyclarr and Maintainerr (the cluster
+              # service name). A client using a new name needs it here.
+              SONARR__SERVER__ALLOWEDHOSTS: sonarr.gismo2004.cc,sonarr.media.svc.cluster.local,sonarr.media.svc,sonarr.media,sonarr
 
             probes:
               liveness:
@@ -62,6 +66,10 @@ spec:
                   httpGet:
                     path: /ping
                     port: *port
+                    # The kubelet sends the pod IP as Host, which ALLOWEDHOSTS rejects.
+                    httpHeaders:
+                      - name: Host
+                        value: localhost
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
