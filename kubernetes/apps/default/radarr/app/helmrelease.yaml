@@ -43,6 +43,11 @@ spec:
               RADARR__AUTH__METHOD: ""
               RADARR__AUTH__REQUIRED: DisabledForLocalAddresses
               RADARR__SERVER__PORT: &port 7878
+              # DNS-rebinding guard: requests naming any other Host get a 400.
+              # localhost and the pod's own hostname are always allowed. Clients:
+              # envoy (the public name), Prowlarr, Recyclarr and Maintainerr (the
+              # cluster service name). A client using a new name needs it here.
+              RADARR__SERVER__ALLOWEDHOSTS: radarr.gismo2004.cc,radarr.media.svc.cluster.local,radarr.media.svc,radarr.media,radarr
 
             probes:
               liveness:
@@ -58,6 +63,10 @@ spec:
                   httpGet:
                     path: /ping
                     port: *port
+                    # The kubelet sends the pod IP as Host, which ALLOWEDHOSTS rejects.
+                    httpHeaders:
+                      - name: Host
+                        value: localhost
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
