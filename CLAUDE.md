@@ -363,6 +363,12 @@ kubectl -n media exec deploy/sonarr -c app -- \
 Healthy apps answer differently: `Basic` auth (sonarr) returns `401`, `Forms` (radarr/lidarr)
 `302`. `*__AUTH__METHOD: ""` is a no-op, not "auth disabled": it falls through to `config.xml`.
 
+**`radarr` and `sonarr` set `*__SERVER__ALLOWEDHOSTS`** (since 2026-10-26, Radarr 7 / Sonarr 5):
+any other `Host` header gets a `400`. The list is the public name plus the cluster service names;
+`localhost` and the pod name are added by the app. Their HTTP readiness probe must send
+`Host: localhost`, because the kubelet sends the pod IP and the pod would never become ready. A
+new client that reaches them by another name (a LAN IP, a short alias) has to be added there.
+
 ## Renovate
 
 `.renovaterc.json5` extends `home-operations/renovate-presets`. **Auto-merge is the default** for OCI
