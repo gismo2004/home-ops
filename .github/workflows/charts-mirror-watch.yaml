@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+# Early warning for charts pulled from home-operations/charts-mirror. The mirror
+# deprecates a chart once upstream publishes its own OCI chart: the commit only
+# deletes apps/<name>/metadata.yaml, and the image is pruned about 6 months
+# later. k8tz went that way (deprecated 2026-03-07, pruned 2026-10-28) and the
+# first sign here was Flux failing to fetch it. This opens an issue as soon as
+# a chart we use loses its metadata.yaml, so there is time to switch upstream.
+name: "Charts mirror watch"
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check mirrored charts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check for deprecated charts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          charts=$(grep -rhoE 'charts-mirror/[a-z0-9-]+' kubernetes/ | sed 's#charts-mirror/##' | sort -u)
+          echo "Mirrored charts in use: $(echo $charts)"
+          failed=0
+          for chart in $charts; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+              "https://raw.githubusercontent.com/home-operations/charts-mirror/main/apps/${chart}/metadata.yaml")
+            case "$code" in
+              200) echo "ok: $chart" ;;
+              404)
+                echo "DEPRECATED: $chart"
+                title="charts-mirror deprecated: ${chart}"
+                if gh issue list --state open --search "in:title \"${title}\"" --json title -q '.[].title' | grep -qxF "$title"; then
+                  echo "  issue already open"
+                else
+                  gh issue create --title "$title" --assignee "$GITHUB_REPOSITORY_OWNER" --body "home-operations/charts-mirror removed \`apps/${chart}/metadata.yaml\`, which is how it deprecates a chart once upstream publishes its own OCI chart. The mirrored image is pruned about 6 months later, and then Flux can no longer fetch it.
+
+          Switch \`oci://ghcr.io/home-operations/charts-mirror/${chart}\` to the official upstream chart (see the deprecation commit in https://github.com/home-operations/charts-mirror/commits/main for the reason) and close this issue.
+
+          This repo uses it in:
+          $(grep -rlE "charts-mirror/${chart}\b" kubernetes/ | sed 's/^/- /')"
+                fi
+                ;;
+              *) echo "could not check $chart (HTTP $code)"; failed=1 ;;
+            esac
+          done
+          exit "$failed"
