@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/source.toolkit.fluxcd.io/helmrepository_v1.json
+# Upstream chart repository. The home-operations charts-mirror OCI copy this used
+# before was removed (ghcr 404/DENIED since 2026-10-28), and upstream publishes
+# no OCI chart, so this is a classic HTTP repository with a chart.spec in the
+# HelmRelease instead of a chartRef.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: k8tz
+spec:
+  interval: 1h
+  url: https://k8tz.github.io/k8tz
