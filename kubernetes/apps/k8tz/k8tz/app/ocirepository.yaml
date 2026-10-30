@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/source.toolkit.fluxcd.io/ocirepository_v1.json
+# The official upstream OCI chart. The home-operations charts-mirror copy used
+# before was deprecated in March 2026 ("official chart exists upstream") and
+# pruned on 2026-10-28, which left Flux without a source. The upstream docs only
+# mention the HTTP repo (k8tz.github.io/k8tz), but this OCI path is what it publishes.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: k8tz
+spec:
+  interval: 15m
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  ref:
+    tag: 0.19.0
+  url: oci://ghcr.io/k8tz/k8tz/charts/k8tz
