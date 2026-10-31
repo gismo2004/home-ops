@@ -369,6 +369,17 @@ any other `Host` header gets a `400`. The list is the public name plus the clust
 `Host: localhost`, because the kubelet sends the pod IP and the pod would never become ready. A
 new client that reaches them by another name (a LAN IP, a short alias) has to be added there.
 
+## Alerting: only `notify=phone` leaves the cluster
+
+Alertmanager's default receiver is `null`. A rule reaches the phone only with the label
+`notify: phone`: the route posts to a Home Assistant webhook (automation `cluster_alert_push`,
+`notify.mobile_app_pixel_11_pro_xl`), one push per `alertname` + `exported_namespace`, repeated every
+24 h while firing, plus one when resolved. The webhook URL is a credential (`kube-prometheus-stack/app/secret.sops.yaml`,
+mounted via `alertmanagerSpec.secrets`); rotating it means changing HA and the secret together.
+Add the label to a rule deliberately, and only if the message leads to an action; don't route whole
+severities. `FluxObjectNotReady` (2 h) is the first such rule. `.github/workflows/charts-mirror-watch.yaml`
+opens an issue when a chart we pull from charts-mirror is deprecated, months before it is pruned.
+
 ## Renovate
 
 `.renovaterc.json5` extends `home-operations/renovate-presets`. **Auto-merge is the default** for OCI
