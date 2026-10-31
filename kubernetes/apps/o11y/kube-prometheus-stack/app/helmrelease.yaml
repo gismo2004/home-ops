@@ -38,10 +38,11 @@ spec:
           parentRefs:
             - name: envoy-internal
               namespace: network
-      # Only alerts labelled notify=phone leave the cluster, as a push through
-      # Home Assistant (automation cluster_alert_push). Everything else stays
-      # on the "null" receiver: a push must lead to an action, so add the label
-      # to a rule on purpose rather than routing whole severities.
+      # Warnings and criticals go to the phone through Home Assistant (automation
+      # cluster_alert_push): about one a day in the two weeks measured before
+      # this. Heartbeats and info rules stay on "null". A push must lead to an
+      # action, so a known harmless case gets a null route here rather than
+      # being silenced by hand.
       config:
         route:
           receiver: "null"
@@ -49,11 +50,22 @@ spec:
             - receiver: "null"
               matchers:
                 - alertname = "Watchdog"
+            # Firmware metadata refresh on the Proxmox host, fails now and then.
+            - receiver: "null"
+              matchers:
+                - alertname = "NodeSystemdServiceFailed"
+                - name = "fwupd-refresh.service"
+            # Scratch cache of the Kopiur verify jobs, gone again with the job.
+            - receiver: "null"
+              matchers:
+                - alertname =~ "KubePersistentVolume(FillingUp|InodesFillingUp)"
+                - persistentvolumeclaim =~ ".*-kopia-cache"
             - receiver: home-assistant
               matchers:
-                - notify = "phone"
+                - severity =~ "warning|critical"
               group_by:
                 - alertname
+                - namespace
                 - exported_namespace
               group_wait: 1m
               repeat_interval: 24h
@@ -144,7 +156,6 @@ spec:
                 for: 2h
                 labels:
                   severity: warning
-                  notify: phone
       dockerhub-rules:
         groups:
           - name: dockerhub
