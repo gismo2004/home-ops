@@ -23,7 +23,7 @@ spec:
           app:
             image:
               repository: ghcr.io/gamarr-app/gamarr
-              tag: 1.1.0.533@sha256:53e0308d5c4b91765ef6061f882f86d45a479001890c03f8c01ece67a61526b1
+              tag: 1.1.0.534@sha256:af62bc6b1174fbf0521070525835d5630f36beb32f897b492d6e607493c8d93e
             # Started directly as 568, bypassing the image's s6 init: all it adds for
             # Gamarr is the TMPDIR (/run/gamarr-temp, an emptyDir below) and chowns
             # that are already satisfied (/config is 568, /app/gamarr is read-only use).
