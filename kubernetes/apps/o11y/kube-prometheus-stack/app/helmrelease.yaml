@@ -38,8 +38,36 @@ spec:
           parentRefs:
             - name: envoy-internal
               namespace: network
+      # Only alerts labelled notify=phone leave the cluster, as a push through
+      # Home Assistant (automation cluster_alert_push). Everything else stays
+      # on the "null" receiver: a push must lead to an action, so add the label
+      # to a rule on purpose rather than routing whole severities.
+      config:
+        route:
+          receiver: "null"
+          routes:
+            - receiver: "null"
+              matchers:
+                - alertname = "Watchdog"
+            - receiver: home-assistant
+              matchers:
+                - notify = "phone"
+              group_by:
+                - alertname
+                - exported_namespace
+              group_wait: 1m
+              repeat_interval: 24h
+        receivers:
+          - name: "null"
+          - name: home-assistant
+            webhook_configs:
+              # The webhook id is a credential, see secret.sops.yaml.
+              - url_file: /etc/alertmanager/secrets/alertmanager-home-assistant/url
+                send_resolved: true
       alertmanagerSpec:
         externalUrl: https://alertmanager.gismo2004.cc
+        secrets:
+          - alertmanager-home-assistant
         storage:
           volumeClaimTemplate:
             spec:
@@ -102,6 +130,21 @@ spec:
         # by design (VMs + 16 GB ZFS ARC), so the 90 % rule fired permanently.
         NodeMemoryHighUtilization: true
     additionalPrometheusRulesMap:
+      # Any Flux object stuck not ready: a dead chart source, a failing upgrade.
+      # k8tz sat like this for days unnoticed. 2 h rides out the short GitHub
+      # timeouts, which recover on their own.
+      flux-rules:
+        groups:
+          - name: flux
+            rules:
+              - alert: FluxObjectNotReady
+                annotations:
+                  summary: "{{ $labels.customresource_kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} ist seit über 2 Stunden nicht bereit."
+                expr: gotk_resource_info{ready="False",suspended!="true"}
+                for: 2h
+                labels:
+                  severity: warning
+                  notify: phone
       dockerhub-rules:
         groups:
           - name: dockerhub
