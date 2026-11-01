@@ -47,13 +47,16 @@ spec:
               runAsNonRoot: false
               readOnlyRootFilesystem: false
             resources:
+              # Measured over 30 days: 40 m CPU idle, 2.2 GiB memory once it has
+              # been used (peak 2248 MiB). Slicing a large model needs more, so
+              # the limit leaves room above that.
               requests:
-                cpu: 75m
-                memory: 200Mi
+                cpu: 100m
+                memory: 2300Mi
                 nvidia.com/gpu: 1
               limits:
                 cpu: 12000m
-                memory: 2400Mi
+                memory: 4Gi
                 nvidia.com/gpu: 1
     service:
       app:
