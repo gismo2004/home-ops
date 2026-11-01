@@ -47,6 +47,10 @@ spec:
               GAMARR__SERVER__TRUSTEDNETWORKS: 172.16.0.0/24
               GAMARR__AUTH__REQUIRED: DisabledForLocalAddresses
               GAMARR__SERVER__PORT: &port 6767
+              # DNS-rebinding guard, see radarr/app/helmrelease.yaml. Only envoy and
+              # the cluster service name reach it. A client using a new name needs
+              # it here.
+              GAMARR__SERVER__ALLOWEDHOSTS: gamarr.gismo2004.cc,gamarr.gamarr.svc.cluster.local,gamarr.gamarr.svc,gamarr.gamarr,gamarr
               # Off: "analytics" are Sentry error reports to the Gamarr developer's own
               # project, carrying the last 200 log lines (game titles, release names,
               # paths at debug level). Runtime option, the UI toggle cannot undo it.
@@ -65,6 +69,10 @@ spec:
                   httpGet:
                     path: /ping
                     port: *port
+                    # The kubelet sends the pod IP as Host, which ALLOWEDHOSTS rejects.
+                    httpHeaders:
+                      - name: Host
+                        value: localhost
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
