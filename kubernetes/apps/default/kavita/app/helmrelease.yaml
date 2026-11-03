@@ -23,7 +23,7 @@ spec:
           app:
             image:
               repository: ghcr.io/linuxserver/kavita
-              tag: 0.9.1@sha256:34dddd2e79854772b788e5847f1702444b11118bbeabd0a5590f57e15346222b
+              tag: 0.9.1@sha256:de556f62dadefdd59dc69e04855db91157d774f84b242568c8858251aff1340b
             # Started directly as 568 instead of through the linuxserver s6 init, whose
             # svc-kavita always calls s6-setuidgid abc (no non-root branch). That init
             # only copied the default appsettings.json (present on the PVC) and chowned
