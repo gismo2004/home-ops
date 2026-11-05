@@ -8,6 +8,7 @@ resources:
   - ./namespaces.yaml
   - ./blocky/ks.yaml
   - ./calibre/ks.yaml
+  - ./calibre-web/ks.yaml
   - ./echo/ks.yaml
   - ./edgetx/ks.yaml
   - ./esphome/ks.yaml

@@ -1,0 +1,34 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: calibre-web
+  namespace: default
+spec:
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: calibre-web
+      namespace: calibre-web
+  interval: 1h
+  path: ./kubernetes/apps/default/calibre-web/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: calibre-web
+  wait: false
+  components:
+    - ../../../../components/kopiur/backup
+  postBuild:
+    substitute:
+      # Identity calibre-web-config@calibre-web:/pvc/calibre-web-config. Holds
+      # app.db (users, settings), cwa.db and the originals of converted books
+      # (processed_books); the library itself stays on the NAS.
+      KOPIUR_NAME: calibre-web-config
+      KOPIUR_CLAIM: calibre-web-config
+      KOPIUR_CAPACITY: 10Gi
+      # New app: no snapshot exists yet. Switch to Fail once the first backup ran.
+      KOPIUR_ONMISSING: Continue
