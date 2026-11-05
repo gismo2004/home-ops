@@ -24,6 +24,7 @@ folder, argv[5] its category, argv[7] the post-processing status.
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 
@@ -109,6 +110,38 @@ def run_local_games(job_dir):
     return subprocess.run([sys.executable, LOCAL_GAMES_SCRIPT, job_dir]).returncode
 
 
+# Category "ebooks": SABnzbd puts each job in its own folder, but Calibre's
+# auto-add only picks up files lying directly in its watched folder
+# (complete/ebooks, mounted into calibre as /mnt/import). Move the book up
+# one level and drop the job folder; Calibre imports it into the library and
+# deletes it from the inbox. EPUB wins when a release carries several formats,
+# so the same book is not added twice.
+EBOOK_EXT = [".epub", ".azw3", ".mobi", ".pdf"]
+
+
+def import_ebooks(job_dir):
+    inbox = os.path.dirname(os.path.abspath(job_dir))
+    if os.path.basename(inbox) != "ebooks":
+        print(f"ebooks: unexpected job folder {job_dir}, nothing done")
+        return 1
+    files = [os.path.join(d, f) for d, _, fs in os.walk(job_dir) for f in fs]
+    for ext in EBOOK_EXT:
+        books = [f for f in files if os.path.splitext(f)[1].lower() == ext]
+        if books:
+            break
+    else:
+        print("REJECT no ebook file in the release")
+        return 1
+    for book in books:
+        target = os.path.join(inbox, os.path.basename(book))
+        if os.path.exists(target):
+            target = os.path.join(inbox, f"{os.path.basename(job_dir)} - {os.path.basename(book)}")
+        os.replace(book, target)
+        print(f"ebooks: handed {os.path.basename(target)} to calibre")
+    shutil.rmtree(job_dir)
+    return 0
+
+
 def main():
     if len(sys.argv) < 8:
         print("usage: media_check.py <dir> <nzb> <name> <x> <category> <group> <status>")
@@ -120,6 +153,9 @@ def main():
 
     if category == "games":
         return run_local_games(job_dir)
+
+    if category == "ebooks":
+        return import_ebooks(job_dir)
 
     if category not in CATEGORIES:
         print(f"skipped (category={category}, status={status})")
