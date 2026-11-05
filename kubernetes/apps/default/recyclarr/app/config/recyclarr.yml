@@ -40,7 +40,10 @@ radarr:
       # Its language is set to "Any" in Radarr itself (recyclarr has no
       # setting for it): the default "Original" rejects German releases of
       # foreign films. A sync leaves it alone.
-      - name: "[German] SD + HD (Klassiker)"
+      # Named so it sorts after the UHD profile: Radarr's and nzb360's "add"
+      # dialogs preselect the first profile alphabetically. Renamed in the apps
+      # first (2026-11-05); recyclarr matches profiles by name.
+      - name: "[Klassiker] German SD + HD"
         reset_unmatched_scores:
           enabled: true
         min_upgrade_format_score: 2000
@@ -112,7 +115,7 @@ radarr:
           - 25e28d0bd60a9ec2f48861b17a73d0d8 # 3D (German naming) (own, ./custom-formats)
         assign_scores_to:
           - trash_id: 425da1ba30711b55d2eb371437ec98d7
-      # "[German] SD + HD (Klassiker)" (see quality_profiles above)
+      # "[Klassiker] German SD + HD" (see quality_profiles above)
       - trash_ids:
           - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
           - 263943bc5d99550c68aad0c4278ba1c7 # German LQ
@@ -126,24 +129,24 @@ radarr:
           - b8cd450cbfa689c0259a01d9e29ba3d6 # 3D
           - 25e28d0bd60a9ec2f48861b17a73d0d8 # 3D (German naming) (own, ./custom-formats)
         assign_scores_to:
-          - name: "[German] SD + HD (Klassiker)"
+          - name: "[Klassiker] German SD + HD"
             score: -35000
       - trash_ids:
           - 86bc3115eb4e9873ac96904a4a68e19e # German
           - f845be10da4f442654c13e1f2c3d6cd5 # German DL
           - 6aad77771dabe9d3e9d7be86f310b867 # German DL (undefined)
         assign_scores_to:
-          - name: "[German] SD + HD (Klassiker)"
+          - name: "[Klassiker] German SD + HD"
             score: 10000
       - trash_ids:
           - b2be17d608fc88818940cd1833b0b24c # 720p
         assign_scores_to:
-          - name: "[German] SD + HD (Klassiker)"
+          - name: "[Klassiker] German SD + HD"
             score: 5000
       - trash_ids:
           - 820b09bb9acbfde9c35c71e0e565dad8 # 1080p
         assign_scores_to:
-          - name: "[German] SD + HD (Klassiker)"
+          - name: "[Klassiker] German SD + HD"
             score: 10000
       # Upgrades only for better picture or sound (user, 2026-10-01): German
       # DL counts like plain German (English audio is no gain), release
@@ -228,7 +231,10 @@ sonarr:
       # profile does not allow (it would chase HD forever). Same rules
       # otherwise: German required, resolution decides, junk blocked;
       # German and German DL score alike so they never replace each other.
-      - name: "[German] SD + HD (Klassiker)"
+      # Named so it sorts after the UHD profile: Radarr's and nzb360's "add"
+      # dialogs preselect the first profile alphabetically. Renamed in the apps
+      # first (2026-11-05); recyclarr matches profiles by name.
+      - name: "[Klassiker] German SD + HD"
         reset_unmatched_scores:
           enabled: true
         min_upgrade_format_score: 2000
@@ -336,7 +342,7 @@ sonarr:
         assign_scores_to:
           - trash_id: 7324309a7d1e10dc0dc2cea6c70ed852
             score: 10100
-      # "[German] SD + HD (Klassiker)" (see quality_profiles above)
+      # "[Klassiker] German SD + HD" (see quality_profiles above)
       - trash_ids:
           - 4aaff9587c0e57ce866a9ede0168f8f8 # Not German (own, ./custom-formats)
           - a6a6c33d057406aaad978a6902823c35 # German LQ
@@ -348,24 +354,24 @@ sonarr:
           - fbcb31d8dabd2a319072b84fc0b7249c # Extras
           - 23297a736ca77c0fc8e70f8edd7ee56c # Upscaled
         assign_scores_to:
-          - name: "[German] SD + HD (Klassiker)"
+          - name: "[Klassiker] German SD + HD"
             score: -35000
       - trash_ids:
           - 8a9fcdbb445f2add0505926df3bb7b8a # German
           - ed51973a811f51985f14e2f6f290e47a # German DL
           - c5dd0fd675f85487ad5bdf97159180bd # German DL (undefined)
         assign_scores_to:
-          - name: "[German] SD + HD (Klassiker)"
+          - name: "[Klassiker] German SD + HD"
             score: 10000
       - trash_ids:
           - c99279ee27a154c2f20d1d505cc99e25 # 720p
         assign_scores_to:
-          - name: "[German] SD + HD (Klassiker)"
+          - name: "[Klassiker] German SD + HD"
             score: 5000
       - trash_ids:
           - 290078c8b266272a5cc8e251b5e2eb0b # 1080p
         assign_scores_to:
-          - name: "[German] SD + HD (Klassiker)"
+          - name: "[Klassiker] German SD + HD"
             score: 10000
       # Upgrades only for better picture or sound (user, 2026-10-01): German
       # DL counts like plain German (English audio is no gain), release
