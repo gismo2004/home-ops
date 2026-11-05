@@ -192,9 +192,11 @@ Imports only become an instant rename when the download folder and the library l
   Deleting a DLC/update folder through gamarr's API (1.1.0.501) only dropped the database row.
 - **SABnzbd local scripts:** `media_check.py` runs `/config/scripts-local/<category>.py` when it
   exists (on the config PVC, backed up with it, deliberately not in git) and takes its exit code.
-  Calibre mounts `complete/ebooks` as `/mnt/import` and watches it with auto-add (`auto_add_path`
-  in calibre's `gui.json`, an app setting; change it only with calibre stopped, or calibre
-  overwrites it when it saves its settings). Kavita's folder watching picks up library changes.
+  Ebooks: `calibre-web` (Calibre-Web-Automated) mounts `complete/ebooks` as its ingest folder,
+  imports every file into the library (`Storage1/ebooks`) and deletes it there. It runs with
+  `NETWORK_SHARE_MODE=true` (library on NFS: no WAL, polling watchers). Its automatic metadata
+  fetch is off on purpose: in a test it replaced a correctly tagged book with an unrelated title.
+  Desktop `calibre` stays at replicas 0; only one of the two may write `metadata.db` at a time.
 - **jellyfin keeps its old in-pod paths** (`/mnt/movies`, `/mnt/tvshows`, `/mnt/music`) via
   `subPath: media/<name>`. A changed in-pod path makes Jellyfin create new items, and **hearts
   (favourites) do not follow** (played state does): measured on ALF. The Jellyfin connections
