@@ -1,0 +1,122 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+# Bookshelf: maintained fork of the retired Readarr (Hardcover metadata image).
+# Searches through Prowlarr, downloads through SABnzbd (category "bookshelf")
+# and imports into calibre-web's ingest folder, which hands each book to the
+# library and deletes it there ("Unmonitor deleted books" keeps Bookshelf from
+# grabbing it again).
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: bookshelf
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: bookshelf
+  values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 568
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups:
+          - 568
+    controllers:
+      bookshelf:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/pennydreadful/bookshelf
+              tag: hardcover-v0.4.21.182@sha256:67498dd5ece516867d72ee642abd6c1a66b36a135c8f7da0127109564372beb1
+            # Started directly as 568, bypassing the image's s6 init (linuxserver
+            # base): all it adds is the TMPDIR (/run/readarr-temp, an emptyDir
+            # below) and chowns already satisfied by fsGroup. Same as gamarr.
+            command:
+              - /app/readarr/bin/Readarr
+              - -nobrowser
+              - -data=/config
+            workingDir: /app/readarr/bin
+            envFrom:
+              # API key from the SOPS secret (READARR__AUTH__APIKEY).
+              - secretRef:
+                  name: bookshelf-secret
+            env:
+              TZ: Europe/Vienna
+              # Readarr's option names (READARR__<SECTION>__<KEY>). This older
+              # Servarr core has no TrustedNetworks or AllowedHosts yet.
+              READARR__AUTH__REQUIRED: DisabledForLocalAddresses
+              READARR__SERVER__PORT: &port 8787
+            probes:
+              liveness:
+                enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /ping
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 60
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 568
+              runAsGroup: 568
+              runAsNonRoot: true
+              readOnlyRootFilesystem: false
+              seccompProfile:
+                type: RuntimeDefault
+              capabilities:
+                drop:
+                  - ALL
+            resources:
+              requests:
+                cpu: 20m
+                memory: 200Mi
+              limits:
+                cpu: 1500m
+                memory: 1Gi
+    service:
+      app:
+        controller: bookshelf
+        ports:
+          http:
+            port: *port
+            targetPort: *port
+    # Single Service, so app-template 5.x auto-detects the backendRef. LAN only.
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.gismo2004.cc"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      config:
+        existingClaim: bookshelf-config
+        globalMounts:
+          - path: /config
+      # The image's TMPDIR; /run itself belongs to root.
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /run/readarr-temp
+      # Same dataset as SABnzbd (TRaSH layout): downloads in /data/usenet, the
+      # root folder is calibre-web's ingest folder /data/usenet/complete/ebooks.
+      data:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/data
+        globalMounts:
+          - path: /data
