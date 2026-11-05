@@ -190,6 +190,12 @@ Imports only become an instant rename when the download folder and the library l
   (it only skips dotfiles), so a `switch/.recycle` would put deleted games back in the shop.
   An empty bin path does not disable recycling in gamarr; it falls back to `<root>/.recycle`.
   Deleting a DLC/update folder through gamarr's API (1.1.0.501) only dropped the database row.
+- **Ebooks import themselves:** SABnzbd category `ebooks` -> `media_check.py` moves the book (EPUB
+  preferred) out of the job folder into `complete/ebooks`, which calibre mounts as `/mnt/import` and
+  watches with auto-add (`auto_add_path` in calibre's `gui.json`, an app setting, not in git). Calibre
+  files it into the library (`Storage1/ebooks`) and empties the inbox; Kavita's folder watching then
+  scans the author folder within minutes. Change `gui.json` only with calibre stopped, or it is
+  overwritten when calibre saves its settings.
 - **jellyfin keeps its old in-pod paths** (`/mnt/movies`, `/mnt/tvshows`, `/mnt/music`) via
   `subPath: media/<name>`. A changed in-pod path makes Jellyfin create new items, and **hearts
   (favourites) do not follow** (played state does): measured on ALF. The Jellyfin connections
