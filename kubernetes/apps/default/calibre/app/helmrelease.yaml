@@ -17,6 +17,11 @@ spec:
           - 568
     controllers:
       calibre:
+        # Off since 2026-11-05: calibre-web-automated manages the library now,
+        # and two apps writing metadata.db at once can corrupt it. Kept (with
+        # its config PVC and backups) for occasional desktop-Calibre work: set
+        # back to 1 only while calibre-web is scaled to 0.
+        replicas: 0
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -129,13 +134,3 @@ spec:
         path: /mnt/Storage1/ebooks
         globalMounts:
           - path: /mnt/books
-      # SABnzbd's "ebooks" category folder. Calibre's auto-add (gui.json
-      # auto_add_path, set in the app) watches it, imports each book into
-      # /mnt/books and deletes it here; Kavita reads /mnt/books.
-      inbox:
-        type: nfs
-        server: 10.0.0.2
-        path: /mnt/Storage1/data
-        globalMounts:
-          - path: /mnt/import
-            subPath: usenet/complete/ebooks
