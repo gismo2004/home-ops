@@ -129,3 +129,13 @@ spec:
         path: /mnt/Storage1/ebooks
         globalMounts:
           - path: /mnt/books
+      # SABnzbd's "ebooks" category folder. Calibre's auto-add (gui.json
+      # auto_add_path, set in the app) watches it, imports each book into
+      # /mnt/books and deletes it here; Kavita reads /mnt/books.
+      inbox:
+        type: nfs
+        server: 10.0.0.2
+        path: /mnt/Storage1/data
+        globalMounts:
+          - path: /mnt/import
+            subPath: usenet/complete/ebooks
