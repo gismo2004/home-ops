@@ -24,7 +24,6 @@ folder, argv[5] its category, argv[7] the post-processing status.
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 
@@ -98,48 +97,17 @@ def strip_dovi(path):
     os.replace(tmp, path)
 
 
-# Category "games" is handled by an optional local script on the config
-# volume (backed up with it, not kept in git).
-LOCAL_GAMES_SCRIPT = "/config/scripts-local/games.py"
+# Any category can have an optional local script on the config volume
+# (/config/scripts-local/<category>.py, backed up with it, not kept in git).
+# It gets the job folder and the category; its exit code becomes the job's.
+LOCAL_SCRIPTS = "/config/scripts-local"
 
 
-def run_local_games(job_dir):
-    if not os.path.isfile(LOCAL_GAMES_SCRIPT):
-        print("games: no local script, nothing to do")
-        return 0
-    return subprocess.run([sys.executable, LOCAL_GAMES_SCRIPT, job_dir]).returncode
-
-
-# Category "ebooks": SABnzbd puts each job in its own folder, but Calibre's
-# auto-add only picks up files lying directly in its watched folder
-# (complete/ebooks, mounted into calibre as /mnt/import). Move the book up
-# one level and drop the job folder; Calibre imports it into the library and
-# deletes it from the inbox. EPUB wins when a release carries several formats,
-# so the same book is not added twice.
-EBOOK_EXT = [".epub", ".azw3", ".mobi", ".pdf"]
-
-
-def import_ebooks(job_dir):
-    inbox = os.path.dirname(os.path.abspath(job_dir))
-    if os.path.basename(inbox) != "ebooks":
-        print(f"ebooks: unexpected job folder {job_dir}, nothing done")
-        return 1
-    files = [os.path.join(d, f) for d, _, fs in os.walk(job_dir) for f in fs]
-    for ext in EBOOK_EXT:
-        books = [f for f in files if os.path.splitext(f)[1].lower() == ext]
-        if books:
-            break
-    else:
-        print("REJECT no ebook file in the release")
-        return 1
-    for book in books:
-        target = os.path.join(inbox, os.path.basename(book))
-        if os.path.exists(target):
-            target = os.path.join(inbox, f"{os.path.basename(job_dir)} - {os.path.basename(book)}")
-        os.replace(book, target)
-        print(f"ebooks: handed {os.path.basename(target)} to calibre")
-    shutil.rmtree(job_dir)
-    return 0
+def run_local(job_dir, category):
+    script = os.path.join(LOCAL_SCRIPTS, f"{category}.py")
+    if not os.path.isfile(script):
+        return None
+    return subprocess.run([sys.executable, script, job_dir, category]).returncode
 
 
 def main():
@@ -151,11 +119,9 @@ def main():
         print(f"skipped (failed job, status={status})")
         return 0
 
-    if category == "games":
-        return run_local_games(job_dir)
-
-    if category == "ebooks":
-        return import_ebooks(job_dir)
+    local = run_local(job_dir, category)
+    if local is not None:
+        return local
 
     if category not in CATEGORIES:
         print(f"skipped (category={category}, status={status})")
