@@ -16,7 +16,6 @@ resources:
   - ./iceagent/ks.yaml
   - ./jdownloader2/ks.yaml
   - ./jellyfin/ks.yaml
-  - ./kavita/ks.yaml
   - ./krokiet/ks.yaml
   - ./lidarr/ks.yaml
   - ./maintainerr/ks.yaml

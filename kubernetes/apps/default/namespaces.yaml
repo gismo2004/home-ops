@@ -65,13 +65,6 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kavita
-  annotations:
-    kustomize.toolkit.fluxcd.io/prune: disabled
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: krokiet
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
