@@ -149,18 +149,17 @@ the system namespaces.
 ## Non-root containers (linuxserver and similar images)
 
 Apps whose image starts as root only to add a PUID user, chown and drop privileges run as 568
-with no capabilities instead (gamarr, ownfoil, kavita since 2026-10-19). Test in a throwaway pod
+with no capabilities instead (gamarr, ownfoil since 2026-10-19). Test in a throwaway pod
 with the app's image as 568 first. Prefer **starting the app binary directly** (`command`,
 `workingDir`) over the image's init whenever the init does nothing the PVC does not already
 satisfy: gamarr (`/app/gamarr/bin/Gamarr -nobrowser -data=/config`, `TMPDIR` on an emptyDir),
-ownfoil (`python /app/run.py`, `HOME` on an emptyDir for gunicorn's socket), kavita
-(`/app/kavita/Kavita`, `HOME=/config`, the jemalloc `LD_PRELOAD`).
+ownfoil (`python /app/run.py`, `HOME` on an emptyDir for gunicorn's socket).
 
 linuxserver's own non-root mode is the fallback, and costly on Kubernetes: an emptyDir `/run` plus
 `S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES=1` (s6 refuses the root-owned 0777 emptyDir)
 and `LSIO_NON_ROOT_USER=1` (linuxserver detects the mode by a non-root owner of `/run`, which an
 emptyDir never has; without it the scripts loop on `s6-setuidgid`); `/custom-services.d` does not
-work non-root, and root-only init steps silently fail. Kavita's `svc-kavita` has no non-root branch.
+work non-root, and root-only init steps silently fail.
 
 Root-only helpers become sidecars from their official images instead: gamarr's virus scan uses a
 `clamd` sidecar (clamav/clamav `_base`, `/init-unprivileged` as 568, signatures on the
@@ -196,7 +195,8 @@ Imports only become an instant rename when the download folder and the library l
   imports every file into the library (`Storage1/ebooks`) and deletes it there. It runs with
   `NETWORK_SHARE_MODE=true` (library on NFS: no WAL, polling watchers). Its automatic metadata
   fetch is off on purpose: in a test it replaced a correctly tagged book with an unrelated title.
-  Desktop `calibre` stays at replicas 0; only one of the two may write `metadata.db` at a time.
+  Desktop Calibre and Kavita were removed on 2026-11-06; never run a second app that writes the
+  same `metadata.db`.
 - **jellyfin keeps its old in-pod paths** (`/mnt/movies`, `/mnt/tvshows`, `/mnt/music`) via
   `subPath: media/<name>`. A changed in-pod path makes Jellyfin create new items, and **hearts
   (favourites) do not follow** (played state does): measured on ALF. The Jellyfin connections
@@ -247,7 +247,7 @@ by `postBuild.substitute` in the app's `ks.yaml` (`KOPIUR_NAME`, `KOPIUR_CLAIM`,
 optionally `KOPIUR_ONMISSING`/`KOPIUR_PUID`/...). No app keeps hand-written backup objects:
 
 - **Excludes** (`files.ignoreRules`) are a `patches:` entry in the app's `app/kustomization.yaml`
-  targeting `kind: SnapshotPolicy` (see `esphome`, `kavita`, `jdownloader2`, `edgetx`,
+  targeting `kind: SnapshotPolicy` (see `esphome`, `jdownloader2`, `edgetx`,
   `orcaslicer`). Write `$$RECYCLE.BIN`: substitution is active in those apps.
 - **A second PVC** gets a second, backup-only Flux Kustomization in the same `ks.yaml`, whose path
   holds an empty `kustomization.yaml` (`vdf/state`). **Never combine PVCs in

@@ -27,16 +27,9 @@ endpoints:
     conditions:
       - "[STATUS] == 200"
 
-  - name: Kavita
+  - name: Calibre-Web
     group: Media
-    url: "https://kavita.gismo2004.cc"
-    interval: 1m
-    conditions:
-      - "[STATUS] == 200"
-
-  - name: Calibre
-    group: Media
-    url: "https://calibre.gismo2004.cc"
+    url: "https://calibre-web.gismo2004.cc/login"
     interval: 1m
     conditions:
       - "[STATUS] == 200"
