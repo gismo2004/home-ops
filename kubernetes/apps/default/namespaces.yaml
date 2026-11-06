@@ -9,13 +9,6 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: calibre
-  annotations:
-    kustomize.toolkit.fluxcd.io/prune: disabled
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: calibre-web
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
