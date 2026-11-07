@@ -38,6 +38,10 @@ spec:
               PROWLARR__AUTH__METHOD: ""
               PROWLARR__AUTH__REQUIRED: DisabledForLocalAddresses
               PROWLARR__SERVER__PORT: &port 9696
+              # DNS-rebinding guard (new in Prowlarr 3.0), see radarr/app/helmrelease.yaml.
+              # Clients: envoy (the public name); Radarr, Sonarr, Lidarr and Gamarr
+              # search through the cluster service name. A new client name needs it here.
+              PROWLARR__SERVER__ALLOWEDHOSTS: prowlarr.gismo2004.cc,prowlarr.media.svc.cluster.local,prowlarr.media.svc,prowlarr.media,prowlarr
 
             probes:
               liveness:
@@ -53,6 +57,10 @@ spec:
                   httpGet:
                     path: /ping
                     port: *port
+                    # The kubelet sends the pod IP as Host, which ALLOWEDHOSTS rejects.
+                    httpHeaders:
+                      - name: Host
+                        value: localhost
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5

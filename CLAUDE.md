@@ -370,7 +370,7 @@ kubectl -n media exec deploy/sonarr -c app -- \
 Healthy apps answer differently: `Basic` auth (sonarr) returns `401`, `Forms` (radarr/lidarr)
 `302`. `*__AUTH__METHOD: ""` is a no-op, not "auth disabled": it falls through to `config.xml`.
 
-**`radarr`, `sonarr` and `gamarr` set `*__SERVER__ALLOWEDHOSTS`** (since 2026-10-26, Radarr 7 / Sonarr 5):
+**`radarr`, `sonarr`, `gamarr` and `prowlarr` set `*__SERVER__ALLOWEDHOSTS`** (since 2026-10-26, Radarr 7 / Sonarr 5):
 any other `Host` header gets a `400`. The list is the public name plus the cluster service names;
 `localhost` and the pod name are added by the app. Their HTTP readiness probe must send
 `Host: localhost`, because the kubelet sends the pod IP and the pod would never become ready. A
