@@ -26,7 +26,7 @@ spec:
           app:
             image:
               repository: ghcr.io/linuxserver/orcaslicer
-              tag: 2.5.0@sha256:1b1629a9dee5c40eea905746441b5d1a3eaea253b1be308849c7a39afcf61afc
+              tag: 2.5.0@sha256:4cb6ec5e296898969be71c0a997a375835e268b8cb6bdb59968e7fe3cd6b571b
             env:
               PIXELFLUX_WAYLAND: "false"
               SELKIES_UI_TITLE: OrcaSlicer
