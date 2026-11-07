@@ -58,6 +58,17 @@ spec:
                 cpu: 12000m
                 memory: 4Gi
                 nvidia.com/gpu: 1
+    configMaps:
+      init:
+        data:
+          # LSIO runs /custom-cont-init.d scripts as root during init, before the
+          # desktop starts. The 2.5.0 image ships /opt/orcaslicer as root-only
+          # (0700), so the desktop user abc got "Permission denied" on AppRun
+          # and the session stayed black (2026-11-07). Harmless once upstream
+          # fixes the mode.
+          10-orcaslicer-permissions.sh: |
+            #!/usr/bin/with-contenv bash
+            chmod -R a+rX /opt/orcaslicer
     service:
       app:
         controller: orcaslicer
@@ -77,6 +88,13 @@ spec:
     persistence:
       config:
         existingClaim: orcaslicer-config
+      custom-init:
+        type: configMap
+        identifier: init
+        defaultMode: 0755
+        globalMounts:
+          - path: /custom-cont-init.d
+            readOnly: true
       printdata:
         type: nfs
         server: 10.0.0.2
