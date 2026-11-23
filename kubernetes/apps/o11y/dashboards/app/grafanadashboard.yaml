@@ -192,28 +192,6 @@ spec:
   url: https://grafana.com/api/dashboards/19105/revisions/9/download
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
-# blocky ships its dashboard in its own repo. Pinned to the release tag rather
-# than main so it moves in step with the app: a custom Renovate manager (see
-# .github/renovate/grafana-dashboards.json5) bumps this tag from GitHub
-# releases, so a blocky update and its dashboard update arrive as one PR.
-apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaDashboard
-metadata:
-  name: blocky
-spec:
-  allowCrossNamespaceImport: true
-  instanceSelector:
-    matchLabels:
-      dashboards: grafana
-  datasources:
-    - datasourceName: prometheus
-      inputName: DS_PROMETHEUS
-    - datasourceName: "https://blocky.gismo2004.cc"
-      inputName: VAR_BLOCKY_URL
-  # renovate: depName=0xERR0R/blocky datasource=github-releases
-  url: https://raw.githubusercontent.com/0xERR0R/blocky/v0.35.0/docs/blocky-grafana.json
----
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
