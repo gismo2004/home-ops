@@ -93,7 +93,7 @@ url = "https://github.com/cloudflare/cloudflared/releases/download/2026.11.1/clo
 url_api = "https://api.github.com/repos/cloudflare/cloudflared/releases/assets/759528258"
 
 [[tools.flux2]]
-version = "2.10.0"
+version = "2.10.1"
 backend = "aqua:fluxcd/flux2"
 
 [tools.flux2."platforms.linux-arm64"]
