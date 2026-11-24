@@ -53,6 +53,9 @@ spec:
               target:
                 group: helm.toolkit.fluxcd.io
                 kind: HelmRelease
+                # Releases that must never be rolled back set their own install/upgrade
+                # strategy and carry this label (home-assistant: stateful, DB migrations).
+                labelSelector: "!home-ops.gismo2004.cc/no-upgrade-rollback"
       target:
         group: kustomize.toolkit.fluxcd.io
         kind: Kustomization
