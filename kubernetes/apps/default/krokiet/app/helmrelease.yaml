@@ -18,7 +18,7 @@ spec:
           app:
             image:
               repository: ghcr.io/jlesage/krokiet
-              tag: latest@sha256:85f7b7017e63877b6ef6efa3b7e3ecf6be285cda3086597f3e5fb5e373b83d1a
+              tag: latest@sha256:0c56b8cf9b7dd69e6b3d834b6cedf675dcf642052b118cd5cace39e26c53f998
             env:
               USER_ID: 568
               GROUP_ID: 568
