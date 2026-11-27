@@ -5,13 +5,12 @@
 # keeps its own in-memory cache. A redis block defaults to `required: true`,
 # and blocky refuses to start if that redis is unreachable.
 #
-# Everything here is load-bearing, including what looks like boilerplate:
 # clientGroupsBlock.default is [ads, default], so every denylist group below
 # (default / -ads / -malicious / -suspicious / -tracking, ~30 list URLs), the
-# allowlist group, all ten upstream resolvers and the caching/prefetch tuning
-# are actively in effect on the LAN. Trimming anything here changes what gets
-# blocked. Any
-# trimming of these inherited lists should be a separate, deliberate commit.
+# allowlist group and all ten upstream resolvers are in effect on the LAN;
+# trimming a list changes what gets blocked and belongs in its own commit.
+# Settings that only restated a blocky default were removed 2026-11-27 (v0.37
+# defaults, checked against config/*.go); what is left differs on purpose.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -27,7 +26,6 @@ data:
         - https://raw.githubusercontent.com/anudeepND/whitelist/master/domains/optional-list.txt
         - https://raw.githubusercontent.com/anudeepND/whitelist/master/domains/whitelist.txt
         - https://raw.githubusercontent.com/rahilpathan/pihole-whitelist/main/1.LowWL.txt
-      blockTTL: 6h
       blockType: nxDomain
       clientGroupsBlock:
         default:
@@ -82,62 +80,37 @@ data:
         - https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt
         - https://hostfiles.frogeye.fr/firstparty-trackers-hosts.txt
       loading:
-        concurrency: 8
         downloads:
-          attempts: 3
-          cooldown: 5s
-          readHeaderTimeout: 60s
+          # several lists are multi-MB (hagezi ultimate, oisd big); the
+          # defaults (5s per attempt, 20s read) are too short for them
           readTimeout: 60s
           timeout: 60s
-          writeTimeout: 60s
-        maxErrorsPerSource: 5
-        refreshPeriod: 4h
-        strategy: blocking
     caching:
-      cacheTimeNegative: -1
-      maxItemsCount: 0
-      maxTime: 0m
-      minTime: 15m
+      # no minTime: answers live as long as their own TTL. A 15m minimum held
+      # GitHub's 60s records for up to 15 minutes, so when one GitHub front end
+      # was unreachable Flux kept dialing it (8-16 min GitOperationFailed
+      # windows, 2026-11-21..27).
+      cacheTimeNegative: -1m
       prefetchExpires: 12h
-      prefetchMaxItemsCount: 0
-      prefetchThreshold: 5
       prefetching: true
     clientLookup:
       clients:
         fernseher:
         - 10.0.0.46
         - 10.0.0.18
-      singleNameOrder:
-      - 1
     conditional:
       mapping:
         gismo2004.cc: 10.0.0.201
     customDNS:
-      customTTL: 1h
-      filterUnmappedTypes: true
       mapping:
         # the NAS by short name, so SMB/WS-Discovery clients reach it directly
         # (truenas.gismo2004.cc stays on the ingress for the web UI)
         truenas: 10.0.0.2
-    log:
-      format: text
-      level: info
-      timestamp: true
-    minTlsServeVersion: 1.2
     ports:
       dns: 53
       http: 4000
-      https: 4443
-      tls: 853
     prometheus:
       enable: true
-      path: /metrics
-    queryLog:
-      creationAttempts: 3
-      creationCooldown: 2s
-      logRetentionDays: 0
-      target: 
-      type: null
     upstreams:
       groups:
         default:
@@ -151,4 +124,3 @@ data:
         - 208.67.220.220
         - 8.26.56.26
         - 8.20.247.20
-      timeout: 1s
